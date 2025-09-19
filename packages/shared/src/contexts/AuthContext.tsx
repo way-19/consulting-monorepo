@@ -105,6 +105,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       if (dbProfile && !error) {
         setProfile(dbProfile);
         setRole(dbProfile.role);
+        console.log('Profile loaded from DB:', dbProfile.role);
         return;
       }
 
@@ -116,13 +117,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         let userRole = sessionUser.user_metadata?.role || 'client';
         
         // Check email patterns for demo accounts
-        if (sessionUser.email?.includes('giorgi.meskhi@consulting19.com')) {
+        if (sessionUser.email === 'giorgi.meskhi@consulting19.com') {
           userRole = 'consultant';
-        } else if (sessionUser.email?.includes('admin@consulting19.com')) {
+        } else if (sessionUser.email === 'admin@consulting19.com') {
           userRole = 'admin';
-        } else if (sessionUser.email?.includes('client@consulting19.com')) {
+        } else if (sessionUser.email === 'client@consulting19.com') {
           userRole = 'client';
         }
+        
+        console.log('Setting role from email pattern:', sessionUser.email, '->', userRole);
         
         const sessionProfile: UserProfile = {
           id: sessionUser.id,

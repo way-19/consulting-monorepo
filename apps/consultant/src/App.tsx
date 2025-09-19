@@ -27,7 +27,9 @@ function App() {
 }
 
 const ProtectedConsultantRoutes = () => {
-  const { user, role, loading } = useAuth();
+  const { user, profile, loading } = useAuth();
+  
+  console.log('Consultant App - User:', user?.email, 'Profile role:', profile?.role, 'Loading:', loading);
   
   if (loading) {
     return (
@@ -47,12 +49,19 @@ const ProtectedConsultantRoutes = () => {
     return <Navigate to="/login" replace />;
   }
   
-  if (role !== 'consultant') {
+  if (profile?.role !== 'consultant') {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
           <h1 className="text-2xl font-bold text-gray-900 mb-4">Access Denied</h1>
-          <p className="text-gray-600">You don't have permission to access the consultant dashboard.</p>
+          <p className="text-gray-600 mb-4">You don't have permission to access the consultant dashboard.</p>
+          <div className="bg-gray-100 p-4 rounded-lg max-w-md mx-auto">
+            <p className="text-sm text-gray-700">
+              <strong>Current role:</strong> {profile?.role || 'unknown'}<br />
+              <strong>Required role:</strong> consultant<br />
+              <strong>Email:</strong> {user?.email}
+            </p>
+          </div>
         </div>
       </div>
     );
