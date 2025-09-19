@@ -180,4 +180,3 @@ const ClientLayout: React.FC<ClientLayoutProps> = ({ children }) => {
 
 export default ClientLayout;
 
-export default ClientLayout
