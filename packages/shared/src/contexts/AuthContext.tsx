@@ -112,12 +112,24 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       console.log('Using session data for profile, DB error:', error);
       const sessionUser = user;
       if (sessionUser) {
+        // Determine role based on email for demo accounts
+        let userRole = sessionUser.user_metadata?.role || 'client';
+        
+        // Check email patterns for demo accounts
+        if (sessionUser.email?.includes('giorgi.meskhi@consulting19.com')) {
+          userRole = 'consultant';
+        } else if (sessionUser.email?.includes('admin@consulting19.com')) {
+          userRole = 'admin';
+        } else if (sessionUser.email?.includes('client@consulting19.com')) {
+          userRole = 'client';
+        }
+        
         const sessionProfile: UserProfile = {
           id: sessionUser.id,
           email: sessionUser.email || '',
           full_name: sessionUser.user_metadata?.full_name || '',
           display_name: sessionUser.user_metadata?.display_name,
-          role: sessionUser.user_metadata?.role || 'client',
+          role: userRole,
           country_id: sessionUser.user_metadata?.country_id,
           phone: sessionUser.user_metadata?.phone,
           company: sessionUser.user_metadata?.company,
@@ -131,7 +143,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         };
       
         setProfile(sessionProfile);
-        setRole(sessionUser.user_metadata?.role || 'client');
+        setRole(userRole);
       }
     } catch (err) {
       console.warn('Profile fetch failed:', err);
