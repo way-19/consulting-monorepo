@@ -1,40 +1,94 @@
-import React from 'react';
-import { Helmet } from 'react-helmet-async';
-import { HelpCircle, Plus, MessageSquare } from 'lucide-react';
-
-const ClientSupport = () => {
-  return (
-    <>
-      <Helmet>
-        <title>Support - Client Portal</title>
-      </Helmet>
-      
-      <div className="space-y-6">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900">Support</h1>
-          <p className="text-gray-600 mt-1">Get help and submit support requests</p>
-        </div>
-        
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-12 text-center">
-          <HelpCircle className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-          <h3 className="text-xl font-semibold text-gray-900 mb-2">Support Center</h3>
-          <p className="text-gray-600 mb-6">
-            Get help from your consultant or submit support requests.
-          </p>
-          <div className="flex items-center justify-center space-x-3">
-            <button className="inline-flex items-center px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors">
-              <MessageSquare className="w-4 h-4 mr-2" />
-              Contact Consultant
-            </button>
-            <button className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
-              <Plus className="w-4 h-4 mr-2" />
-              New Support Request
-            </button>
-          </div>
-        </div>
-      </div>
-    </>
-  );
-};
-
-export default ClientSupport;
+{
+  "dashboard": {
+    "title": "Painel",
+    "welcome": "Bem-vindo de volta",
+    "stats": {
+      "activeProjects": "Projetos Ativos",
+      "pendingTasks": "Tarefas Pendentes",
+      "totalDocuments": "Total de Documentos",
+      "completedOrders": "Pedidos Concluídos",
+      "totalRevenue": "Receita Total",
+      "responseTime": "Tempo de Resposta"
+    },
+    "quickActions": {
+      "title": "Ações Rápidas",
+      "uploadDocument": "Carregar Documento",
+      "scheduleCall": "Agendar Chamada",
+      "sendMessage": "Enviar Mensagem",
+      "viewTasks": "Ver Tarefas"
+    },
+    "recentActivity": {
+      "title": "Atividade Recente"
+    },
+    "financialOverview": {
+      "title": "Visão Geral Financeira"
+    }
+  },
+  "projects": {
+    "title": "Projetos",
+    "subtitle": "Gerencie e acompanhe seus projetos",
+    "stats": {
+      "totalProjects": "Total de Projetos",
+      "completed": "Concluídos",
+      "totalBudget": "Orçamento Total",
+      "averageProgress": "Progresso Médio",
+      "active": "ativo",
+      "successfullyFinished": "Concluído com sucesso",
+      "estimatedBudget": "Orçamento estimado",
+      "averageCompletion": "Conclusão média"
+    },
+    "search": "Pesquisar projetos...",
+    "filters": {
+      "allStatus": "Todos os Status",
+      "allPriorities": "Todas as Prioridades",
+      "active": "Ativo",
+      "completed": "Concluído",
+      "onHold": "Em Espera",
+      "cancelled": "Cancelado",
+      "high": "Alta",
+      "medium": "Média",
+      "low": "Baixa"
+    },
+    "myProjects": {
+      "title": "Meus Projetos",
+      "subtitle": "Visualize e gerencie seus projetos ativos",
+      "viewDetails": "Ver Detalhes",
+      "viewProgress": "Ver Progresso",
+      "started": "Iniciado",
+      "progress": "Progresso",
+      "complete": "Completo",
+      "priority": {
+        "high": "alta prioridade",
+        "medium": "prioridade média",
+        "low": "baixa prioridade"
+      },
+      "status": {
+        "active": "ativo",
+        "onHold": "em espera",
+        "completed": "concluído",
+        "cancelled": "cancelado"
+      }
+    }
+  },
+  "navigation": {
+    "dashboard": "Painel",
+    "projects": "Projetos",
+    "tasks": "Tarefas",
+    "services": "Serviços",
+    "messages": "Mensagens",
+    "meetings": "Reuniões",
+    "billing": "Faturamento",
+    "accounting": "Contabilidade",
+    "fileManager": "Gerenciador de Arquivos",
+    "mailbox": "Caixa de Correio",
+    "progress": "Progresso",
+    "support": "Suporte",
+    "settings": "Configurações"
+  },
+  "common": {
+    "loading": "Carregando...",
+    "refresh": "Atualizar",
+    "viewAll": "Ver Todos",
+    "noData": "Nenhum dado disponível"
+  }
+}

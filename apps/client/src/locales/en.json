@@ -1,40 +1,94 @@
-import React from 'react';
-import { Helmet } from 'react-helmet-async';
-import { HelpCircle, Plus, MessageSquare } from 'lucide-react';
-
-const ClientSupport = () => {
-  return (
-    <>
-      <Helmet>
-        <title>Support - Client Portal</title>
-      </Helmet>
-      
-      <div className="space-y-6">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900">Support</h1>
-          <p className="text-gray-600 mt-1">Get help and submit support requests</p>
-        </div>
-        
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-12 text-center">
-          <HelpCircle className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-          <h3 className="text-xl font-semibold text-gray-900 mb-2">Support Center</h3>
-          <p className="text-gray-600 mb-6">
-            Get help from your consultant or submit support requests.
-          </p>
-          <div className="flex items-center justify-center space-x-3">
-            <button className="inline-flex items-center px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors">
-              <MessageSquare className="w-4 h-4 mr-2" />
-              Contact Consultant
-            </button>
-            <button className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
-              <Plus className="w-4 h-4 mr-2" />
-              New Support Request
-            </button>
-          </div>
-        </div>
-      </div>
-    </>
-  );
-};
-
-export default ClientSupport;
+{
+  "dashboard": {
+    "title": "Dashboard",
+    "welcome": "Welcome back",
+    "stats": {
+      "activeProjects": "Active Projects",
+      "pendingTasks": "Pending Tasks", 
+      "totalDocuments": "Total Documents",
+      "completedOrders": "Completed Orders",
+      "totalRevenue": "Total Revenue",
+      "responseTime": "Response Time"
+    },
+    "quickActions": {
+      "title": "Quick Actions",
+      "uploadDocument": "Upload Document",
+      "scheduleCall": "Schedule Call",
+      "sendMessage": "Send Message",
+      "viewTasks": "View Tasks"
+    },
+    "recentActivity": {
+      "title": "Recent Activity"
+    },
+    "financialOverview": {
+      "title": "Financial Overview"
+    }
+  },
+  "projects": {
+    "title": "Projects",
+    "subtitle": "Manage and track your projects",
+    "stats": {
+      "totalProjects": "Total Projects",
+      "completed": "Completed",
+      "totalBudget": "Total Budget",
+      "averageProgress": "Average Progress",
+      "active": "active",
+      "successfullyFinished": "Successfully finished",
+      "estimatedBudget": "Estimated budget",
+      "averageCompletion": "Average completion"
+    },
+    "search": "Search projects...",
+    "filters": {
+      "allStatus": "All Status",
+      "allPriorities": "All Priorities",
+      "active": "Active",
+      "completed": "Completed",
+      "onHold": "On Hold",
+      "cancelled": "Cancelled",
+      "high": "High",
+      "medium": "Medium",
+      "low": "Low"
+    },
+    "myProjects": {
+      "title": "My Projects",
+      "subtitle": "View and manage your active projects",
+      "viewDetails": "View Details",
+      "viewProgress": "View Progress",
+      "started": "Started",
+      "progress": "Progress",
+      "complete": "Complete",
+      "priority": {
+        "high": "high priority",
+        "medium": "medium priority",
+        "low": "low priority"
+      },
+      "status": {
+        "active": "active",
+        "onHold": "on hold",
+        "completed": "completed",
+        "cancelled": "cancelled"
+      }
+    }
+  },
+  "navigation": {
+    "dashboard": "Dashboard",
+    "projects": "Projects",
+    "tasks": "Tasks",
+    "services": "Services",
+    "messages": "Messages",
+    "meetings": "Meetings",
+    "billing": "Billing",
+    "accounting": "Accounting",
+    "fileManager": "File Manager",
+    "mailbox": "Mailbox",
+    "progress": "Progress",
+    "support": "Support",
+    "settings": "Settings"
+  },
+  "common": {
+    "loading": "Loading...",
+    "refresh": "Refresh",
+    "viewAll": "View All",
+    "noData": "No data available"
+  }
+}
