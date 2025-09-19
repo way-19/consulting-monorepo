@@ -14,12 +14,18 @@
     "dev:client": "npm run --workspace @consulting19/client dev",
     "dev:admin": "npm run --workspace @consulting19/admin dev",
     "dev:dashboard": "npm run --workspace dashboard dev",
+
+    "dev:both": "concurrently -k -n CLIENT,CONSULTANT -c blue,magenta \"npm run dev:client:port\" \"npm run dev:consultant:port\"",
+    "dev:client:port": "npm run --workspace @consulting19/client dev -- --port 5173",
+    "dev:consultant:port": "npm run --workspace @consulting19/consultant dev -- --port 5174",
+
     "build": "npm run --workspace @consulting19/marketing build",
     "build:marketing": "npm run --workspace @consulting19/marketing build",
     "build:consultant": "npm run --workspace @consulting19/consultant build",
     "build:client": "npm run --workspace @consulting19/client build",
     "build:admin": "npm run --workspace @consulting19/admin build",
     "build:dashboard": "npm run --workspace dashboard build",
+
     "install:all": "npm install",
     "clean": "rm -rf node_modules apps/*/node_modules packages/*/node_modules",
     "clean:build": "rm -rf apps/*/dist packages/*/dist"
@@ -31,6 +37,8 @@
     "@typescript-eslint/parser": "^6.14.0",
     "@vitejs/plugin-react": "^4.3.1",
     "autoprefixer": "^10.4.18",
+    "concurrently": "^9.2.1",
+    "cross-env": "^10.0.0",
     "eslint": "^8.55.0",
     "eslint-plugin-react-hooks": "^4.6.0",
     "eslint-plugin-react-refresh": "^0.4.5",
