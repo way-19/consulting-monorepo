@@ -1,7 +1,6 @@
 import React from 'react';
 import { Helmet } from 'react-helmet-async';
 import { HelpCircle, Plus, MessageSquare } from 'lucide-react';
-import { supabase } from '@consulting19/shared/lib/supabase';
 
 const ClientSupport = () => {
   return (
