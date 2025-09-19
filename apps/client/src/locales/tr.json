@@ -1,119 +1,40 @@
-{
-  "navigation": {
-    "dashboard": "Panel",
-    "projects": "Projeler",
-    "tasks": "Görevler",
-    "documents": "Belgeler",
-    "services": "Hizmetler",
-    "messages": "Mesajlar",
-    "billing": "Faturalama",
-    "settings": "Ayarlar",
-    "logout": "Çıkış"
-  },
-  "dashboard": {
-    "title": "Müşteri Paneli",
-    "subtitle": "Projelerinizi ve hizmetlerinizi yönetin",
-    "welcome": "Tekrar hoş geldiniz",
-    "stats": {
-      "activeProjects": "Aktif Projeler",
-      "pendingTasks": "Bekleyen Görevler",
-      "totalDocuments": "Toplam Belgeler",
-      "completedMilestones": "Tamamlanan Kilometre Taşları"
-    }
-  },
-  "projects": {
-    "title": "Projeler",
-    "subtitle": "Uluslararası iş genişleme projelerinizi takip edin",
-    "noProjects": "Henüz Proje Yok",
-    "noProjectsDescription": "İş genişlemeniz başladığında danışmanınız projeler oluşturacak"
-  },
-  "tasks": {
-    "title": "Görevler",
-    "subtitle": "Projeleriniz için görevleri ve kilometre taşlarını takip edin",
-    "noTasks": "Henüz Görev Yok",
-    "noTasksDescription": "Projeleriniz ilerledikçe görevler burada görünecek"
-  },
-  "documents": {
-    "title": "Belgeler",
-    "subtitle": "Belgelerinizi ve isteklerinizi yönetin",
-    "upload": "Belge Yükle",
-    "download": "İndir",
-    "noDocuments": "Henüz Belge Yok",
-    "noDocumentsDescription": "Belgeleri yüklediğinizde veya danışmanınız istediğinde burada görünecek"
-  },
-  "services": {
-    "title": "Hizmetler",
-    "subtitle": "Uzman danışmanlardan hizmetlere göz atın ve sipariş verin",
-    "orderService": "Hizmet Sipariş Et",
-    "noServices": "Mevcut Hizmet Yok",
-    "noServicesDescription": "Bir danışmana atandığınızda hizmetler mevcut olacak"
-  },
-  "messages": {
-    "title": "Mesajlar",
-    "subtitle": "Danışmanınız ve ekibinizle iletişim kurun",
-    "sendMessage": "Mesaj Gönder",
-    "noMessages": "Henüz Mesaj Yok",
-    "noMessagesDescription": "Danışmanınızla iletişim kurmaya başladığınızda mesajlar burada görünecek"
-  },
-  "billing": {
-    "title": "Faturalama ve Ödemeler",
-    "subtitle": "Ödemelerinizi ve fatura geçmişinizi yönetin",
-    "totalSpent": "Toplam Harcama",
-    "pendingPayments": "Bekleyen Ödemeler",
-    "noBilling": "Fatura Geçmişi Yok",
-    "noBillingDescription": "Hizmet siparişi vermeye başladığınızda ödeme geçmişiniz burada görünecek"
-  },
-  "settings": {
-    "title": "Ayarlar",
-    "subtitle": "Hesap tercihlerinizi ve ayarlarınızı yönetin",
-    "profile": "Profil",
-    "notifications": "Bildirimler",
-    "security": "Güvenlik",
-    "saveChanges": "Değişiklikleri Kaydet"
-  },
-  "onboarding": {
-    "title": "Consulting19'a Hoş Geldiniz!",
-    "subtitle": "Platformumuzla başarı için sizi hazırlayalım",
-    "progress": "Onboarding İlerlemesi",
-    "completed": "Onboarding tamamlandı! Consulting19'a hoş geldiniz.",
-    "nextSteps": "Her Şey Hazır!"
-  },
-  "common": {
-    "loading": "Yükleniyor...",
-    "error": "Hata",
-    "success": "Başarılı",
-    "save": "Kaydet",
-    "cancel": "İptal",
-    "delete": "Sil",
-    "edit": "Düzenle",
-    "view": "Görüntüle",
-    "add": "Ekle",
-    "remove": "Kaldır",
-    "search": "Ara",
-    "filter": "Filtrele",
-    "refresh": "Yenile",
-    "close": "Kapat",
-    "open": "Aç",
-    "yes": "Evet",
-    "no": "Hayır",
-    "confirm": "Onayla",
-    "back": "Geri",
-    "next": "İleri",
-    "previous": "Önceki"
-  },
-  "status": {
-    "active": "Aktif",
-    "inactive": "Pasif",
-    "pending": "Bekleyen",
-    "completed": "Tamamlandı",
-    "cancelled": "İptal Edildi",
-    "approved": "Onaylandı",
-    "rejected": "Reddedildi"
-  },
-  "priority": {
-    "low": "Düşük",
-    "medium": "Orta",
-    "high": "Yüksek",
-    "urgent": "Acil"
-  }
-}
+import React from 'react';
+import { Helmet } from 'react-helmet-async';
+import { HelpCircle, Plus, MessageSquare } from 'lucide-react';
+
+const ClientSupport = () => {
+  return (
+    <>
+      <Helmet>
+        <title>Support - Client Portal</title>
+      </Helmet>
+      
+      <div className="space-y-6">
+        <div>
+          <h1 className="text-3xl font-bold text-gray-900">Support</h1>
+          <p className="text-gray-600 mt-1">Get help and submit support requests</p>
+        </div>
+        
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-12 text-center">
+          <HelpCircle className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+          <h3 className="text-xl font-semibold text-gray-900 mb-2">Support Center</h3>
+          <p className="text-gray-600 mb-6">
+            Get help from your consultant or submit support requests.
+          </p>
+          <div className="flex items-center justify-center space-x-3">
+            <button className="inline-flex items-center px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors">
+              <MessageSquare className="w-4 h-4 mr-2" />
+              Contact Consultant
+            </button>
+            <button className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
+              <Plus className="w-4 h-4 mr-2" />
+              New Support Request
+            </button>
+          </div>
+        </div>
+      </div>
+    </>
+  );
+};
+
+export default ClientSupport;

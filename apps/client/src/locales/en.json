@@ -1,119 +1,40 @@
-{
-  "navigation": {
-    "dashboard": "Dashboard",
-    "projects": "Projects",
-    "tasks": "Tasks",
-    "documents": "Documents",
-    "services": "Services",
-    "messages": "Messages",
-    "billing": "Billing",
-    "settings": "Settings",
-    "logout": "Logout"
-  },
-  "dashboard": {
-    "title": "Client Dashboard",
-    "subtitle": "Manage your projects and services",
-    "welcome": "Welcome back",
-    "stats": {
-      "activeProjects": "Active Projects",
-      "pendingTasks": "Pending Tasks",
-      "totalDocuments": "Total Documents",
-      "completedMilestones": "Completed Milestones"
-    }
-  },
-  "projects": {
-    "title": "Projects",
-    "subtitle": "Track your international business expansion projects",
-    "noProjects": "No Projects Yet",
-    "noProjectsDescription": "Your consultant will create projects as your business expansion begins"
-  },
-  "tasks": {
-    "title": "Tasks",
-    "subtitle": "Track tasks and milestones for your projects",
-    "noTasks": "No Tasks Yet",
-    "noTasksDescription": "Tasks will appear here as your projects progress"
-  },
-  "documents": {
-    "title": "Documents",
-    "subtitle": "Manage your documents and requests",
-    "upload": "Upload Document",
-    "download": "Download",
-    "noDocuments": "No Documents Yet",
-    "noDocumentsDescription": "Documents will appear here as you upload them or as your consultant requests them"
-  },
-  "services": {
-    "title": "Services",
-    "subtitle": "Browse and order services from expert consultants",
-    "orderService": "Order Service",
-    "noServices": "No Services Available",
-    "noServicesDescription": "Services will be available once you are assigned to a consultant"
-  },
-  "messages": {
-    "title": "Messages",
-    "subtitle": "Communicate with your consultant and team",
-    "sendMessage": "Send Message",
-    "noMessages": "No Messages Yet",
-    "noMessagesDescription": "Messages will appear here when you start communicating with your consultant"
-  },
-  "billing": {
-    "title": "Billing & Payments",
-    "subtitle": "Manage your payments and billing history",
-    "totalSpent": "Total Spent",
-    "pendingPayments": "Pending Payments",
-    "noBilling": "No Billing History",
-    "noBillingDescription": "Your payment history will appear here once you start ordering services"
-  },
-  "settings": {
-    "title": "Settings",
-    "subtitle": "Manage your account preferences and settings",
-    "profile": "Profile",
-    "notifications": "Notifications",
-    "security": "Security",
-    "saveChanges": "Save Changes"
-  },
-  "onboarding": {
-    "title": "Welcome to Consulting19!",
-    "subtitle": "Let's get you set up for success with our platform",
-    "progress": "Onboarding Progress",
-    "completed": "Onboarding completed! Welcome to Consulting19.",
-    "nextSteps": "You're All Set!"
-  },
-  "common": {
-    "loading": "Loading...",
-    "error": "Error",
-    "success": "Success",
-    "save": "Save",
-    "cancel": "Cancel",
-    "delete": "Delete",
-    "edit": "Edit",
-    "view": "View",
-    "add": "Add",
-    "remove": "Remove",
-    "search": "Search",
-    "filter": "Filter",
-    "refresh": "Refresh",
-    "close": "Close",
-    "open": "Open",
-    "yes": "Yes",
-    "no": "No",
-    "confirm": "Confirm",
-    "back": "Back",
-    "next": "Next",
-    "previous": "Previous"
-  },
-  "status": {
-    "active": "Active",
-    "inactive": "Inactive",
-    "pending": "Pending",
-    "completed": "Completed",
-    "cancelled": "Cancelled",
-    "approved": "Approved",
-    "rejected": "Rejected"
-  },
-  "priority": {
-    "low": "Low",
-    "medium": "Medium",
-    "high": "High",
-    "urgent": "Urgent"
-  }
-}
+import React from 'react';
+import { Helmet } from 'react-helmet-async';
+import { HelpCircle, Plus, MessageSquare } from 'lucide-react';
+
+const ClientSupport = () => {
+  return (
+    <>
+      <Helmet>
+        <title>Support - Client Portal</title>
+      </Helmet>
+      
+      <div className="space-y-6">
+        <div>
+          <h1 className="text-3xl font-bold text-gray-900">Support</h1>
+          <p className="text-gray-600 mt-1">Get help and submit support requests</p>
+        </div>
+        
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-12 text-center">
+          <HelpCircle className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+          <h3 className="text-xl font-semibold text-gray-900 mb-2">Support Center</h3>
+          <p className="text-gray-600 mb-6">
+            Get help from your consultant or submit support requests.
+          </p>
+          <div className="flex items-center justify-center space-x-3">
+            <button className="inline-flex items-center px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors">
+              <MessageSquare className="w-4 h-4 mr-2" />
+              Contact Consultant
+            </button>
+            <button className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
+              <Plus className="w-4 h-4 mr-2" />
+              New Support Request
+            </button>
+          </div>
+        </div>
+      </div>
+    </>
+  );
+};
+
+export default ClientSupport;
