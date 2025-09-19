@@ -19,7 +19,7 @@
     "dev:client:port": "npm run --workspace @consulting19/client dev -- --port 5173",
     "dev:consultant:port": "npm run --workspace @consulting19/consultant dev -- --port 5174",
 
-    "build": "npm run --workspace @consulting19/marketing build",
+    "build": "npm run build:client && npm run build:consultant",
     "build:marketing": "npm run --workspace @consulting19/marketing build",
     "build:consultant": "npm run --workspace @consulting19/consultant build",
     "build:client": "npm run --workspace @consulting19/client build",
