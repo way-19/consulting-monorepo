@@ -2,6 +2,8 @@ import React from 'react';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Eye, EyeOff, Mail, Lock } from 'lucide-react';
+import { Helmet } from 'react-helmet-async';
+import { useAuth, Button, Card } from '@consulting19/shared';
 
 export default function LoginPage() {
   const [email, setEmail] = useState('giorgi.meskhi@consulting19.com');
@@ -9,6 +11,8 @@ export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  
+  const { signIn } = useAuth();
   const navigate = useNavigate();
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -16,19 +20,22 @@ export default function LoginPage() {
     setLoading(true);
     setError('');
 
-    // Simulate login
-    setTimeout(() => {
-      if (email === 'giorgi.meskhi@consulting19.com' && password === 'Consultant123!') {
-        navigate('/');
-      } else {
-        setError('Invalid credentials');
-      }
+    const { error } = await signIn(email, password);
+    
+    if (error) {
+      setError(error.message);
       setLoading(false);
-    }, 1000);
+    } else {
+      navigate('/');
+    }
   };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-teal-50 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
+      <Helmet>
+        <title>Consultant Login - Consulting19</title>
+      </Helmet>
+      
       <div className="max-w-md w-full space-y-8">
         {/* Header */}
         <div className="text-center">
@@ -52,7 +59,8 @@ export default function LoginPage() {
         </div>
 
         {/* Form */}
-        <div className="bg-white rounded-lg shadow-md p-8">
+        <Card>
+          <Card.Body>
           <form onSubmit={handleSubmit} className="space-y-6">
             {error && (
               <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm">
@@ -103,18 +111,18 @@ export default function LoginPage() {
               </div>
             </div>
 
-            <button 
+              <Button 
               type="submit" 
-              disabled={loading}
-              className="w-full flex items-center justify-center px-4 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 transition-colors"
+                className="w-full" 
+                size="lg" 
+                loading={loading}
+                disabled={loading}
             >
-              {loading ? (
-                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-              ) : null}
               {loading ? 'Signing in...' : 'Sign In'}
-            </button>
+              </Button>
           </form>
-        </div>
+          </Card.Body>
+        </Card>
       </div>
     </div>
   );
