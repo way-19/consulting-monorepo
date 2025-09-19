@@ -12,6 +12,12 @@ import ClientMessages from './pages/client/ClientMessages';
 import ClientBilling from './pages/client/ClientBilling';
 import ClientSettings from './pages/client/ClientSettings';
 import ClientOnboarding from './pages/client/ClientOnboarding';
+import ClientMeetings from './pages/client/ClientMeetings';
+import ClientAccounting from './pages/client/ClientAccounting';
+import ClientFileManager from './pages/client/ClientFileManager';
+import ClientMailbox from './pages/client/ClientMailbox';
+import ClientProgressTracking from './pages/client/ClientProgressTracking';
+import ClientSupport from './pages/client/ClientSupport';
 
 function App() {
   return (
@@ -64,6 +70,12 @@ const ProtectedClientRoutes = () => {
         <Route path="/billing" element={<ClientBilling />} />
         <Route path="/settings" element={<ClientSettings />} />
         <Route path="/onboarding" element={<ClientOnboarding />} />
+        <Route path="/meetings" element={<ClientMeetings />} />
+        <Route path="/accounting" element={<ClientAccounting />} />
+        <Route path="/file-manager" element={<ClientFileManager />} />
+        <Route path="/mailbox" element={<ClientMailbox />} />
+        <Route path="/progress" element={<ClientProgressTracking />} />
+        <Route path="/support" element={<ClientSupport />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </ClientLayout>

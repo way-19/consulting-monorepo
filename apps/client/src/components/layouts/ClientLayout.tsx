@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { 
   Home, 
@@ -12,10 +12,17 @@ import {
   Briefcase, 
   User,
   Calendar,
-  HelpCircle
+  HelpCircle,
+  BarChart3,
+  Mail,
+  TrendingUp,
+  Globe,
+  Bell,
+  ChevronDown
 } from 'lucide-react';
 import { useAuth } from '@consulting19/shared';
 import { useTranslation } from 'react-i18next';
+import NotificationCenter from '../NotificationCenter';
 
 interface ClientLayoutProps {
   children: React.ReactNode;
@@ -23,20 +30,32 @@ interface ClientLayoutProps {
 
 const ClientLayout: React.FC<ClientLayoutProps> = ({ children }) => {
   const location = useLocation();
-  const { signOut, user } = useAuth();
-  const { t } = useTranslation();
+  const { signOut, user, profile } = useAuth();
+  const { t, i18n } = useTranslation();
+  const [showNotifications, setShowNotifications] = useState(false);
+  const [showLanguageMenu, setShowLanguageMenu] = useState(false);
 
   const navigation = [
     { name: 'Dashboard', href: '/', icon: Home },
     { name: 'Projects', href: '/projects', icon: FolderOpen },
     { name: 'Tasks', href: '/tasks', icon: CheckSquare },
-    { name: 'Documents', href: '/documents', icon: FileText },
     { name: 'Services', href: '/services', icon: Briefcase },
     { name: 'Messages', href: '/messages', icon: MessageCircle },
     { name: 'Meetings', href: '/meetings', icon: Calendar },
     { name: 'Billing', href: '/billing', icon: CreditCard },
+    { name: 'Accounting', href: '/accounting', icon: BarChart3 },
+    { name: 'File Manager', href: '/file-manager', icon: FileText },
+    { name: 'Mailbox', href: '/mailbox', icon: Mail },
+    { name: 'Progress', href: '/progress', icon: TrendingUp },
     { name: 'Support', href: '/support', icon: HelpCircle },
     { name: 'Settings', href: '/settings', icon: Settings },
+  ];
+
+  const languages = [
+    { code: 'en', name: 'English', flag: '🇺🇸' },
+    { code: 'tr', name: 'Türkçe', flag: '🇹🇷' },
+    { code: 'pt', name: 'Português', flag: '🇵🇹' },
+    { code: 'es', name: 'Español', flag: '🇪🇸' },
   ];
 
   const handleSignOut = async () => {
@@ -48,36 +67,46 @@ const ClientLayout: React.FC<ClientLayoutProps> = ({ children }) => {
     }
   };
 
+  const changeLanguage = (langCode: string) => {
+    i18n.changeLanguage(langCode);
+    setShowLanguageMenu(false);
+  };
+
   return (
     <div className="min-h-screen bg-gray-50 flex">
       {/* Sidebar */}
-      <div className="w-64 bg-white shadow-lg flex flex-col">
+      <div className="w-64 bg-white shadow-lg flex flex-col border-r border-gray-200">
         {/* Logo */}
         <div className="p-6 border-b border-gray-200">
-          <div className="flex items-center space-x-2">
-            <div className="w-8 h-8 bg-gradient-to-r from-blue-600 to-teal-600 rounded-lg flex items-center justify-center">
+          <div className="flex items-center space-x-3">
+            <div className="w-10 h-10 bg-gradient-to-r from-blue-600 to-teal-600 rounded-xl flex items-center justify-center shadow-lg">
               <span className="text-white font-bold text-sm">C19</span>
             </div>
-            <span className="text-xl font-bold text-gray-900">Client Dashboard</span>
+            <div>
+              <span className="text-lg font-bold text-gray-900">Client Portal</span>
+              <div className="text-xs text-gray-500">Business Dashboard</div>
+            </div>
           </div>
         </div>
 
         {/* Navigation */}
-        <nav className="flex-1 p-4">
-          <ul className="space-y-2">
+        <nav className="flex-1 p-4 overflow-y-auto">
+          <ul className="space-y-1">
             {navigation.map((item) => {
               const isActive = location.pathname === item.href;
               return (
                 <li key={item.name}>
                   <Link
                     to={item.href}
-                    className={`flex items-center space-x-3 px-3 py-2 rounded-lg transition-colors duration-200 ${
+                    className={`flex items-center space-x-3 px-4 py-3 rounded-xl transition-all duration-200 group ${
                       isActive
-                        ? 'bg-blue-100 text-blue-700'
-                        : 'text-gray-700 hover:bg-gray-100'
+                        ? 'bg-blue-50 text-blue-700 shadow-sm border border-blue-100'
+                        : 'text-gray-700 hover:bg-gray-50 hover:text-gray-900'
                     }`}
                   >
-                    <item.icon className="w-5 h-5" />
+                    <item.icon className={`w-5 h-5 ${
+                      isActive ? 'text-blue-600' : 'text-gray-500 group-hover:text-gray-700'
+                    }`} />
                     <span className="font-medium">{item.name}</span>
                   </Link>
                 </li>
@@ -87,16 +116,25 @@ const ClientLayout: React.FC<ClientLayoutProps> = ({ children }) => {
         </nav>
 
         {/* User Info & Sign Out */}
-        <div className="p-4 border-t border-gray-200">
-          <div className="mb-3">
-            <p className="text-sm font-medium text-gray-900">{user?.user_metadata?.full_name || user?.email?.split('@')[0] || 'Client'}</p>
-            <p className="text-xs text-gray-500">{user?.email}</p>
+        <div className="p-4 border-t border-gray-200 bg-gray-50">
+          <div className="mb-4 p-3 bg-white rounded-lg border border-gray-200">
+            <div className="flex items-center space-x-3">
+              <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
+                <User className="w-4 h-4 text-blue-600" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-semibold text-gray-900 truncate">
+                  {profile?.full_name || user?.email?.split('@')[0] || 'Client'}
+                </p>
+                <p className="text-xs text-gray-500 truncate">{user?.email}</p>
+              </div>
+            </div>
           </div>
           <button
             onClick={handleSignOut}
-            className="flex items-center space-x-3 px-3 py-2 rounded-lg text-gray-700 hover:bg-red-50 hover:text-red-700 transition-colors duration-200 w-full"
+            className="flex items-center space-x-3 px-4 py-3 rounded-xl text-gray-700 hover:bg-red-50 hover:text-red-700 transition-all duration-200 w-full group"
           >
-            <LogOut className="w-5 h-5" />
+            <LogOut className="w-5 h-5 group-hover:text-red-600" />
             <span className="font-medium">Logout</span>
           </button>
         </div>
@@ -107,15 +145,75 @@ const ClientLayout: React.FC<ClientLayoutProps> = ({ children }) => {
         {/* Header */}
         <header className="bg-white shadow-sm border-b border-gray-200 px-6 py-4">
           <div className="flex justify-between items-center">
-            <h1 className="text-lg font-semibold text-gray-900">Client Dashboard</h1>
+            <div>
+              <h1 className="text-xl font-semibold text-gray-900">Client Dashboard</h1>
+              <p className="text-sm text-gray-500">Path: {location.pathname}</p>
+            </div>
             <div className="flex items-center space-x-4">
-              <span className="text-sm text-gray-600">Client Dashboard</span>
+              {/* Language Selector */}
+              <div className="relative">
+                <button
+                  onClick={() => setShowLanguageMenu(!showLanguageMenu)}
+                  className="flex items-center space-x-2 px-3 py-2 text-sm border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+                >
+                  <Globe className="w-4 h-4 text-gray-500" />
+                  <span className="text-gray-700">
+                    {languages.find(l => l.code === i18n.language)?.flag} {i18n.language.toUpperCase()}
+                  </span>
+                  <ChevronDown className="w-4 h-4 text-gray-500" />
+                </button>
+                
+                {showLanguageMenu && (
+                  <div className="absolute top-full right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 py-2 z-50">
+                    {languages.map((lang) => (
+                      <button
+                        key={lang.code}
+                        onClick={() => changeLanguage(lang.code)}
+                        className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center space-x-2"
+                      >
+                        <span>{lang.flag}</span>
+                        <span>{lang.name}</span>
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* AI Assistant */}
+              <button className="flex items-center space-x-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
+                <span className="text-sm">🤖</span>
+                <span className="text-sm font-medium">AI Assistant</span>
+              </button>
+
+              {/* Notifications */}
+              <div className="relative">
+                <button
+                  onClick={() => setShowNotifications(!showNotifications)}
+                  className="relative p-2 text-gray-500 hover:text-gray-700 transition-colors"
+                >
+                  <Bell className="w-5 h-5" />
+                  <span className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full"></span>
+                </button>
+                
+                <NotificationCenter 
+                  isOpen={showNotifications}
+                  onClose={() => setShowNotifications(false)}
+                />
+              </div>
+
+              {/* Logout */}
+              <button
+                onClick={handleSignOut}
+                className="text-gray-500 hover:text-gray-700 transition-colors"
+              >
+                <LogOut className="w-5 h-5" />
+              </button>
             </div>
           </div>
         </header>
 
         {/* Page Content */}
-        <main className="flex-1 p-6">
+        <main className="flex-1 p-6 overflow-y-auto">
           {children}
         </main>
       </div>
