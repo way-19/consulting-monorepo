@@ -171,7 +171,7 @@ const ClientDashboard = () => {
           <div className="flex items-center justify-between">
             <div>
               <h1 className="text-3xl font-bold mb-2">
-                Welcome, {profile?.full_name || user?.email?.split('@')[0] || 'Client'}!
+                Welcome, {profile?.full_name || user?.email?.split('@') || 'Client'}!
               </h1>
               <p className="text-blue-100 text-lg">
                 Your business expansion dashboard
@@ -287,7 +287,7 @@ const ClientDashboard = () => {
               <div>
                 <p className="text-sm font-medium text-gray-600">Upcoming Meetings</p>
                 <p className="text-3xl font-bold text-gray-900">{stats.upcomingMeetings}</p>
-                <p className="text-sm text-gray-600 mt-1">↗ No meetings scheduled</p>
+                <p className="text-sm text-indigo-600 mt-1">↗ No meetings scheduled</p>
               </div>
               <div className="w-12 h-12 bg-indigo-100 rounded-2xl flex items-center justify-center">
                 <Calendar className="w-6 h-6 text-indigo-600" />
@@ -424,7 +424,7 @@ const ClientDashboard = () => {
               <p className="text-sm text-gray-600">Your investment in business expansion</p>
             </div>
             
-            <div className="grid grid-cols-1 gap-4">
+            <div className="space-y-4">
               <div className="bg-green-50 rounded-xl p-4 border border-green-200">
                 <div className="flex items-center justify-between">
                   <div>
