@@ -1,0 +1,233 @@
+{
+  "jurisdictions": [
+    {
+      "code": "GE",
+      "name": "Georgia",
+      "flag": "🇬🇪",
+      "active": true,
+      "defaultConsultantId": "a4d1a7b0-1234-5678-90ab-cdef12345678",
+      "steps": {
+        "namesAndType": true,
+        "packages": true,
+        "addons": true,
+        "additionalDetails": true
+      },
+      "entityTypes": ["LLC", "JSC"],
+      "validations": {
+        "companyNameRegex": "^[A-Za-z0-9 &'-]{3,100}$",
+        "minProposedNames": 1,
+        "requirePassportNumber": false,
+        "minApplicantAge": 18
+      },
+      "fields": {
+        "nationality": "required",
+        "dateOfBirth": "required",
+        "passportNumber": "optional",
+        "address": "required",
+        "phone": "required",
+        "email": "required"
+      },
+      "currency": "USD",
+      "packages": [
+        {
+          "id": "basic",
+          "name": "Basic",
+          "price": 1100,
+          "processingTime": "3–5 days",
+          "includes": [
+            "Set-up Fee",
+            "Business Consultation",
+            "Document Preparation",
+            "Dedicated Account Manager"
+          ],
+          "active": true
+        },
+        {
+          "id": "plus",
+          "name": "Plus",
+          "price": 1620,
+          "processingTime": "3–7 days",
+          "includes": [
+            "Company Seal",
+            "Notarisation & Apostille",
+            "International Courier",
+            "Dedicated Account Manager"
+          ],
+          "active": true,
+          "recommended": true
+        },
+        {
+          "id": "premium",
+          "name": "Premium",
+          "price": 1910,
+          "processingTime": "5–10 days",
+          "includes": [
+            "Everything in Plus",
+            "Company Logo, Business Card & Letterhead"
+          ],
+          "active": true
+        }
+      ],
+      "addons": [
+        {
+          "id": "rubber-stamp",
+          "label": "Company Rubber Stamp",
+          "price": 70,
+          "active": true
+        },
+        {
+          "id": "company-seal",
+          "label": "Company Seal",
+          "price": 150,
+          "active": true
+        },
+        {
+          "id": "apostille",
+          "label": "Apostille on Documents",
+          "price": 220,
+          "active": true
+        },
+        {
+          "id": "intl-courier",
+          "label": "International Courier",
+          "price": 90,
+          "active": true
+        },
+        {
+          "id": "branding",
+          "label": "Visual Branding Pack",
+          "price": 400,
+          "active": true
+        }
+      ]
+    },
+    {
+      "code": "AE",
+      "name": "UAE",
+      "flag": "🇦🇪",
+      "active": true,
+      "defaultConsultantId": "b5e2b8c1-abcd-efgh-ijkl-mnop12345678",
+      "steps": {
+        "namesAndType": true,
+        "packages": true,
+        "addons": false,
+        "additionalDetails": true
+      },
+      "entityTypes": ["LLC", "Free Zone LLC"],
+      "validations": {
+        "companyNameRegex": "^[A-Za-z0-9 &'-]{3,100}$",
+        "minProposedNames": 2,
+        "requirePassportNumber": true,
+        "minApplicantAge": 18
+      },
+      "fields": {
+        "nationality": "required",
+        "dateOfBirth": "required",
+        "passportNumber": "required",
+        "address": "required",
+        "phone": "required",
+        "email": "required"
+      },
+      "currency": "USD",
+      "packages": [
+        {
+          "id": "fz-basic",
+          "name": "Free Zone Basic",
+          "price": 2400,
+          "processingTime": "7–14 days",
+          "includes": [
+            "Trade Name Reservation",
+            "License Issuance"
+          ],
+          "active": true
+        },
+        {
+          "id": "fz-premium",
+          "name": "Free Zone Premium",
+          "price": 3200,
+          "processingTime": "10–14 days",
+          "includes": [
+            "Everything in Basic",
+            "Business Bank Account Setup",
+            "Visa Processing Support"
+          ],
+          "active": true,
+          "recommended": true
+        }
+      ],
+      "addons": []
+    },
+    {
+      "code": "TR",
+      "name": "Turkey",
+      "flag": "🇹🇷",
+      "active": true,
+      "defaultConsultantId": "c6f3c9d2-bcde-fghi-jklm-nopq12345678",
+      "steps": {
+        "namesAndType": true,
+        "packages": true,
+        "addons": true,
+        "additionalDetails": true
+      },
+      "entityTypes": ["Limited Şirketi", "Anonim Şirketi", "Kollektif Şirketi"],
+      "validations": {
+        "companyNameRegex": "^[A-Za-z0-9 &'çğıöşüÇĞIİÖŞÜ-]{3,100}$",
+        "minProposedNames": 3,
+        "requirePassportNumber": false,
+        "minApplicantAge": 18
+      },
+      "fields": {
+        "nationality": "required",
+        "dateOfBirth": "required",
+        "passportNumber": "optional",
+        "address": "required",
+        "phone": "required",
+        "email": "required"
+      },
+      "currency": "TRY",
+      "packages": [
+        {
+          "id": "tr-basic",
+          "name": "Temel Paket",
+          "price": 15000,
+          "processingTime": "5–7 gün",
+          "includes": [
+            "Şirket Kuruluş İşlemleri",
+            "Vergi Dairesi Kayıtları",
+            "SGK İşlemleri",
+            "Ticaret Sicili Kayıtları"
+          ],
+          "active": true
+        },
+        {
+          "id": "tr-plus",
+          "name": "Artı Paket",
+          "price": 22000,
+          "processingTime": "7–10 gün",
+          "includes": [
+            "Temel Paketteki Her Şey",
+            "Banka Hesabı Açılışı",
+            "Muhasebe Sistemi Kurulumu",
+            "İlk Ay Muhasebe Desteği"
+          ],
+          "active": true,
+          "recommended": true
+        }
+      ],
+      "addons": [
+        {
+          "id": "logo-design",
+          "label": "Logo Tasarımı",
+          "price": 2500,
+          "active": true
+        },
+        {
+          "id": "website-basic",
+          "label": "Temel Web Sitesi",
+          "price": 8000,
+          "active": true
+        }
+      ]
+    }
+  ]
+}

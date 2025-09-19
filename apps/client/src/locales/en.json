@@ -1,0 +1,119 @@
+{
+  "navigation": {
+    "dashboard": "Dashboard",
+    "projects": "Projects",
+    "tasks": "Tasks",
+    "documents": "Documents",
+    "services": "Services",
+    "messages": "Messages",
+    "billing": "Billing",
+    "settings": "Settings",
+    "logout": "Logout"
+  },
+  "dashboard": {
+    "title": "Client Dashboard",
+    "subtitle": "Manage your projects and services",
+    "welcome": "Welcome back",
+    "stats": {
+      "activeProjects": "Active Projects",
+      "pendingTasks": "Pending Tasks",
+      "totalDocuments": "Total Documents",
+      "completedMilestones": "Completed Milestones"
+    }
+  },
+  "projects": {
+    "title": "Projects",
+    "subtitle": "Track your international business expansion projects",
+    "noProjects": "No Projects Yet",
+    "noProjectsDescription": "Your consultant will create projects as your business expansion begins"
+  },
+  "tasks": {
+    "title": "Tasks",
+    "subtitle": "Track tasks and milestones for your projects",
+    "noTasks": "No Tasks Yet",
+    "noTasksDescription": "Tasks will appear here as your projects progress"
+  },
+  "documents": {
+    "title": "Documents",
+    "subtitle": "Manage your documents and requests",
+    "upload": "Upload Document",
+    "download": "Download",
+    "noDocuments": "No Documents Yet",
+    "noDocumentsDescription": "Documents will appear here as you upload them or as your consultant requests them"
+  },
+  "services": {
+    "title": "Services",
+    "subtitle": "Browse and order services from expert consultants",
+    "orderService": "Order Service",
+    "noServices": "No Services Available",
+    "noServicesDescription": "Services will be available once you are assigned to a consultant"
+  },
+  "messages": {
+    "title": "Messages",
+    "subtitle": "Communicate with your consultant and team",
+    "sendMessage": "Send Message",
+    "noMessages": "No Messages Yet",
+    "noMessagesDescription": "Messages will appear here when you start communicating with your consultant"
+  },
+  "billing": {
+    "title": "Billing & Payments",
+    "subtitle": "Manage your payments and billing history",
+    "totalSpent": "Total Spent",
+    "pendingPayments": "Pending Payments",
+    "noBilling": "No Billing History",
+    "noBillingDescription": "Your payment history will appear here once you start ordering services"
+  },
+  "settings": {
+    "title": "Settings",
+    "subtitle": "Manage your account preferences and settings",
+    "profile": "Profile",
+    "notifications": "Notifications",
+    "security": "Security",
+    "saveChanges": "Save Changes"
+  },
+  "onboarding": {
+    "title": "Welcome to Consulting19!",
+    "subtitle": "Let's get you set up for success with our platform",
+    "progress": "Onboarding Progress",
+    "completed": "Onboarding completed! Welcome to Consulting19.",
+    "nextSteps": "You're All Set!"
+  },
+  "common": {
+    "loading": "Loading...",
+    "error": "Error",
+    "success": "Success",
+    "save": "Save",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "edit": "Edit",
+    "view": "View",
+    "add": "Add",
+    "remove": "Remove",
+    "search": "Search",
+    "filter": "Filter",
+    "refresh": "Refresh",
+    "close": "Close",
+    "open": "Open",
+    "yes": "Yes",
+    "no": "No",
+    "confirm": "Confirm",
+    "back": "Back",
+    "next": "Next",
+    "previous": "Previous"
+  },
+  "status": {
+    "active": "Active",
+    "inactive": "Inactive",
+    "pending": "Pending",
+    "completed": "Completed",
+    "cancelled": "Cancelled",
+    "approved": "Approved",
+    "rejected": "Rejected"
+  },
+  "priority": {
+    "low": "Low",
+    "medium": "Medium",
+    "high": "High",
+    "urgent": "Urgent"
+  }
+}

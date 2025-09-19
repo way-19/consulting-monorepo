@@ -1,0 +1,119 @@
+{
+  "navigation": {
+    "dashboard": "Panel",
+    "projects": "Projeler",
+    "tasks": "Görevler",
+    "documents": "Belgeler",
+    "services": "Hizmetler",
+    "messages": "Mesajlar",
+    "billing": "Faturalama",
+    "settings": "Ayarlar",
+    "logout": "Çıkış"
+  },
+  "dashboard": {
+    "title": "Müşteri Paneli",
+    "subtitle": "Projelerinizi ve hizmetlerinizi yönetin",
+    "welcome": "Tekrar hoş geldiniz",
+    "stats": {
+      "activeProjects": "Aktif Projeler",
+      "pendingTasks": "Bekleyen Görevler",
+      "totalDocuments": "Toplam Belgeler",
+      "completedMilestones": "Tamamlanan Kilometre Taşları"
+    }
+  },
+  "projects": {
+    "title": "Projeler",
+    "subtitle": "Uluslararası iş genişleme projelerinizi takip edin",
+    "noProjects": "Henüz Proje Yok",
+    "noProjectsDescription": "İş genişlemeniz başladığında danışmanınız projeler oluşturacak"
+  },
+  "tasks": {
+    "title": "Görevler",
+    "subtitle": "Projeleriniz için görevleri ve kilometre taşlarını takip edin",
+    "noTasks": "Henüz Görev Yok",
+    "noTasksDescription": "Projeleriniz ilerledikçe görevler burada görünecek"
+  },
+  "documents": {
+    "title": "Belgeler",
+    "subtitle": "Belgelerinizi ve isteklerinizi yönetin",
+    "upload": "Belge Yükle",
+    "download": "İndir",
+    "noDocuments": "Henüz Belge Yok",
+    "noDocumentsDescription": "Belgeleri yüklediğinizde veya danışmanınız istediğinde burada görünecek"
+  },
+  "services": {
+    "title": "Hizmetler",
+    "subtitle": "Uzman danışmanlardan hizmetlere göz atın ve sipariş verin",
+    "orderService": "Hizmet Sipariş Et",
+    "noServices": "Mevcut Hizmet Yok",
+    "noServicesDescription": "Bir danışmana atandığınızda hizmetler mevcut olacak"
+  },
+  "messages": {
+    "title": "Mesajlar",
+    "subtitle": "Danışmanınız ve ekibinizle iletişim kurun",
+    "sendMessage": "Mesaj Gönder",
+    "noMessages": "Henüz Mesaj Yok",
+    "noMessagesDescription": "Danışmanınızla iletişim kurmaya başladığınızda mesajlar burada görünecek"
+  },
+  "billing": {
+    "title": "Faturalama ve Ödemeler",
+    "subtitle": "Ödemelerinizi ve fatura geçmişinizi yönetin",
+    "totalSpent": "Toplam Harcama",
+    "pendingPayments": "Bekleyen Ödemeler",
+    "noBilling": "Fatura Geçmişi Yok",
+    "noBillingDescription": "Hizmet siparişi vermeye başladığınızda ödeme geçmişiniz burada görünecek"
+  },
+  "settings": {
+    "title": "Ayarlar",
+    "subtitle": "Hesap tercihlerinizi ve ayarlarınızı yönetin",
+    "profile": "Profil",
+    "notifications": "Bildirimler",
+    "security": "Güvenlik",
+    "saveChanges": "Değişiklikleri Kaydet"
+  },
+  "onboarding": {
+    "title": "Consulting19'a Hoş Geldiniz!",
+    "subtitle": "Platformumuzla başarı için sizi hazırlayalım",
+    "progress": "Onboarding İlerlemesi",
+    "completed": "Onboarding tamamlandı! Consulting19'a hoş geldiniz.",
+    "nextSteps": "Her Şey Hazır!"
+  },
+  "common": {
+    "loading": "Yükleniyor...",
+    "error": "Hata",
+    "success": "Başarılı",
+    "save": "Kaydet",
+    "cancel": "İptal",
+    "delete": "Sil",
+    "edit": "Düzenle",
+    "view": "Görüntüle",
+    "add": "Ekle",
+    "remove": "Kaldır",
+    "search": "Ara",
+    "filter": "Filtrele",
+    "refresh": "Yenile",
+    "close": "Kapat",
+    "open": "Aç",
+    "yes": "Evet",
+    "no": "Hayır",
+    "confirm": "Onayla",
+    "back": "Geri",
+    "next": "İleri",
+    "previous": "Önceki"
+  },
+  "status": {
+    "active": "Aktif",
+    "inactive": "Pasif",
+    "pending": "Bekleyen",
+    "completed": "Tamamlandı",
+    "cancelled": "İptal Edildi",
+    "approved": "Onaylandı",
+    "rejected": "Reddedildi"
+  },
+  "priority": {
+    "low": "Düşük",
+    "medium": "Orta",
+    "high": "Yüksek",
+    "urgent": "Acil"
+  }
+}
