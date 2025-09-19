@@ -1,194 +1,40 @@
-import React, { useState } from 'react';
-import { Link, useLocation } from 'react-router-dom';
-import { useTranslation } from 'react-i18next';
-import { 
-  Home, 
-  FolderOpen, 
-  CheckSquare, 
-  Briefcase, 
-  MessageCircle, 
-  Calendar, 
-  CreditCard, 
-  BarChart3,
-  FolderIcon,
-  Mail,
-  TrendingUp,
-  HelpCircle,
-  Settings, 
-  LogOut, 
-  User,
-  Bell,
-  Globe,
-  ChevronDown
-} from 'lucide-react';
-import { useAuth } from '@consulting19/shared';
-import NotificationCenter from '../NotificationCenter';
+import React from 'react';
+import { Helmet } from 'react-helmet-async';
+import { HelpCircle, Plus, MessageSquare } from 'lucide-react';
 
-interface ClientLayoutProps {
-  children: React.ReactNode;
-}
-
-const ClientLayout: React.FC<ClientLayoutProps> = ({ children }) => {
-  const location = useLocation();
-  const { t } = useTranslation();
-  const { signOut, user, profile } = useAuth();
-  const [showNotifications, setShowNotifications] = useState(false);
-  const [showLanguageMenu, setShowLanguageMenu] = useState(false);
-
-  const navigation = [
-    { name: t('navigation.dashboard'), href: '/', icon: Home },
-    { name: t('navigation.projects'), href: '/projects', icon: FolderOpen },
-    { name: t('navigation.tasks'), href: '/tasks', icon: CheckSquare },
-    { name: t('navigation.services'), href: '/services', icon: Briefcase },
-    { name: t('navigation.messages'), href: '/messages', icon: MessageCircle },
-    { name: t('navigation.meetings'), href: '/meetings', icon: Calendar },
-    { name: t('navigation.billing'), href: '/billing', icon: CreditCard },
-    { name: t('navigation.accounting'), href: '/accounting', icon: BarChart3 },
-    { name: t('navigation.fileManager'), href: '/file-manager', icon: FolderIcon },
-    { name: t('navigation.mailbox'), href: '/mailbox', icon: Mail },
-    { name: t('navigation.progress'), href: '/progress', icon: TrendingUp },
-    { name: t('navigation.support'), href: '/support', icon: HelpCircle },
-    { name: t('navigation.settings'), href: '/settings', icon: Settings },
-  ];
-
-  const handleSignOut = async () => {
-    try {
-      await signOut();
-      window.location.href = 'http://localhost:5173';
-    } catch (error) {
-      console.error('Error signing out:', error);
-    }
-  };
-
+const ClientSupport = () => {
   return (
-    <div className="min-h-screen bg-gray-50 flex">
-      {/* Sidebar */}
-      <div className="w-64 bg-white shadow-lg flex flex-col border-r border-gray-200">
-        {/* Logo */}
-        <div className="p-6 border-b border-gray-200">
-          <div className="flex items-center space-x-3">
-            <div className="w-10 h-10 bg-gradient-to-r from-blue-600 to-teal-600 rounded-xl flex items-center justify-center shadow-lg">
-              <span className="text-white font-bold text-sm">C19</span>
-            </div>
-            <div>
-              <span className="text-lg font-bold text-gray-900">Client Portal</span>
-              <div className="text-xs text-gray-500">Business Dashboard</div>
-            </div>
+    <>
+      <Helmet>
+        <title>Support - Client Portal</title>
+      </Helmet>
+      
+      <div className="space-y-6">
+        <div>
+          <h1 className="text-3xl font-bold text-gray-900">Support</h1>
+          <p className="text-gray-600 mt-1">Get help and submit support requests</p>
+        </div>
+        
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-12 text-center">
+          <HelpCircle className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+          <h3 className="text-xl font-semibold text-gray-900 mb-2">Support Center</h3>
+          <p className="text-gray-600 mb-6">
+            Get help from your consultant or submit support requests.
+          </p>
+          <div className="flex items-center justify-center space-x-3">
+            <button className="inline-flex items-center px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors">
+              <MessageSquare className="w-4 h-4 mr-2" />
+              Contact Consultant
+            </button>
+            <button className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
+              <Plus className="w-4 h-4 mr-2" />
+              New Support Request
+            </button>
           </div>
         </div>
-
-        {/* Navigation */}
-        <nav className="flex-1 p-4 overflow-y-auto">
-          <ul className="space-y-1">
-            {navigation.map((item) => {
-              const isActive = location.pathname === item.href;
-              return (
-                <li key={item.name}>
-                  <Link
-                    to={item.href}
-                    className={`flex items-center space-x-3 px-4 py-3 rounded-xl transition-all duration-200 group ${
-                      isActive
-                        ? 'bg-blue-50 text-blue-700 shadow-sm border border-blue-100'
-                        : 'text-gray-700 hover:bg-gray-50 hover:text-gray-900'
-                    }`}
-                  >
-                    <item.icon className={`w-5 h-5 ${
-                      isActive ? 'text-blue-600' : 'text-gray-500 group-hover:text-gray-700'
-                    }`} />
-                    <span className="font-medium">{item.name}</span>
-                  </Link>
-                </li>
-              );
-            })}
-          </ul>
-        </nav>
-
-        {/* User Info & Sign Out */}
-        <div className="p-4 border-t border-gray-200 bg-gray-50">
-          <div className="mb-4 p-3 bg-white rounded-lg border border-gray-200">
-            <div className="flex items-center space-x-3">
-              <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
-                <User className="w-4 h-4 text-blue-600" />
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-semibold text-gray-900 truncate">
-                  {profile?.full_name || user?.email?.split('@')[0] || 'Client'}
-                </p>
-                <p className="text-xs text-gray-500 truncate">{user?.email}</p>
-              </div>
-            </div>
-          </div>
-          <button
-            onClick={handleSignOut}
-            className="flex items-center space-x-3 px-4 py-3 rounded-xl text-gray-700 hover:bg-red-50 hover:text-red-700 transition-all duration-200 w-full group"
-          >
-            <LogOut className="w-5 h-5 group-hover:text-red-600" />
-            <span className="font-medium">Logout</span>
-          </button>
-        </div>
       </div>
-
-      {/* Main Content */}
-      <div className="flex-1 flex flex-col">
-        {/* Header */}
-        <header className="bg-white shadow-sm border-b border-gray-200 px-6 py-4">
-          <div className="flex justify-between items-center">
-            <div>
-              <h1 className="text-xl font-semibold text-gray-900">Client Dashboard</h1>
-              <p className="text-sm text-gray-500">Path: {location.pathname}</p>
-            </div>
-            <div className="flex items-center space-x-4">
-              {/* Language Selector */}
-              <div className="relative">
-                <button
-                  onClick={() => setShowLanguageMenu(!showLanguageMenu)}
-                  className="flex items-center space-x-2 px-3 py-2 text-sm border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
-                >
-                  <Globe className="w-4 h-4" />
-                  <span>English</span>
-                  <ChevronDown className="w-3 h-3" />
-                </button>
-              </div>
-
-              {/* AI Assistant */}
-              <button className="flex items-center space-x-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
-                <span className="text-sm font-medium">AI Assistant</span>
-              </button>
-
-              {/* Notifications */}
-              <div className="relative">
-                <button
-                  onClick={() => setShowNotifications(!showNotifications)}
-                  className="relative p-2 text-gray-500 hover:text-gray-700 transition-colors"
-                >
-                  <Bell className="w-5 h-5" />
-                  <span className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full"></span>
-                </button>
-                
-                <NotificationCenter 
-                  isOpen={showNotifications}
-                  onClose={() => setShowNotifications(false)}
-                />
-              </div>
-
-              {/* Logout */}
-              <button
-                onClick={handleSignOut}
-                className="text-gray-500 hover:text-gray-700 transition-colors"
-              >
-                <LogOut className="w-5 h-5" />
-              </button>
-            </div>
-          </div>
-        </header>
-
-        {/* Page Content */}
-        <main className="flex-1 p-6 overflow-y-auto">
-          {children}
-        </main>
-      </div>
-    </div>
+    </>
   );
 };
 
-export default ClientLayout;
+export default ClientSupport;
