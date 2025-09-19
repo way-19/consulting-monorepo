@@ -1,0 +1,94 @@
+{
+  "dashboard": {
+    "title": "Dashboard",
+    "welcome": "Welcome back",
+    "stats": {
+      "activeProjects": "Active Projects",
+      "pendingTasks": "Pending Tasks", 
+      "totalDocuments": "Total Documents",
+      "completedOrders": "Completed Orders",
+      "totalRevenue": "Total Revenue",
+      "responseTime": "Response Time"
+    },
+    "quickActions": {
+      "title": "Quick Actions",
+      "uploadDocument": "Upload Document",
+      "scheduleCall": "Schedule Call",
+      "sendMessage": "Send Message",
+      "viewTasks": "View Tasks"
+    },
+    "recentActivity": {
+      "title": "Recent Activity"
+    },
+    "financialOverview": {
+      "title": "Financial Overview"
+    }
+  },
+  "projects": {
+    "title": "Projects",
+    "subtitle": "Manage and track your projects",
+    "stats": {
+      "totalProjects": "Total Projects",
+      "completed": "Completed",
+      "totalBudget": "Total Budget",
+      "averageProgress": "Average Progress",
+      "active": "active",
+      "successfullyFinished": "Successfully finished",
+      "estimatedBudget": "Estimated budget",
+      "averageCompletion": "Average completion"
+    },
+    "search": "Search projects...",
+    "filters": {
+      "allStatus": "All Status",
+      "allPriorities": "All Priorities",
+      "active": "Active",
+      "completed": "Completed",
+      "onHold": "On Hold",
+      "cancelled": "Cancelled",
+      "high": "High",
+      "medium": "Medium",
+      "low": "Low"
+    },
+    "myProjects": {
+      "title": "My Projects",
+      "subtitle": "View and manage your active projects",
+      "viewDetails": "View Details",
+      "viewProgress": "View Progress",
+      "started": "Started",
+      "progress": "Progress",
+      "complete": "Complete",
+      "priority": {
+        "high": "high priority",
+        "medium": "medium priority",
+        "low": "low priority"
+      },
+      "status": {
+        "active": "active",
+        "onHold": "on hold",
+        "completed": "completed",
+        "cancelled": "cancelled"
+      }
+    }
+  },
+  "navigation": {
+    "dashboard": "Dashboard",
+    "projects": "Projects",
+    "tasks": "Tasks",
+    "services": "Services",
+    "messages": "Messages",
+    "meetings": "Meetings",
+    "billing": "Billing",
+    "accounting": "Accounting",
+    "fileManager": "File Manager",
+    "mailbox": "Mailbox",
+    "progress": "Progress",
+    "support": "Support",
+    "settings": "Settings"
+  },
+  "common": {
+    "loading": "Loading...",
+    "refresh": "Refresh",
+    "viewAll": "View All",
+    "noData": "No data available"
+  }
+}

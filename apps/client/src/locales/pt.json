@@ -1,0 +1,94 @@
+{
+  "dashboard": {
+    "title": "Painel",
+    "welcome": "Bem-vindo de volta",
+    "stats": {
+      "activeProjects": "Projetos Ativos",
+      "pendingTasks": "Tarefas Pendentes",
+      "totalDocuments": "Total de Documentos",
+      "completedOrders": "Pedidos Concluídos",
+      "totalRevenue": "Receita Total",
+      "responseTime": "Tempo de Resposta"
+    },
+    "quickActions": {
+      "title": "Ações Rápidas",
+      "uploadDocument": "Carregar Documento",
+      "scheduleCall": "Agendar Chamada",
+      "sendMessage": "Enviar Mensagem",
+      "viewTasks": "Ver Tarefas"
+    },
+    "recentActivity": {
+      "title": "Atividade Recente"
+    },
+    "financialOverview": {
+      "title": "Visão Geral Financeira"
+    }
+  },
+  "projects": {
+    "title": "Projetos",
+    "subtitle": "Gerencie e acompanhe seus projetos",
+    "stats": {
+      "totalProjects": "Total de Projetos",
+      "completed": "Concluídos",
+      "totalBudget": "Orçamento Total",
+      "averageProgress": "Progresso Médio",
+      "active": "ativo",
+      "successfullyFinished": "Concluído com sucesso",
+      "estimatedBudget": "Orçamento estimado",
+      "averageCompletion": "Conclusão média"
+    },
+    "search": "Pesquisar projetos...",
+    "filters": {
+      "allStatus": "Todos os Status",
+      "allPriorities": "Todas as Prioridades",
+      "active": "Ativo",
+      "completed": "Concluído",
+      "onHold": "Em Espera",
+      "cancelled": "Cancelado",
+      "high": "Alta",
+      "medium": "Média",
+      "low": "Baixa"
+    },
+    "myProjects": {
+      "title": "Meus Projetos",
+      "subtitle": "Visualize e gerencie seus projetos ativos",
+      "viewDetails": "Ver Detalhes",
+      "viewProgress": "Ver Progresso",
+      "started": "Iniciado",
+      "progress": "Progresso",
+      "complete": "Completo",
+      "priority": {
+        "high": "alta prioridade",
+        "medium": "prioridade média",
+        "low": "baixa prioridade"
+      },
+      "status": {
+        "active": "ativo",
+        "onHold": "em espera",
+        "completed": "concluído",
+        "cancelled": "cancelado"
+      }
+    }
+  },
+  "navigation": {
+    "dashboard": "Painel",
+    "projects": "Projetos",
+    "tasks": "Tarefas",
+    "services": "Serviços",
+    "messages": "Mensagens",
+    "meetings": "Reuniões",
+    "billing": "Faturamento",
+    "accounting": "Contabilidade",
+    "fileManager": "Gerenciador de Arquivos",
+    "mailbox": "Caixa de Correio",
+    "progress": "Progresso",
+    "support": "Suporte",
+    "settings": "Configurações"
+  },
+  "common": {
+    "loading": "Carregando...",
+    "refresh": "Atualizar",
+    "viewAll": "Ver Todos",
+    "noData": "Nenhum dado disponível"
+  }
+}
