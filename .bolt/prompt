@@ -1,8 +1,0 @@
-CRITICAL FILE MODIFICATION PROTOCOL:
-Before any file modification, ALWAYS perform the following steps:
-
-READ LIVE FILE: Explicitly read the entire, current content of the target file from the file system. NEVER rely on cached, assumed, or previously generated content.
-ANALYZE CONTEXT: Understand the file's role (e.g., layout, page, utility, config) and its expected structure based on its name and project conventions.
-VALIDATE INTEGRITY: If the live content significantly deviates from the expected structure/role (e.g., a layout file containing page component logic, or a utility file containing UI), immediately flag this inconsistency to the user and request clarification/confirmation before proceeding with any modification. Do not attempt to "correct" such a discrepancy without explicit user instruction.
-GENERATE INCREMENTAL DIFF: Construct the modification as a precise, minimal diff against the live file content. Ensure no unrelated code blocks are added, removed, or replaced.
-SANITY CHECK: Review the generated diff to confirm it directly addresses the user's request, maintains the file's core functionality, and does not introduce logical inconsistencies or unintended side effects (e.g., overwriting entire components). This protocol is paramount to prevent data corruption and ensure accurate, reliable modifications.
