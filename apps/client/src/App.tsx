@@ -189,275 +189,277 @@ const ClientSupport = () => {
   }
 
   return (
-    <>
-      <Helmet>
-        <title>Support - Client Portal</title>
-      </Helmet>
-      
-      <div className="space-y-6">
-        {/* Header */}
-        <div className="flex justify-between items-center">
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900">Support</h1>
-            <p className="text-gray-600 mt-1">Get help from your consultant or submit general inquiries</p>
-          </div>
-          <button className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
-            <Plus className="w-4 h-4 mr-2" />
-            New Support Request
-          </button>
-        </div>
-
-        {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-600">Total Tickets</p>
-                <p className="text-3xl font-bold text-gray-900">{stats.totalTickets}</p>
-              </div>
-              <div className="w-12 h-12 bg-gray-100 rounded-lg flex items-center justify-center">
-                <HelpCircle className="w-6 h-6 text-gray-600" />
-              </div>
+    <LanguageProvider>
+      <>
+        <Helmet>
+          <title>Support - Client Portal</title>
+        </Helmet>
+        
+        <div className="space-y-6">
+          {/* Header */}
+          <div className="flex justify-between items-center">
+            <div>
+              <h1 className="text-3xl font-bold text-gray-900">Support</h1>
+              <p className="text-gray-600 mt-1">Get help from your consultant or submit general inquiries</p>
             </div>
-          </div>
-
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-600">Open</p>
-                <p className="text-3xl font-bold text-yellow-600">{stats.openTickets}</p>
-              </div>
-              <div className="w-12 h-12 bg-yellow-100 rounded-lg flex items-center justify-center">
-                <AlertTriangle className="w-6 h-6 text-yellow-600" />
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-600">In Progress</p>
-                <p className="text-3xl font-bold text-blue-600">{stats.inProgressTickets}</p>
-              </div>
-              <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
-                <Clock className="w-6 h-6 text-blue-600" />
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-600">Resolved</p>
-                <p className="text-3xl font-bold text-green-600">{stats.resolvedTickets}</p>
-              </div>
-              <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
-                <CheckCircle className="w-6 h-6 text-green-600" />
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Search and Filter */}
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
-          <div className="flex flex-col md:flex-row gap-4">
-            <div className="flex-1 relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
-              <input
-                type="text"
-                placeholder="Search support tickets..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              />
-            </div>
-            <select
-              value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value)}
-              className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            >
-              <option>All Status</option>
-              <option>Open</option>
-              <option>In Progress</option>
-              <option>Resolved</option>
-              <option>Closed</option>
-            </select>
-          </div>
-        </div>
-
-        {/* Support Tickets List */}
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-          <div className="flex items-center justify-between mb-6">
-            <h2 className="text-xl font-semibold text-gray-900">Your Support Tickets</h2>
-            <button 
-              onClick={fetchSupportTickets}
-              className="inline-flex items-center px-3 py-2 text-sm border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
-            >
-              <RefreshCw className="w-4 h-4 mr-2" />
-              Refresh
+            <button className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
+              <Plus className="w-4 h-4 mr-2" />
+              New Support Request
             </button>
           </div>
 
-          {filteredTickets.length > 0 ? (
-            <div className="space-y-4">
-              {filteredTickets.map((ticket) => (
-                <div key={ticket.id} className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow">
-                  <div className="flex items-start justify-between">
-                    <div className="flex items-start space-x-3">
-                      <div className="w-8 h-8 bg-gray-100 rounded-lg flex items-center justify-center mt-1">
-                        {getStatusIcon(ticket.status)}
-                      </div>
-                      <div className="flex-1">
-                        <div className="flex items-center space-x-2 mb-2">
-                          <AlertTriangle className="w-4 h-4 text-yellow-600" />
-                          <h3 className="font-semibold text-gray-900">{ticket.subject}</h3>
-                          <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(ticket.status)}`}>
-                            {ticket.status === 'open' ? 'open' : 
-                             ticket.status === 'in_progress' ? 'in progress' : 
-                             ticket.status === 'resolved' ? 'resolved' : 'closed'}
-                          </span>
-                          <span className={`px-2 py-1 rounded-full text-xs font-medium ${getPriorityColor(ticket.priority)}`}>
-                            {ticket.priority}
-                          </span>
-                        </div>
-                        <p className="text-sm text-gray-600 mb-2">{ticket.description}</p>
-                        <div className="flex items-center space-x-4 text-sm text-gray-500">
-                          <span className="capitalize">{ticket.ticket_type}</span>
-                          <span>•</span>
-                          <span>{new Date(ticket.created_at).toLocaleDateString()}</span>
-                          <span>•</span>
-                          <span>Assigned to: {ticket.consultant?.full_name || 'Unassigned'}</span>
-                        </div>
-                      </div>
-                    </div>
-                    
-                    <div className="flex items-center space-x-2">
-                      <button className="inline-flex items-center px-3 py-2 text-sm border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
-                        <Eye className="w-4 h-4 mr-1" />
-                        View Details
-                      </button>
-                      <button className="inline-flex items-center px-3 py-2 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
-                        <Reply className="w-4 h-4 mr-1" />
-                        Add Response
-                      </button>
-                    </div>
-                  </div>
+          {/* Stats Cards */}
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-gray-600">Total Tickets</p>
+                  <p className="text-3xl font-bold text-gray-900">{stats.totalTickets}</p>
                 </div>
-              ))}
+                <div className="w-12 h-12 bg-gray-100 rounded-lg flex items-center justify-center">
+                  <HelpCircle className="w-6 h-6 text-gray-600" />
+                </div>
+              </div>
             </div>
-          ) : (
-            <div className="text-center py-12">
-              <HelpCircle className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-              <h3 className="text-xl font-semibold text-gray-900 mb-2">No Support Tickets</h3>
-              <p className="text-gray-600 mb-6">
-                You haven't submitted any support requests yet.
-              </p>
-              <button className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
-                <Plus className="w-4 h-4 mr-2" />
-                Create Your First Ticket
+
+            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-gray-600">Open</p>
+                  <p className="text-3xl font-bold text-yellow-600">{stats.openTickets}</p>
+                </div>
+                <div className="w-12 h-12 bg-yellow-100 rounded-lg flex items-center justify-center">
+                  <AlertTriangle className="w-6 h-6 text-yellow-600" />
+                </div>
+              </div>
+            </div>
+
+            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-gray-600">In Progress</p>
+                  <p className="text-3xl font-bold text-blue-600">{stats.inProgressTickets}</p>
+                </div>
+                <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
+                  <Clock className="w-6 h-6 text-blue-600" />
+                </div>
+              </div>
+            </div>
+
+            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-gray-600">Resolved</p>
+                  <p className="text-3xl font-bold text-green-600">{stats.resolvedTickets}</p>
+                </div>
+                <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
+                  <CheckCircle className="w-6 h-6 text-green-600" />
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Search and Filter */}
+          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
+            <div className="flex flex-col md:flex-row gap-4">
+              <div className="flex-1 relative">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+                <input
+                  type="text"
+                  placeholder="Search support tickets..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                />
+              </div>
+              <select
+                value={statusFilter}
+                onChange={(e) => setStatusFilter(e.target.value)}
+                className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              >
+                <option>All Status</option>
+                <option>Open</option>
+                <option>In Progress</option>
+                <option>Resolved</option>
+                <option>Closed</option>
+              </select>
+            </div>
+          </div>
+
+          {/* Support Tickets List */}
+          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-xl font-semibold text-gray-900">Your Support Tickets</h2>
+              <button 
+                onClick={fetchSupportTickets}
+                className="inline-flex items-center px-3 py-2 text-sm border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+              >
+                <RefreshCw className="w-4 h-4 mr-2" />
+                Refresh
               </button>
             </div>
-          )}
-        </div>
 
-        {/* Quick Help Section */}
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-          <h2 className="text-xl font-semibold text-gray-900 mb-6">Quick Help</h2>
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {/* How to submit accounting documents */}
-            <div className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow">
-              <div className="flex items-start space-x-3">
-                <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center mt-1">
-                  <FileText className="w-4 h-4 text-blue-600" />
-                </div>
-                <div>
-                  <h3 className="font-semibold text-gray-900 mb-2">How to submit accounting documents?</h3>
-                  <p className="text-sm text-gray-600">
-                    Go to Monthly Accounting section and submit your monthly financial documents (invoices, bank statements).
-                  </p>
+            {filteredTickets.length > 0 ? (
+              <div className="space-y-4">
+                {filteredTickets.map((ticket) => (
+                  <div key={ticket.id} className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow">
+                    <div className="flex items-start justify-between">
+                      <div className="flex items-start space-x-3">
+                        <div className="w-8 h-8 bg-gray-100 rounded-lg flex items-center justify-center mt-1">
+                          {getStatusIcon(ticket.status)}
+                        </div>
+                        <div className="flex-1">
+                          <div className="flex items-center space-x-2 mb-2">
+                            <AlertTriangle className="w-4 h-4 text-yellow-600" />
+                            <h3 className="font-semibold text-gray-900">{ticket.subject}</h3>
+                            <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(ticket.status)}`}>
+                              {ticket.status === 'open' ? 'open' : 
+                               ticket.status === 'in_progress' ? 'in progress' : 
+                               ticket.status === 'resolved' ? 'resolved' : 'closed'}
+                            </span>
+                            <span className={`px-2 py-1 rounded-full text-xs font-medium ${getPriorityColor(ticket.priority)}`}>
+                              {ticket.priority}
+                            </span>
+                          </div>
+                          <p className="text-sm text-gray-600 mb-2">{ticket.description}</p>
+                          <div className="flex items-center space-x-4 text-sm text-gray-500">
+                            <span className="capitalize">{ticket.ticket_type}</span>
+                            <span>•</span>
+                            <span>{new Date(ticket.created_at).toLocaleDateString()}</span>
+                            <span>•</span>
+                            <span>Assigned to: {ticket.consultant?.full_name || 'Unassigned'}</span>
+                          </div>
+                        </div>
+                      </div>
+                      
+                      <div className="flex items-center space-x-2">
+                        <button className="inline-flex items-center px-3 py-2 text-sm border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
+                          <Eye className="w-4 h-4 mr-1" />
+                          View Details
+                        </button>
+                        <button className="inline-flex items-center px-3 py-2 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
+                          <Reply className="w-4 h-4 mr-1" />
+                          Add Response
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-12">
+                <HelpCircle className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+                <h3 className="text-xl font-semibold text-gray-900 mb-2">No Support Tickets</h3>
+                <p className="text-gray-600 mb-6">
+                  You haven't submitted any support requests yet.
+                </p>
+                <button className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
+                  <Plus className="w-4 h-4 mr-2" />
+                  Create Your First Ticket
+                </button>
+              </div>
+            )}
+          </div>
+
+          {/* Quick Help Section */}
+          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+            <h2 className="text-xl font-semibold text-gray-900 mb-6">Quick Help</h2>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {/* How to submit accounting documents */}
+              <div className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow">
+                <div className="flex items-start space-x-3">
+                  <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center mt-1">
+                    <FileText className="w-4 h-4 text-blue-600" />
+                  </div>
+                  <div>
+                    <h3 className="font-semibold text-gray-900 mb-2">How to submit accounting documents?</h3>
+                    <p className="text-sm text-gray-600">
+                      Go to Monthly Accounting section and submit your monthly financial documents (invoices, bank statements).
+                    </p>
+                  </div>
                 </div>
               </div>
-            </div>
 
-            {/* How to access company documents */}
-            <div className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow">
-              <div className="flex items-start space-x-3">
-                <div className="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center mt-1">
-                  <Building className="w-4 h-4 text-green-600" />
-                </div>
-                <div>
-                  <h3 className="font-semibold text-gray-900 mb-2">How to access company documents?</h3>
-                  <p className="text-sm text-gray-600">
-                    Check Company Documents section for formation certificates and official papers from your consultant.
-                  </p>
+              {/* How to access company documents */}
+              <div className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow">
+                <div className="flex items-start space-x-3">
+                  <div className="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center mt-1">
+                    <Building className="w-4 h-4 text-green-600" />
+                  </div>
+                  <div>
+                    <h3 className="font-semibold text-gray-900 mb-2">How to access company documents?</h3>
+                    <p className="text-sm text-gray-600">
+                      Check Company Documents section for formation certificates and official papers from your consultant.
+                    </p>
+                  </div>
                 </div>
               </div>
-            </div>
 
-            {/* How to message consultant */}
-            <div className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow">
-              <div className="flex items-start space-x-3">
-                <div className="w-8 h-8 bg-purple-100 rounded-lg flex items-center justify-center mt-1">
-                  <MessageSquare className="w-4 h-4 text-purple-600" />
-                </div>
-                <div>
-                  <h3 className="font-semibold text-gray-900 mb-2">How to message my consultant?</h3>
-                  <p className="text-sm text-gray-600">
-                    Use the Messages section to chat directly with your consultant in real-time.
-                  </p>
+              {/* How to message consultant */}
+              <div className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow">
+                <div className="flex items-start space-x-3">
+                  <div className="w-8 h-8 bg-purple-100 rounded-lg flex items-center justify-center mt-1">
+                    <MessageSquare className="w-4 h-4 text-purple-600" />
+                  </div>
+                  <div>
+                    <h3 className="font-semibold text-gray-900 mb-2">How to message my consultant?</h3>
+                    <p className="text-sm text-gray-600">
+                      Use the Messages section to chat directly with your consultant in real-time.
+                    </p>
+                  </div>
                 </div>
               </div>
-            </div>
 
-            {/* How to make payments */}
-            <div className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow">
-              <div className="flex items-start space-x-3">
-                <div className="w-8 h-8 bg-yellow-100 rounded-lg flex items-center justify-center mt-1">
-                  <CreditCard className="w-4 h-4 text-yellow-600" />
-                </div>
-                <div>
-                  <h3 className="font-semibold text-gray-900 mb-2">How to make payments?</h3>
-                  <p className="text-sm text-gray-600">
-                    Check the Billing section for pending invoices and use the secure payment system.
-                  </p>
+              {/* How to make payments */}
+              <div className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow">
+                <div className="flex items-start space-x-3">
+                  <div className="w-8 h-8 bg-yellow-100 rounded-lg flex items-center justify-center mt-1">
+                    <CreditCard className="w-4 h-4 text-yellow-600" />
+                  </div>
+                  <div>
+                    <h3 className="font-semibold text-gray-900 mb-2">How to make payments?</h3>
+                    <p className="text-sm text-gray-600">
+                      Check the Billing section for pending invoices and use the secure payment system.
+                    </p>
+                  </div>
                 </div>
               </div>
-            </div>
 
-            {/* How to request mail forwarding */}
-            <div className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow">
-              <div className="flex items-start space-x-3">
-                <div className="w-8 h-8 bg-orange-100 rounded-lg flex items-center justify-center mt-1">
-                  <Truck className="w-4 h-4 text-orange-600" />
-                </div>
-                <div>
-                  <h3 className="font-semibold text-gray-900 mb-2">How to request mail forwarding?</h3>
-                  <p className="text-sm text-gray-600">
-                    Use the Mailbox section to request physical mail forwarding for $15.
-                  </p>
+              {/* How to request mail forwarding */}
+              <div className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow">
+                <div className="flex items-start space-x-3">
+                  <div className="w-8 h-8 bg-orange-100 rounded-lg flex items-center justify-center mt-1">
+                    <Truck className="w-4 h-4 text-orange-600" />
+                  </div>
+                  <div>
+                    <h3 className="font-semibold text-gray-900 mb-2">How to request mail forwarding?</h3>
+                    <p className="text-sm text-gray-600">
+                      Use the Mailbox section to request physical mail forwarding for $15.
+                    </p>
+                  </div>
                 </div>
               </div>
-            </div>
 
-            {/* How to request services from other countries */}
-            <div className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow">
-              <div className="flex items-start space-x-3">
-                <div className="w-8 h-8 bg-teal-100 rounded-lg flex items-center justify-center mt-1">
-                  <Globe className="w-4 h-4 text-teal-600" />
-                </div>
-                <div>
-                  <h3 className="font-semibold text-gray-900 mb-2">How to request services from other countries?</h3>
-                  <p className="text-sm text-gray-600">
-                    Create a service request to access specialists from different countries and expertise areas.
-                  </p>
+              {/* How to request services from other countries */}
+              <div className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow">
+                <div className="flex items-start space-x-3">
+                  <div className="w-8 h-8 bg-teal-100 rounded-lg flex items-center justify-center mt-1">
+                    <Globe className="w-4 h-4 text-teal-600" />
+                  </div>
+                  <div>
+                    <h3 className="font-semibold text-gray-900 mb-2">How to request services from other countries?</h3>
+                    <p className="text-sm text-gray-600">
+                      Create a service request to access specialists from different countries and expertise areas.
+                    </p>
+                  </div>
                 </div>
               </div>
             </div>
           </div>
         </div>
-      </div>
-    </>
+      </>
+    </LanguageProvider>
   );
 };
 
