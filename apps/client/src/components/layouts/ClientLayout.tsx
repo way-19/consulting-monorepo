@@ -462,3 +462,5 @@ const ClientSupport = () => {
 };
 
 export default ClientSupport;
+
+export default ClientSupport
