@@ -16,8 +16,8 @@ if (!isSupabaseConfigured) {
 }
 
 const supabase = createClient(
-  supabaseUrl || 'https://placeholder.supabase.co', // Fallback to a placeholder URL
-  supabaseAnonKey || 'placeholder-key', // Fallback to a placeholder key
+  supabaseUrl || 'https://qdwykqrepolavgvfxquw.supabase.co', // Fallback to actual Supabase URL from .env
+  supabaseAnonKey || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFkd3lrcXJlcG9sYXZndmZ4cXV3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTYwNjgzNDIsImV4cCI6MjA3MTY0NDM0Mn0.WuaXRd_Kgd0ld4hMaeLptJktK3AiGTwRajpAnYgyhPo', // Fallback to actual key from .env
   {
     auth: {
       persistSession: true,

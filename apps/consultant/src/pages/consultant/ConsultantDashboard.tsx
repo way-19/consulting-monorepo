@@ -145,11 +145,12 @@ const ConsultantDashboard = () => {
           .order('created_at', { ascending: false })
           .limit(5),
         
-        // Client satisfaction
+        // Client satisfaction - Hata durumunda boş veri döndürecek şekilde düzeltildi
         supabase
           .from('client_feedback')
           .select('rating')
           .eq('consultant_id', user?.id)
+          .maybeSingle()
       ]);
 
       // Calculate stats
