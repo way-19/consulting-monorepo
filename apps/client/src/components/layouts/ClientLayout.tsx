@@ -148,7 +148,6 @@ const ClientLayout: React.FC<ClientLayoutProps> = ({ children }) => {
           <div className="flex justify-between items-center">
             <div>
               <h1 className="text-xl font-semibold text-gray-900">Client Dashboard</h1>
-              <p className="text-sm text-gray-500">Path: {location.pathname}</p>
             </div>
             <div className="flex items-center space-x-4">
               {/* Language Selector */}

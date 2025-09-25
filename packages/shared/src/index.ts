@@ -7,8 +7,9 @@ export { LanguageProvider, useLanguage } from './contexts/LanguageContext';
 // UI Components
 export * from './components/ui';
 
-// Loading
+// Components
 export { default as LoadingSpinner } from './components/LoadingSpinner';
+export { default as MfaSetup } from './components/MfaSetup';
 
 // Supabase
 export { supabase } from './lib/supabase';

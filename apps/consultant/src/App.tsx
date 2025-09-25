@@ -6,9 +6,13 @@ import ConsultantDashboard from './pages/consultant/ConsultantDashboard';
 import ConsultantClients from './pages/consultant/ConsultantClients';
 import ConsultantTasks from './pages/consultant/ConsultantTasks';
 import ConsultantDocuments from './pages/consultant/ConsultantDocuments';
+import ConsultantMessages from './pages/consultant/ConsultantMessages';
 import ConsultantAvailability from './pages/consultant/ConsultantAvailability';
 import ConsultantServices from './pages/consultant/ConsultantServices';
+import ConsultantFinancial from './pages/consultant/ConsultantFinancial';
+import ConsultantCrossAssignments from './pages/consultant/ConsultantCrossAssignments';
 import ConsultantContent from './pages/consultant/ConsultantContent';
+import ConsultantSettings from './pages/consultant/ConsultantSettings';
 import ConsultantLayout from './components/layouts/ConsultantLayout';
 
 function App() {
@@ -74,9 +78,13 @@ const ProtectedConsultantRoutes = () => {
         <Route path="/clients" element={<ConsultantClients />} />
         <Route path="/tasks" element={<ConsultantTasks />} />
         <Route path="/documents" element={<ConsultantDocuments />} />
+        <Route path="/messages" element={<ConsultantMessages />} />
         <Route path="/availability" element={<ConsultantAvailability />} />
         <Route path="/services" element={<ConsultantServices />} />
+        <Route path="/financial" element={<ConsultantFinancial />} />
+        <Route path="/cross-assignments" element={<ConsultantCrossAssignments />} />
         <Route path="/content" element={<ConsultantContent />} />
+        <Route path="/settings" element={<ConsultantSettings />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </ConsultantLayout>

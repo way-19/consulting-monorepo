@@ -9,11 +9,14 @@ interface AuthContextType {
   profile: UserProfile | null;
   role: string | null;
   loading: boolean;
+  mfaFactors: any[];
   signIn: (email: string, password: string) => Promise<{ error: any }>;
   signUp: (email: string, password: string, metadata?: any) => Promise<{ error: any }>;
   signOut: () => Promise<{ error: any }>;
   resetPassword: (email: string) => Promise<{ error: any }>;
   refreshProfile: () => Promise<void>;
+  enableMfa: (verificationCode?: string) => Promise<{ data?: any; error?: any }>;
+  disableMfa: (factorId: string) => Promise<{ error?: any }>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -24,6 +27,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [role, setRole] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const [mfaFactors, setMfaFactors] = useState<any[]>([]);
 
   useEffect(() => {
     // Get initial session
@@ -50,6 +54,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         
         // Try to fetch real profile in background
         fetchProfile(session.user.id);
+        
+        // Load MFA factors
+        loadMfaFactors();
       } else {
         setLoading(false);
       }
@@ -80,9 +87,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           
           // Try to fetch real profile in background
           fetchProfile(session.user.id);
+          
+          // Load MFA factors
+          loadMfaFactors();
         } else {
           setProfile(null);
           setRole(null);
+          setMfaFactors([]);
           setLoading(false);
         }
       }
@@ -90,6 +101,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     return () => subscription.unsubscribe();
   }, []);
+
+  const loadMfaFactors = async () => {
+    try {
+      const factors = await supabase.auth.mfa.listFactors();
+      setMfaFactors(factors.data?.totp || []);
+    } catch (error) {
+      console.warn('Failed to load MFA factors:', error);
+      setMfaFactors([]);
+    }
+  };
 
   const fetchProfile = async (userId: string) => {
     try {
@@ -209,6 +230,63 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return { error };
   };
 
+  const enableMfa = async (verificationCode?: string) => {
+    try {
+      if (!verificationCode) {
+        // First step: enroll TOTP factor
+        const { data, error } = await supabase.auth.mfa.enroll({
+          factorType: 'totp',
+          friendlyName: 'Authenticator App'
+        });
+        
+        if (error) {
+          return { error };
+        }
+        
+        return { data };
+      } else {
+        // Second step: verify and enable
+        const factors = await supabase.auth.mfa.listFactors();
+        if (factors.data?.totp && factors.data.totp.length > 0) {
+          const factorId = factors.data.totp[0].id;
+          
+          const { data, error } = await supabase.auth.mfa.challengeAndVerify({
+            factorId,
+            code: verificationCode
+          });
+          
+          if (!error) {
+            // Refresh MFA factors
+            const updatedFactors = await supabase.auth.mfa.listFactors();
+            setMfaFactors(updatedFactors.data?.totp || []);
+          }
+          
+          return { data, error };
+        }
+        
+        return { error: new Error('No TOTP factor found') };
+      }
+    } catch (error) {
+      return { error };
+    }
+  };
+
+  const disableMfa = async (factorId: string) => {
+    try {
+      const { error } = await supabase.auth.mfa.unenroll({ factorId });
+      
+      if (!error) {
+        // Refresh MFA factors
+        const updatedFactors = await supabase.auth.mfa.listFactors();
+        setMfaFactors(updatedFactors.data?.totp || []);
+      }
+      
+      return { error };
+    } catch (error) {
+      return { error };
+    }
+  };
+
   return (
     <AuthContext.Provider 
       value={{
@@ -217,11 +295,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         profile,
         role,
         loading,
+        mfaFactors,
         signIn,
         signUp,
         signOut,
         resetPassword,
         refreshProfile,
+        enableMfa,
+        disableMfa,
       }}
     >
       {children}
