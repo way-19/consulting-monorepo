@@ -2,6 +2,7 @@ import React, { createContext, useContext, useEffect, useState } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '../lib/supabase';
 import type { UserProfile } from '../types/database';
+import { checkSessionMismatch, forceResetSession } from '../utils/sessionReset';
 
 interface AuthContextType {
   user: User | null;
@@ -17,6 +18,7 @@ interface AuthContextType {
   refreshProfile: () => Promise<void>;
   enableMfa: (verificationCode?: string) => Promise<{ data?: any; error?: any }>;
   disableMfa: (factorId: string) => Promise<{ error?: any }>;
+  resetSession: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -31,8 +33,20 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   useEffect(() => {
     // Get initial session
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    supabase.auth.getSession().then(async ({ data: { session } }) => {
       console.log('Initial session:', session?.user?.email);
+      
+      // Check for session mismatch before proceeding
+      if (session?.user) {
+        const hasMismatch = await checkSessionMismatch();
+        if (hasMismatch) {
+          console.log('🔄 Session mismatch detected, resetting...');
+          await forceResetSession();
+          // After reset, the page will reload automatically
+          return;
+        }
+      }
+      
       setSession(session);
       setUser(session?.user ?? null);
       
@@ -287,6 +301,28 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
+  const resetSession = async () => {
+    try {
+      console.log('🔄 Manual session reset triggered...');
+      await forceResetSession();
+      
+      // Reset all state
+      setUser(null);
+      setSession(null);
+      setProfile(null);
+      setRole(null);
+      setMfaFactors([]);
+      setLoading(false);
+      
+      // Reload the page to ensure clean state
+      if (typeof window !== 'undefined') {
+        window.location.reload();
+      }
+    } catch (error) {
+      console.error('Error during manual session reset:', error);
+    }
+  };
+
   return (
     <AuthContext.Provider 
       value={{
@@ -303,6 +339,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         refreshProfile,
         enableMfa,
         disableMfa,
+        resetSession,
       }}
     >
       {children}

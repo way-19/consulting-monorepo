@@ -430,7 +430,7 @@ const AdminNotifications = () => {
                         <Percent className="w-4 h-4 text-gray-400" />
                         <input
                           type="number"
-                          value={commission.commission_rate}
+                          value={commission?.commission_rate || 0}
                           onChange={(e) => updateCommissionRate(commission.consultant_id, Number(e.target.value))}
                           min="0"
                           max="50"

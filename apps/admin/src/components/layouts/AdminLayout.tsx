@@ -3,7 +3,6 @@ import { Link, useLocation } from 'react-router-dom';
 import { 
   Home, 
   Users, 
-  Globe, 
   FileText, 
   DollarSign, 
   Settings, 
@@ -25,7 +24,6 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
     { name: 'Dashboard', href: '/', icon: Home },
     { name: 'Form Control', href: '/forms', icon: ClipboardList },
     { name: 'Users', href: '/users', icon: Users },
-    { name: 'Countries', href: '/countries', icon: Globe },
     { name: 'Content', href: '/content', icon: FileText },
     { name: 'Financial', href: '/financial', icon: DollarSign },
     { name: 'Analytics', href: '/analytics', icon: BarChart3 },

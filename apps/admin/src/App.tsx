@@ -4,8 +4,8 @@ import { AuthProvider, useAuth, LoadingSpinner } from '@consulting19/shared';
 import LoginPage from './pages/LoginPage';
 import AdminDashboard from './pages/AdminDashboard';
 import AdminFormControl from './pages/AdminFormControl';
-import AdminCountryConfig from './pages/AdminCountryConfig';
 import AdminLayout from './components/layouts/AdminLayout';
+import SessionDebugger from './components/SessionDebugger';
 
 function App() {
   return (
@@ -17,6 +17,7 @@ function App() {
         }}
       >
         <div className="min-h-screen bg-gray-50">
+          <SessionDebugger />
           <Routes>
             <Route path="/login" element={<LoginPage />} />
             <Route path="/*" element={<ProtectedAdminRoutes />} />
@@ -54,7 +55,6 @@ const ProtectedAdminRoutes = () => {
       <Routes>
         <Route path="/" element={<AdminDashboard />} />
         <Route path="/forms" element={<AdminFormControl />} />
-        <Route path="/countries" element={<AdminCountryConfig />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </AdminLayout>

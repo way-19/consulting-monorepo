@@ -119,7 +119,7 @@ const AuthPage = () => {
               <div className="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
                 <h3 className="text-sm font-semibold text-blue-900 mb-3">🔑 Test Accounts (Demo)</h3>
                 <div className="space-y-2 text-xs text-blue-800">
-                  <div><strong>Admin:</strong> admin@consulting19.com / Admin123!</div>
+                  <div><strong>Admin:</strong> admin@consulting19.com / admin123</div>
                   <div><strong>Consultant:</strong> giorgi.meskhi@consulting19.com / Consultant123!</div>
                   <div><strong>Client:</strong> client@consulting19.com / Client123!</div>
                 </div>

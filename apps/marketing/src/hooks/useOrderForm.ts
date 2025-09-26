@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
-import { CountryConfigService } from '@consulting19/shared';
+import { CountryConfigService, CrossDomainSync } from '@consulting19/shared';
 
 export interface Country {
   id: string;
@@ -67,7 +67,93 @@ export const useOrderForm = () => {
 
   useEffect(() => {
     fetchInitialData();
-  }, []);
+
+    // Set up CrossDomainSync listener for automatic updates from admin panel
+    const handleCountryConfigUpdate = (data: any) => {
+      console.log('🔄 ORDER FORM - Received country config update from admin', data);
+      
+      // Reload countries from updated localStorage
+      const configService = CountryConfigService.getInstance();
+      configService.reloadFromStorage();
+      
+      const availableCountries = configService.getAvailableCountries();
+      console.log('🔄 ORDER FORM - Raw updated countries from service:', availableCountries);
+      
+      const formattedCountries: Country[] = availableCountries.map(config => ({
+        id: config.countryCode,
+        name: config.countryName,
+        code: config.countryCode,
+        flag_emoji: '🏳️',
+        is_recommended: config.countryCode === 'GE'
+      }));
+      
+      console.log('🔄 ORDER FORM - Formatted updated countries:', formattedCountries);
+      setCountries(formattedCountries);
+    };
+
+    // Initialize CrossDomainSync and add listener
+    const crossDomainSync = CrossDomainSync.getInstance();
+    console.log('🔄 ORDER FORM - Setting up CrossDomainSync listener');
+    crossDomainSync.addListener(handleCountryConfigUpdate);
+    console.log('🔄 ORDER FORM - CrossDomainSync listener added successfully');
+
+    // Listen for localStorage changes (cross-tab communication)
+    const handleStorageChange = (event: StorageEvent) => {
+      if (event.key === 'country_configurations') {
+        console.log('🔄 Country configurations updated in localStorage, refreshing...');
+        // Force reload countries from updated localStorage
+        setTimeout(() => {
+          const configService = CountryConfigService.getInstance();
+          configService.reloadFromStorage(); // Force reload from localStorage
+          const availableCountries = configService.getAvailableCountries();
+          
+          const formattedCountries: Country[] = availableCountries.map(config => ({
+            id: config.countryCode,
+            name: config.countryName,
+            code: config.countryCode,
+            flag_emoji: '🏳️',
+            is_recommended: config.countryCode === 'GE'
+          }));
+          
+          setCountries(formattedCountries);
+          console.log('✅ Countries updated:', formattedCountries.length);
+        }, 100);
+      }
+    };
+
+    window.addEventListener('storage', handleStorageChange);
+
+    // Also listen for focus events to refresh data when user switches back to tab
+    const handleFocus = () => {
+      console.log('🔄 Tab focused, checking for country updates...');
+      const configService = CountryConfigService.getInstance();
+      configService.reloadFromStorage();
+      const availableCountries = configService.getAvailableCountries();
+      
+      const formattedCountries: Country[] = availableCountries.map(config => ({
+        id: config.countryCode,
+        name: config.countryName,
+        code: config.countryCode,
+        flag_emoji: '🏳️',
+        is_recommended: config.countryCode === 'GE'
+      }));
+      
+      if (formattedCountries.length !== countries.length) {
+        setCountries(formattedCountries);
+        console.log('✅ Countries updated on focus:', formattedCountries.length);
+      }
+    };
+
+    window.addEventListener('focus', handleFocus);
+
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+      window.removeEventListener('focus', handleFocus);
+      // Clean up CrossDomainSync listener
+      crossDomainSync.removeListener(handleCountryConfigUpdate);
+      console.log('🔄 ORDER FORM - CrossDomainSync listener removed');
+    };
+  }, [countries.length]);
 
   const fetchInitialData = async () => {
     try {
@@ -161,21 +247,21 @@ export const useOrderForm = () => {
         .from('service_orders')
         .insert({
           client_id: clientData.id,
-          consultant_id: 'a4d1a7b0-1234-5678-90ab-cdef12345678', // TODO: Dinamik olarak atanacak
-          company_name: formData.companyName,
-          company_type: formData.companyType,
           title: `Yeni Sipariş: ${formData.companyName} - ${selectedPackage?.name}`,
           description: `Ülke: ${countries.find(c => c.id === formData.selectedCountryId)?.name}, Banka: ${selectedBank?.name}, Ek Hizmetler: ${selectedAddOns.map(s => s.name).join(', ')}`,
-          total_amount: totalAmount,
-          currency: 'USD', // Varsayılan para birimi
+          budget: totalAmount,
           status: 'pending',
+          country_code: formData.selectedCountryId,
           selected_package_id: formData.selectedPackageId,
           additional_service_ids: formData.selectedAdditionalServiceIds,
           customer_details: {
             contactEmail: formData.contactEmail,
             phoneNumber: formData.phoneNumber,
+            companyName: formData.companyName,
+            companyType: formData.companyType,
           },
-          country_id: formData.selectedCountryId,
+          total_amount: totalAmount,
+          currency: 'USD',
         })
         .select()
         .single();

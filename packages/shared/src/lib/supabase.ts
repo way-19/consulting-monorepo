@@ -16,12 +16,12 @@ if (!isSupabaseConfigured) {
 }
 
 const supabase = createClient(
-  supabaseUrl || 'https://qdwykqrepolavgvfxquw.supabase.co', // Fallback to actual Supabase URL from .env
-  supabaseAnonKey || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFkd3lrcXJlcG9sYXZndmZ4cXV3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTYwNjgzNDIsImV4cCI6MjA3MTY0NDM0Mn0.WuaXRd_Kgd0ld4hMaeLptJktK3AiGTwRajpAnYgyhPo', // Fallback to actual key from .env
+  supabaseUrl || 'http://127.0.0.1:54321', // Fallback to local development URL
+  supabaseAnonKey || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6ImFub24iLCJleHAiOjE5ODM4MTI5OTZ9.CRXP1A7WOeoJeXxjNni43kdQwgnWNReilDMblYTn_I0', // Fallback to local development key
   {
     auth: {
       persistSession: true,
-      autoRefreshToken: isSupabaseConfigured,
+      autoRefreshToken: true, // Always enable auto refresh for better UX
     }
   }
 );

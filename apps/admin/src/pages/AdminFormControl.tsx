@@ -66,11 +66,18 @@ const AdminFormControl: React.FC = () => {
         const updatedCountry = { ...country, active: !country.active };
         console.log('🔧 ADMIN APP - Country after update:', updatedCountry);
         
+        console.log('🔧 ADMIN APP - About to call saveConfiguration...');
         await configService.saveConfiguration(updatedCountry);
+        console.log('🔧 ADMIN APP - saveConfiguration completed');
         
         // Check localStorage after save
         const localStorageData = localStorage.getItem('country_configurations');
         console.log('🔧 ADMIN APP - localStorage after save:', localStorageData);
+        
+        // Check if CrossDomainSync is working
+        console.log('🔧 ADMIN APP - Checking CrossDomainSync instance...');
+        const crossDomainSync = (configService as any).crossDomainSync;
+        console.log('🔧 ADMIN APP - CrossDomainSync instance:', crossDomainSync);
         
         loadCountries();
         if (selectedCountry?.countryCode === countryCode) {
@@ -426,9 +433,9 @@ const AdminFormControl: React.FC = () => {
                           </label>
                           <input
                             type="text"
-                            value={selectedCountry.countryName}
+                            value={selectedCountry?.countryName || ''}
                             onChange={(e) => setSelectedCountry({
-                              ...selectedCountry,
+                              ...selectedCountry!,
                               countryName: e.target.value
                             })}
                             disabled={!isEditing}
@@ -441,9 +448,9 @@ const AdminFormControl: React.FC = () => {
                           </label>
                           <input
                             type="text"
-                            value={selectedCountry.countryCode}
+                            value={selectedCountry?.countryCode || ''}
                             onChange={(e) => setSelectedCountry({
-                              ...selectedCountry,
+                              ...selectedCountry!,
                               countryCode: e.target.value.toUpperCase()
                             })}
                             disabled={!isEditing}
@@ -458,9 +465,9 @@ const AdminFormControl: React.FC = () => {
                           </label>
                           <input
                             type="text"
-                            value={selectedCountry.currency}
+                            value={selectedCountry?.currency || ''}
                             onChange={(e) => setSelectedCountry({
-                              ...selectedCountry,
+                              ...selectedCountry!,
                               currency: e.target.value
                             })}
                             disabled={!isEditing}
@@ -473,11 +480,11 @@ const AdminFormControl: React.FC = () => {
                           </label>
                           <input
                             type="text"
-                            value={selectedCountry.localization.language}
+                            value={selectedCountry?.localization?.language || ''}
                             onChange={(e) => setSelectedCountry({
-                              ...selectedCountry,
+                              ...selectedCountry!,
                               localization: {
-                                ...selectedCountry.localization,
+                                ...selectedCountry!.localization,
                                 language: e.target.value
                               }
                             })}
@@ -491,11 +498,11 @@ const AdminFormControl: React.FC = () => {
                           </label>
                           <input
                             type="text"
-                            value={selectedCountry.localization.timezone}
+                            value={selectedCountry?.localization?.timezone || ''}
                             onChange={(e) => setSelectedCountry({
-                              ...selectedCountry,
+                              ...selectedCountry!,
                               localization: {
-                                ...selectedCountry.localization,
+                                ...selectedCountry!.localization,
                                 timezone: e.target.value
                               }
                             })}
@@ -509,9 +516,9 @@ const AdminFormControl: React.FC = () => {
                           </label>
                           <input
                             type="text"
-                            value={selectedCountry.timeframe}
+                            value={selectedCountry?.timeframe || ''}
                             onChange={(e) => setSelectedCountry({
-                              ...selectedCountry,
+                              ...selectedCountry!,
                               timeframe: e.target.value
                             })}
                             disabled={!isEditing}
@@ -526,9 +533,9 @@ const AdminFormControl: React.FC = () => {
                           </label>
                           <input
                             type="number"
-                            value={selectedCountry.basePrice}
+                            value={selectedCountry?.basePrice || 0}
                             onChange={(e) => setSelectedCountry({
-                              ...selectedCountry,
+                              ...selectedCountry!,
                               basePrice: parseFloat(e.target.value) || 0
                             })}
                             disabled={!isEditing}
@@ -539,9 +546,9 @@ const AdminFormControl: React.FC = () => {
                           <input
                             type="checkbox"
                             id="isActive"
-                            checked={selectedCountry.active}
+                            checked={selectedCountry?.active || false}
                             onChange={(e) => setSelectedCountry({
-                              ...selectedCountry,
+                              ...selectedCountry!,
                               active: e.target.checked
                             })}
                             disabled={!isEditing}
@@ -595,18 +602,18 @@ const AdminFormControl: React.FC = () => {
                                       </label>
                                       <input
                                         type="text"
-                                        value={field.label}
+                                        value={field?.label || ''}
                                         onChange={(e) => {
-                                          const updatedSections = selectedCountry.companyDetailsForm.sections.map(s => ({
+                                          const updatedSections = selectedCountry!.companyDetailsForm.sections.map(s => ({
                                             ...s,
                                             fields: s.fields.map(f =>
                                               f.id === field.id ? { ...f, label: e.target.value } : f
                                             )
                                           }));
                                           setSelectedCountry({ 
-                                            ...selectedCountry, 
+                                            ...selectedCountry!, 
                                             companyDetailsForm: {
-                                              ...selectedCountry.companyDetailsForm,
+                                              ...selectedCountry!.companyDetailsForm,
                                               sections: updatedSections
                                             }
                                           });
@@ -620,18 +627,18 @@ const AdminFormControl: React.FC = () => {
                                         Field Type
                                       </label>
                                       <select
-                                        value={field.type}
+                                        value={field?.type || 'text'}
                                         onChange={(e) => {
-                                          const updatedSections = selectedCountry.companyDetailsForm.sections.map(s => ({
+                                          const updatedSections = selectedCountry!.companyDetailsForm.sections.map(s => ({
                                             ...s,
                                             fields: s.fields.map(f =>
                                               f.id === field.id ? { ...f, type: e.target.value as any } : f
                                             )
                                           }));
                                           setSelectedCountry({ 
-                                            ...selectedCountry, 
+                                            ...selectedCountry!, 
                                             companyDetailsForm: {
-                                              ...selectedCountry.companyDetailsForm,
+                                              ...selectedCountry!.companyDetailsForm,
                                               sections: updatedSections
                                             }
                                           });
@@ -694,12 +701,12 @@ const AdminFormControl: React.FC = () => {
                                 </label>
                                 <input
                                   type="text"
-                                  value={pkg.name}
+                                  value={pkg?.name || ''}
                                   onChange={(e) => {
-                                    const updatedPackages = selectedCountry.packages.map(p =>
+                                    const updatedPackages = selectedCountry!.packages.map(p =>
                                       p.id === pkg.id ? { ...p, name: e.target.value } : p
                                     );
-                                    setSelectedCountry({ ...selectedCountry, packages: updatedPackages });
+                                    setSelectedCountry({ ...selectedCountry!, packages: updatedPackages });
                                   }}
                                   disabled={!isEditing}
                                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-50"
@@ -711,12 +718,12 @@ const AdminFormControl: React.FC = () => {
                                 </label>
                                 <input
                                   type="number"
-                                  value={pkg.price}
+                                  value={pkg?.price || 0}
                                   onChange={(e) => {
-                                    const updatedPackages = selectedCountry.packages.map(p =>
+                                    const updatedPackages = selectedCountry!.packages.map(p =>
                                       p.id === pkg.id ? { ...p, price: parseFloat(e.target.value) || 0 } : p
                                     );
-                                    setSelectedCountry({ ...selectedCountry, packages: updatedPackages });
+                                    setSelectedCountry({ ...selectedCountry!, packages: updatedPackages });
                                   }}
                                   disabled={!isEditing}
                                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-50"
@@ -765,12 +772,12 @@ const AdminFormControl: React.FC = () => {
                                 </label>
                                 <input
                                   type="text"
-                                  value={service.name}
+                                  value={service?.name || ''}
                                   onChange={(e) => {
-                                    const updatedServices = selectedCountry.services.map(s =>
+                                    const updatedServices = selectedCountry!.services.map(s =>
                                       s.id === service.id ? { ...s, name: e.target.value } : s
                                     );
-                                    setSelectedCountry({ ...selectedCountry, services: updatedServices });
+                                    setSelectedCountry({ ...selectedCountry!, services: updatedServices });
                                   }}
                                   disabled={!isEditing}
                                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-50"
@@ -782,12 +789,12 @@ const AdminFormControl: React.FC = () => {
                                 </label>
                                 <input
                                   type="number"
-                                  value={service.price}
+                                  value={service?.price || 0}
                                   onChange={(e) => {
-                                    const updatedServices = selectedCountry.services.map(s =>
+                                    const updatedServices = selectedCountry!.services.map(s =>
                                       s.id === service.id ? { ...s, price: parseFloat(e.target.value) || 0 } : s
                                     );
-                                    setSelectedCountry({ ...selectedCountry, services: updatedServices });
+                                    setSelectedCountry({ ...selectedCountry!, services: updatedServices });
                                   }}
                                   disabled={!isEditing}
                                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-50"

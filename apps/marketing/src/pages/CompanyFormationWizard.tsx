@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { ChevronLeft, ChevronRight, Globe, Building, Package as PackageIcon, Plus, Check, Clock, Shield, Award, Star, CreditCard } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { CountryConfigService, CountryConfiguration } from '@consulting19/shared';
+import { CountryConfigService, CountryConfiguration, CrossDomainSync } from '@consulting19/shared';
 import { loadStripe } from '@stripe/stripe-js';
 import { supabase } from '../lib/supabase';
 
@@ -101,19 +101,25 @@ const CompanyFormationWizard: React.FC = () => {
     const service = CountryConfigService.getInstance();
     
     // Force reload from localStorage
-    const configs = service.getAllCountryConfigs();
-    console.log('📊 Loaded configurations:', Object.keys(configs));
+    service.reloadFromStorage();
     
-    // Update countries list
-    const updatedCountries = Object.values(configs).map(config => ({
+    // Get all configurations using the same method as initial load
+    const allCountries = service.getAllConfigurations();
+    console.log('📊 Loaded configurations:', allCountries);
+    
+    // Update countries list with same formatting as initial load
+    const updatedCountries: Country[] = allCountries.map(config => ({
       code: config.countryCode,
       name: config.countryName,
-      flag: config.flag || '🏳️',
-      price: config.basePrice || 0,
-      description: config.description || `Company formation in ${config.countryName}`,
-      features: config.features || []
+      flag: `https://flagcdn.com/w320/${config.countryCode.toLowerCase()}.png`,
+      price: config.packages[0]?.price || config.basePrice || 1200,
+      timeframe: config.timeframe || '5-7 days',
+      recommended: config.countryCode === 'GE',
+      active: config.active
     }));
     
+    console.log('🔄 Updated countries:', updatedCountries);
+    console.log('🔄 Active countries:', updatedCountries.filter(c => c.active));
     setCountries(updatedCountries);
     
     // If a country is currently selected, refresh its config
@@ -147,7 +153,7 @@ const CompanyFormationWizard: React.FC = () => {
       code: config.countryCode,
       name: config.countryName,
       flag: `https://flagcdn.com/w320/${config.countryCode.toLowerCase()}.png`,
-      price: config.packages[0]?.price || config.basePrice || 1200, // Use first package price or base price
+      price: config.packages?.[0]?.price || config.basePrice || 1200, // Use first package price or base price
       timeframe: config.timeframe || '5-7 days',
       recommended: config.countryCode === 'GE', // Georgia is recommended
       active: config.active
@@ -156,6 +162,42 @@ const CompanyFormationWizard: React.FC = () => {
     console.log('🔍 MARKETING APP - Formatted countries:', formattedCountries);
     console.log('🔍 MARKETING APP - Active countries:', formattedCountries.filter(c => c.active));
     setCountries(formattedCountries);
+
+    // Set up CrossDomainSync listener for automatic updates
+    const handleCountryConfigUpdate = (data: any) => {
+      console.log('🔄 MARKETING APP - Received country config update from admin', data);
+      
+      // Reload countries from updated localStorage
+      const service = CountryConfigService.getInstance();
+      service.reloadFromStorage();
+      
+      const updatedCountries = service.getAllConfigurations();
+      console.log('🔄 MARKETING APP - Raw updated countries from service:', updatedCountries);
+      
+      const formattedUpdatedCountries: Country[] = updatedCountries.map(config => ({
+        code: config.countryCode,
+        name: config.countryName,
+        flag: `https://flagcdn.com/w320/${config.countryCode.toLowerCase()}.png`,
+        price: config.packages[0]?.price || config.basePrice || 1200,
+        timeframe: config.timeframe || '5-7 days',
+        recommended: config.countryCode === 'GE',
+        active: config.active
+      }));
+      
+      console.log('🔄 MARKETING APP - Formatted updated countries:', formattedUpdatedCountries);
+      setCountries(formattedUpdatedCountries);
+    };
+
+    // Initialize CrossDomainSync and add listener
+    const crossDomainSync = CrossDomainSync.getInstance();
+    console.log('🔄 MARKETING APP - Setting up CrossDomainSync listener');
+    crossDomainSync.addListener(handleCountryConfigUpdate);
+    console.log('🔄 MARKETING APP - CrossDomainSync listener added successfully');
+
+    // Cleanup listener on unmount
+    return () => {
+      crossDomainSync.removeListener(handleCountryConfigUpdate);
+    };
   }, []);
 
   // Function to get packages based on selected country
@@ -806,7 +848,7 @@ const CompanyFormationWizard: React.FC = () => {
             selectedCountry={selectedCountry}
             onCountrySelect={(country) => {
               setSelectedCountry(country);
-              assignConsultant(country.name);
+              assignConsultant(country.code);
             }}
           />
         );
@@ -1012,15 +1054,29 @@ const CompanyFormationWizard: React.FC = () => {
                   console.log('Current URL:', window.location.href);
                   console.log('localStorage content:', JSON.stringify(localStorage, null, 2));
                   
-                  // Force reload from localStorage
-                  countryConfigService.reloadFromStorage();
+                  // Get service instance
+                  const service = CountryConfigService.getInstance();
                   
-                  // Reload countries
-                  const reloadedCountries = countryConfigService.getAllCountries();
-                  console.log('Reloaded countries:', reloadedCountries);
+                  // Force reload from localStorage
+                  service.reloadFromStorage();
+                  
+                  // Reload countries using the same method as refreshCountryConfigs
+                  const allCountries = service.getAllConfigurations();
+                  console.log('Reloaded countries:', allCountries);
+                  
+                  // Format countries the same way
+                  const formattedCountries: Country[] = allCountries.map(config => ({
+                    code: config.countryCode,
+                    name: config.countryName,
+                    flag: `https://flagcdn.com/w320/${config.countryCode.toLowerCase()}.png`,
+                    price: config.packages[0]?.price || config.basePrice || 1200,
+                    timeframe: config.timeframe || '5-7 days',
+                    recommended: config.countryCode === 'GE',
+                    active: config.active
+                  }));
                   
                   // Update state to trigger re-render
-                  setCountries(reloadedCountries);
+                  setCountries(formattedCountries);
                   
                   alert('Countries refreshed! Check console for details.');
                 }}

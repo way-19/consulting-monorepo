@@ -5,7 +5,7 @@ import { useAuth, Button, Card } from '@consulting19/shared';
 
 const LoginPage = () => {
   const [email, setEmail] = useState('admin@consulting19.com');
-  const [password, setPassword] = useState('Admin123!');
+  const [password, setPassword] = useState('admin123');
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -52,7 +52,7 @@ const LoginPage = () => {
                 <div className="text-xs font-semibold text-red-700 mb-1">👑 Admin Panel</div>
                 <div className="text-xs text-blue-800">
                   <div><strong>Email:</strong> admin@consulting19.com</div>
-                  <div><strong>Password:</strong> Admin123!</div>
+                  <div><strong>Password:</strong> admin123</div>
                   <div className="text-gray-600 mt-1">• System management • All data • Settings</div>
                 </div>
               </div>

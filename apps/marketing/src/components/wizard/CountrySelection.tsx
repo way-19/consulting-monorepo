@@ -155,7 +155,7 @@ const CountrySelection: React.FC<CountrySelectionProps> = ({
                 : 'glass-morphism-inactive opacity-60 cursor-not-allowed'
             }`}
             style={{
-              background: country.active 
+              backgroundImage: country.active 
                 ? selectedCountry?.code === country.code
                   ? `linear-gradient(135deg, rgba(59, 130, 246, 0.2) 0%, rgba(147, 197, 253, 0.1) 100%), url(${country.flag})`
                   : `linear-gradient(135deg, rgba(255, 255, 255, 0.8) 0%, rgba(255, 255, 255, 0.6) 100%), url(${country.flag})`

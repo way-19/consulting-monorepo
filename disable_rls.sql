@@ -2,6 +2,7 @@
 -- This script disables Row Level Security on all tables for easier development
 
 -- Disable RLS on all tables
+ALTER TABLE IF EXISTS users DISABLE ROW LEVEL SECURITY;
 ALTER TABLE IF EXISTS user_profiles DISABLE ROW LEVEL SECURITY;
 ALTER TABLE IF EXISTS clients DISABLE ROW LEVEL SECURITY;
 ALTER TABLE IF EXISTS service_orders DISABLE ROW LEVEL SECURITY;

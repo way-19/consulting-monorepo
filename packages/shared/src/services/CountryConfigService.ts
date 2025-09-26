@@ -22,7 +22,7 @@ export class CountryConfigService implements CountryConfigurationManager {
     this.initializePassiveCountries();
     
     // Load from database and sync with localStorage
-    this.loadFromDatabase();
+    // TEMPORARILY DISABLED: this.loadFromDatabase();
   }
 
   private setupCrossDomainSync(): void {
@@ -537,13 +537,18 @@ export class CountryConfigService implements CountryConfigurationManager {
 
   private saveToStorage(): void {
     try {
+      console.log('🔧 CountryConfigService - saveToStorage called');
       const data = Object.fromEntries(this.configurations);
       const jsonData = JSON.stringify(data);
+      console.log('🔧 CountryConfigService - Data to save:', data);
+      
       localStorage.setItem(this.STORAGE_KEY, jsonData);
+      console.log('🔧 CountryConfigService - Data saved to localStorage');
       
       // Notify other domains about the update
+      console.log('🔧 CountryConfigService - About to notify CrossDomainSync...');
       this.crossDomainSync.notifyCountryConfigUpdate(this.STORAGE_KEY, jsonData);
-      console.log('Country configurations saved and cross-domain sync notified');
+      console.log('🔧 CountryConfigService - CrossDomainSync notified successfully');
     } catch (error) {
       console.warn('Failed to save configurations to localStorage:', error);
     }
@@ -609,7 +614,8 @@ export class CountryConfigService implements CountryConfigurationManager {
       // Save the configuration (add or update) in memory
       this.configurations.set(config.countryCode, config);
       
-      // Save to Supabase database
+      // TEMPORARILY DISABLED: Save to Supabase database
+      /*
       const { error: dbError } = await supabase
         .from('country_configurations')
         .upsert({
@@ -642,6 +648,9 @@ export class CountryConfigService implements CountryConfigurationManager {
       }
 
       console.log(`✅ Country configuration for ${config.countryCode} saved to database`);
+      */
+      
+      console.log(`✅ Country configuration for ${config.countryCode} saved to localStorage (database disabled)`);
       
       // Persist to localStorage
       this.saveToStorage();
