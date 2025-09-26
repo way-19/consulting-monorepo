@@ -35,13 +35,19 @@ import CookiePolicyPage from './pages/CookiePolicyPage';
 import AboutPage from './pages/AboutPage';
 import SitemapPage from './pages/SitemapPage';
 import CompanyFormationWizard from './pages/CompanyFormationWizard';
+import PaymentSuccess from './pages/PaymentSuccess';
 
 function App() {
   return (
     <HelmetProvider>
       <AuthProvider>
         <LanguageProvider>
-          <Router>
+          <Router
+            future={{
+              v7_startTransition: true,
+              v7_relativeSplatPath: true,
+            }}
+          >
             <Routes>
               <Route path="/" element={<HomePage />} />
               <Route path="/services" element={<ServicesPage />} />
@@ -62,6 +68,7 @@ function App() {
               <Route path="/consultant/:consultantId" element={<ConsultantProfilePage />} />
               <Route path="/auth" element={<AuthPage />} />
               <Route path="/order-form" element={<CompanyFormationWizard />} />
+              <Route path="/payment-success" element={<PaymentSuccess />} />
               
               {/* Georgian Service Pages */}
               <Route path="/services/georgia/llc-formation" element={<GeorgianLLCFormationPage />} />
@@ -98,6 +105,8 @@ function App() {
               <Route path="/countries/bulgaria" element={<ComingSoonCountryPage country="Bulgaria" flag="🇧🇬" />} />
               <Route path="/countries/spain" element={<ComingSoonCountryPage country="Spain" flag="🇪🇸" />} />
               <Route path="/countries/montenegro" element={<ComingSoonCountryPage country="Montenegro" flag="🇲🇪" />} />
+              <Route path="/countries/costa-rica" element={<CountryPage />} />
+              <Route path="/countries/norway" element={<ComingSoonCountryPage country="Norway" flag="🇳🇴" />} />
             </Routes>
           </Router>
         </LanguageProvider>

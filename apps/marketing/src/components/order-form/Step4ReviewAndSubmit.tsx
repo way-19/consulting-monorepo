@@ -25,11 +25,11 @@ export const Step4ReviewAndSubmit: React.FC<Step4Props> = ({
   );
 
   const timelineLabels: Record<string, string> = {
-    'asap': 'En kısa sürede',
-    '1-month': '1 ay içinde',
-    '2-3-months': '2-3 ay içinde',
-    '3-6-months': '3-6 ay içinde',
-    'flexible': 'Esnek'
+    'asap': 'As soon as possible',
+    '1-month': 'Within 1 month',
+    '2-3-months': 'Within 2-3 months',
+    '3-6-months': 'Within 3-6 months',
+    'flexible': 'Flexible'
   };
 
   const budgetLabels: Record<string, string> = {
@@ -37,23 +37,23 @@ export const Step4ReviewAndSubmit: React.FC<Step4Props> = ({
     '10k-25k': '$10,000 - $25,000',
     '25k-50k': '$25,000 - $50,000',
     '50k+': '$50,000+',
-    'discuss': 'Görüşelim'
+    'discuss': 'Let\'s discuss'
   };
 
   const communicationLabels: Record<string, string> = {
-    'email': 'E-posta',
-    'phone': 'Telefon',
-    'both': 'Her ikisi'
+    'email': 'Email',
+    'phone': 'Phone',
+    'both': 'Both'
   };
 
   return (
     <div className="space-y-8">
       <div className="text-center mb-8">
         <h2 className="text-2xl font-bold text-gray-900 mb-2">
-          Sipariş Özeti
+          Order Summary
         </h2>
         <p className="text-gray-600">
-          Bilgilerinizi kontrol edin ve siparişinizi onaylayın
+          Review your information and confirm your order
         </p>
       </div>
 
@@ -61,28 +61,28 @@ export const Step4ReviewAndSubmit: React.FC<Step4Props> = ({
         {/* Company Details */}
         <div className="bg-gray-50 rounded-lg p-6">
           <h3 className="text-lg font-semibold text-gray-900 mb-4">
-            Şirket Bilgileri
+            Company Information
           </h3>
           <div className="space-y-3">
             <div>
-              <span className="text-sm font-medium text-gray-500">Şirket:</span>
+              <span className="text-sm font-medium text-gray-500">Company:</span>
               <p className="text-gray-900">{formData.companyName}</p>
             </div>
             <div>
-              <span className="text-sm font-medium text-gray-500">İletişim Kişisi:</span>
+              <span className="text-sm font-medium text-gray-500">Contact Person:</span>
               <p className="text-gray-900">{formData.contactPerson}</p>
             </div>
             <div>
-              <span className="text-sm font-medium text-gray-500">E-posta:</span>
+              <span className="text-sm font-medium text-gray-500">Email:</span>
               <p className="text-gray-900">{formData.email}</p>
             </div>
             <div>
-              <span className="text-sm font-medium text-gray-500">Telefon:</span>
+              <span className="text-sm font-medium text-gray-500">Phone:</span>
               <p className="text-gray-900">{formData.phone}</p>
             </div>
             {formData.website && (
               <div>
-                <span className="text-sm font-medium text-gray-500">Web Sitesi:</span>
+                <span className="text-sm font-medium text-gray-500">Website:</span>
                 <p className="text-gray-900">{formData.website}</p>
               </div>
             )}
@@ -92,7 +92,7 @@ export const Step4ReviewAndSubmit: React.FC<Step4Props> = ({
         {/* Selected Services */}
         <div className="bg-gray-50 rounded-lg p-6">
           <h3 className="text-lg font-semibold text-gray-900 mb-4">
-            Seçilen Hizmetler
+            Selected Services
           </h3>
           <div className="space-y-3">
             {selectedServiceDetails.map((service) => (
@@ -108,7 +108,7 @@ export const Step4ReviewAndSubmit: React.FC<Step4Props> = ({
             {totalPrice > 0 && (
               <div className="border-t pt-3 mt-3">
                 <div className="flex justify-between items-center font-semibold">
-                  <span className="text-gray-900">Toplam:</span>
+                  <span className="text-gray-900">Total:</span>
                   <span className="text-xl text-blue-600">
                     ${totalPrice.toLocaleString()}
                   </span>
@@ -121,19 +121,19 @@ export const Step4ReviewAndSubmit: React.FC<Step4Props> = ({
         {/* Project Details */}
         <div className="bg-gray-50 rounded-lg p-6">
           <h3 className="text-lg font-semibold text-gray-900 mb-4">
-            Proje Detayları
+            Project Details
           </h3>
           <div className="space-y-3">
             <div>
-              <span className="text-sm font-medium text-gray-500">Zaman Çizelgesi:</span>
+              <span className="text-sm font-medium text-gray-500">Timeline:</span>
               <p className="text-gray-900">{timelineLabels[formData.timeline] || formData.timeline}</p>
             </div>
             <div>
-              <span className="text-sm font-medium text-gray-500">Bütçe:</span>
+              <span className="text-sm font-medium text-gray-500">Budget:</span>
               <p className="text-gray-900">{budgetLabels[formData.budget] || formData.budget}</p>
             </div>
             <div>
-              <span className="text-sm font-medium text-gray-500">Açıklama:</span>
+              <span className="text-sm font-medium text-gray-500">Description:</span>
               <p className="text-gray-900 text-sm">{formData.projectDescription}</p>
             </div>
           </div>
@@ -142,27 +142,27 @@ export const Step4ReviewAndSubmit: React.FC<Step4Props> = ({
         {/* Additional Details */}
         <div className="bg-gray-50 rounded-lg p-6">
           <h3 className="text-lg font-semibold text-gray-900 mb-4">
-            Ek Bilgiler
+            Additional Information
           </h3>
           <div className="space-y-3">
             <div>
-              <span className="text-sm font-medium text-gray-500">Başlangıç Tarihi:</span>
+              <span className="text-sm font-medium text-gray-500">Start Date:</span>
               <p className="text-gray-900">
                 {formData.preferredStartDate ? 
-                  new Date(formData.preferredStartDate).toLocaleDateString('tr-TR') : 
+                  new Date(formData.preferredStartDate).toLocaleDateString('en-US') : 
                   '-'
                 }
               </p>
             </div>
             <div>
-              <span className="text-sm font-medium text-gray-500">İletişim Tercihi:</span>
+              <span className="text-sm font-medium text-gray-500">Communication Preference:</span>
               <p className="text-gray-900">
                 {communicationLabels[formData.communicationPreference] || formData.communicationPreference}
               </p>
             </div>
             {formData.additionalRequirements && (
               <div>
-                <span className="text-sm font-medium text-gray-500">Ek Gereksinimler:</span>
+                <span className="text-sm font-medium text-gray-500">Additional Requirements:</span>
                 <p className="text-gray-900 text-sm">{formData.additionalRequirements}</p>
               </div>
             )}
@@ -172,11 +172,11 @@ export const Step4ReviewAndSubmit: React.FC<Step4Props> = ({
 
       <div className="bg-blue-50 border border-blue-200 rounded-lg p-6">
         <h4 className="font-semibold text-blue-900 mb-3">
-          🎯 Sipariş Onayı
+          🎯 Order Confirmation
         </h4>
         <p className="text-blue-800 text-sm mb-4">
-          Yukarıdaki bilgileri kontrol ettiniz mi? Siparişinizi onayladığınızda, 
-          ekibimiz 24 saat içinde sizinle iletişime geçecektir.
+          Have you reviewed the information above? Once you confirm your order, 
+          our team will contact you within 24 hours.
         </p>
         <div className="flex flex-col sm:flex-row gap-3">
           <Button
@@ -186,7 +186,7 @@ export const Step4ReviewAndSubmit: React.FC<Step4Props> = ({
             onClick={onSubmit}
             className="flex-1"
           >
-            {isSubmitting ? 'Gönderiliyor...' : 'Siparişi Onayla'}
+            {isSubmitting ? 'Submitting...' : 'Confirm Order'}
           </Button>
         </div>
       </div>

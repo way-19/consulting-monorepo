@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
+import { CountryConfigService } from '@consulting19/shared';
 
 export interface Country {
   id: string;
@@ -71,24 +72,35 @@ export const useOrderForm = () => {
   const fetchInitialData = async () => {
     try {
       setLoading(true);
+      
+      // Get countries from CountryConfigService instead of Supabase
+      const configService = CountryConfigService.getInstance();
+      const availableCountries = configService.getAvailableCountries();
+      
+      // Convert CountryConfiguration to Country interface
+      const formattedCountries: Country[] = availableCountries.map(config => ({
+        id: config.countryCode,
+        name: config.countryName,
+        code: config.countryCode,
+        flag_emoji: '🏳️', // Default flag, can be enhanced later
+        is_recommended: config.countryCode === 'GE' // Georgia is recommended
+      }));
+
       const [
-        countriesRes,
         packagesRes,
         additionalServicesRes,
         banksRes,
       ] = await Promise.all([
-        supabase.from('countries').select('*').eq('is_active', true).order('is_recommended', { ascending: false }).order('name'),
         supabase.from('packages').select('*').eq('is_active', true).order('price'),
         supabase.from('additional_services').select('*').eq('is_active', true).order('base_price'),
         supabase.from('banks').select('*').eq('is_active', true).order('name'),
       ]);
 
-      if (countriesRes.error) throw countriesRes.error;
       if (packagesRes.error) throw packagesRes.error;
       if (additionalServicesRes.error) throw additionalServicesRes.error;
       if (banksRes.error) throw banksRes.error;
 
-      setCountries(countriesRes.data || []);
+      setCountries(formattedCountries);
       setPackages(packagesRes.data || []);
       setAdditionalServices(additionalServicesRes.data?.map(s => ({ ...s, price: s.base_price })) || []); // Use base_price as default
       setBanks(banksRes.data || []);

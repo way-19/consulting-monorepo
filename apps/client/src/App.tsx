@@ -20,9 +20,14 @@ import ClientLayout from './components/layouts/ClientLayout';
 
 function App() {
   return (
-    <AuthProvider>
-      <LanguageProvider>
-        <Router>
+    <LanguageProvider>
+      <AuthProvider>
+        <Router
+          future={{
+            v7_startTransition: true,
+            v7_relativeSplatPath: true,
+          }}
+        >
           <div className="min-h-screen bg-gray-50">
             <Routes>
               <Route path="/login" element={<LoginPage />} />
@@ -30,8 +35,8 @@ function App() {
             </Routes>
           </div>
         </Router>
-      </LanguageProvider>
-    </AuthProvider>
+      </AuthProvider>
+    </LanguageProvider>
   );
 }
 

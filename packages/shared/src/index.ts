@@ -14,3 +14,11 @@ export { default as MfaSetup } from './components/MfaSetup';
 // Supabase
 export { supabase } from './lib/supabase';
 export type * from './types/database';
+
+// Country Configuration
+export type * from './types/country-config';
+export { CountryConfigService } from './services/CountryConfigService';
+
+// Cross-Domain Sync
+export { CrossDomainSync } from './services/CrossDomainSync';
+export type { CrossDomainMessage } from './services/CrossDomainSync';

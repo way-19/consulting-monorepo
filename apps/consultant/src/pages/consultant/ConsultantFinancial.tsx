@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { DollarSign, TrendingUp, TrendingDown, Calendar, Download, Eye, CreditCard, Wallet } from 'lucide-react';
 import { useAuth } from '@consulting19/shared';
+import { supabase } from '@consulting19/shared/lib/supabase';
 
 interface FinancialData {
   totalEarnings: number;
@@ -30,53 +31,125 @@ const ConsultantFinancial: React.FC = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Mock data for demonstration
-    const mockFinancialData: FinancialData = {
-      totalEarnings: 15750.00,
-      monthlyEarnings: 3250.00,
-      pendingPayments: 1200.00,
-      completedProjects: 12,
-      averageProjectValue: 1312.50,
-      commissionRate: 15
-    };
+    fetchFinancialData();
+  }, [user, selectedPeriod]);
 
-    const mockTransactions: Transaction[] = [
-      {
-        id: '1',
-        type: 'earning',
-        amount: 1500.00,
-        description: 'Project completion payment',
-        date: new Date().toISOString(),
-        status: 'completed',
-        client_name: 'John Smith',
-        project_name: 'Website Development'
-      },
-      {
-        id: '2',
-        type: 'commission',
-        amount: 225.00,
-        description: 'Commission from project referral',
-        date: new Date(Date.now() - 86400000).toISOString(),
-        status: 'completed',
-        client_name: 'Sarah Johnson',
-        project_name: 'Marketing Strategy'
-      },
-      {
-        id: '3',
-        type: 'earning',
-        amount: 800.00,
-        description: 'Consultation services',
-        date: new Date(Date.now() - 172800000).toISOString(),
-        status: 'pending',
-        client_name: 'Mike Wilson',
-        project_name: 'Business Analysis'
+  const fetchFinancialData = async () => {
+    try {
+      setLoading(true);
+      
+      // Get current user
+      const { data: { user: currentUser } } = await supabase.auth.getUser();
+      if (!currentUser) {
+        console.error('No authenticated user');
+        return;
       }
-    ];
 
-    setFinancialData(mockFinancialData);
-    setTransactions(mockTransactions);
-    setLoading(false);
-  }, [user]);
+      // Get consultant profile to get commission rate
+      const { data: consultantProfile } = await supabase
+        .from('consultants')
+        .select('commission_rate')
+        .eq('id', currentUser.id)
+        .single();
+
+      // Calculate date range based on selected period
+      const now = new Date();
+      let startDate = new Date();
+      
+      switch (selectedPeriod) {
+        case 'week':
+          startDate.setDate(now.getDate() - 7);
+          break;
+        case 'month':
+          startDate.setMonth(now.getMonth() - 1);
+          break;
+        case 'quarter':
+          startDate.setMonth(now.getMonth() - 3);
+          break;
+        case 'year':
+          startDate.setFullYear(now.getFullYear() - 1);
+          break;
+      }
+
+      // Fetch service orders for this consultant
+      const { data: serviceOrders, error } = await supabase
+        .from('service_orders')
+        .select(`
+          *,
+          client:clients(full_name),
+          service:services(name)
+        `)
+        .eq('consultant_id', currentUser.id)
+        .order('created_at', { ascending: false });
+
+      if (error) {
+        console.error('Error fetching service orders:', error);
+        return;
+      }
+
+      // Calculate financial metrics
+      const allOrders = serviceOrders || [];
+      const completedOrders = allOrders.filter(order => order.status === 'completed');
+      const pendingOrders = allOrders.filter(order => order.status === 'approved' || order.status === 'in_progress');
+      
+      // Calculate period-specific orders
+      const periodOrders = allOrders.filter(order => 
+        new Date(order.created_at) >= startDate
+      );
+      const periodCompletedOrders = periodOrders.filter(order => order.status === 'completed');
+
+      const totalEarnings = completedOrders.reduce((sum, order) => {
+        const commission = (order.total_amount || 0) * ((consultantProfile?.commission_rate || 15) / 100);
+        return sum + commission;
+      }, 0);
+
+      const monthlyEarnings = periodCompletedOrders.reduce((sum, order) => {
+        const commission = (order.total_amount || 0) * ((consultantProfile?.commission_rate || 15) / 100);
+        return sum + commission;
+      }, 0);
+
+      const pendingPayments = pendingOrders.reduce((sum, order) => {
+        const commission = (order.total_amount || 0) * ((consultantProfile?.commission_rate || 15) / 100);
+        return sum + commission;
+      }, 0);
+
+      const averageProjectValue = completedOrders.length > 0 
+        ? completedOrders.reduce((sum, order) => sum + (order.total_amount || 0), 0) / completedOrders.length
+        : 0;
+
+      const calculatedFinancialData: FinancialData = {
+        totalEarnings,
+        monthlyEarnings,
+        pendingPayments,
+        completedProjects: completedOrders.length,
+        averageProjectValue,
+        commissionRate: consultantProfile?.commission_rate || 15
+      };
+
+      // Transform service orders to transactions
+      const transformedTransactions: Transaction[] = allOrders.map(order => {
+        const commission = (order.total_amount || 0) * ((consultantProfile?.commission_rate || 15) / 100);
+        return {
+          id: order.id,
+          type: 'commission' as const,
+          amount: commission,
+          description: `Commission from ${order.service?.name || 'service'}`,
+          date: order.created_at,
+          status: order.status === 'completed' ? 'completed' : 
+                  order.status === 'approved' || order.status === 'in_progress' ? 'pending' : 'processing',
+          client_name: order.client?.full_name || 'Unknown Client',
+          project_name: order.service?.name || 'Service Order'
+        };
+      });
+
+      setFinancialData(calculatedFinancialData);
+      setTransactions(transformedTransactions);
+    } catch (error) {
+      console.error('Error fetching financial data:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const getStatusColor = (status: string) => {
     switch (status) {

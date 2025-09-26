@@ -13,11 +13,11 @@ interface Step2Props {
 }
 
 const timelineOptions = [
-  { value: 'asap', label: 'En kısa sürede' },
-  { value: '1-month', label: '1 ay içinde' },
-  { value: '2-3-months', label: '2-3 ay içinde' },
-  { value: '3-6-months', label: '3-6 ay içinde' },
-  { value: 'flexible', label: 'Esnek' }
+  { value: 'asap', label: 'As soon as possible' },
+  { value: '1-month', label: 'Within 1 month' },
+  { value: '2-3-months', label: 'Within 2-3 months' },
+  { value: '3-6-months', label: 'Within 3-6 months' },
+  { value: 'flexible', label: 'Flexible' }
 ];
 
 const budgetOptions = [
@@ -25,7 +25,7 @@ const budgetOptions = [
   { value: '10k-25k', label: '$10,000 - $25,000' },
   { value: '25k-50k', label: '$25,000 - $50,000' },
   { value: '50k+', label: '$50,000+' },
-  { value: 'discuss', label: 'Görüşelim' }
+  { value: 'discuss', label: 'Let\'s discuss' }
 ];
 
 export const Step2ServiceSelection: React.FC<Step2Props> = ({
@@ -56,16 +56,16 @@ export const Step2ServiceSelection: React.FC<Step2Props> = ({
     <div className="space-y-8">
       <div className="text-center mb-8">
         <h2 className="text-2xl font-bold text-gray-900 mb-2">
-          Hizmet Seçimi
+          Service Selection
         </h2>
         <p className="text-gray-600">
-          İhtiyacınız olan hizmetleri seçin
+          Select the services you need
         </p>
       </div>
 
       <div>
         <h3 className="text-lg font-semibold text-gray-900 mb-4">
-          Hizmetler
+          Services
         </h3>
         {errors.selectedServices && (
           <p className="text-sm text-red-600 mb-4 flex items-center gap-1">
@@ -88,7 +88,7 @@ export const Step2ServiceSelection: React.FC<Step2Props> = ({
           <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
             <div className="flex justify-between items-center">
               <span className="font-medium text-gray-900">
-                Seçilen Hizmetler Toplamı:
+                Selected Services Total:
               </span>
               <span className="text-xl font-bold text-blue-600">
                 ${totalPrice.toLocaleString()}
@@ -100,19 +100,19 @@ export const Step2ServiceSelection: React.FC<Step2Props> = ({
 
       <div className="space-y-6">
         <Textarea
-          label="Proje Açıklaması"
-          placeholder="Projeniz hakkında detaylı bilgi verin..."
+          label="Project Description"
+          placeholder="Provide detailed information about your project..."
           rows={4}
           required
           {...register('projectDescription')}
           error={errors.projectDescription?.message}
-          helperText="Hedeflerinizi, beklentilerinizi ve özel gereksinimlerinizi açıklayın"
+          helperText="Describe your goals, expectations, and special requirements"
         />
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <Select
-            label="Zaman Çizelgesi"
-            placeholder="Proje başlangıç zamanını seçin"
+            label="Timeline"
+            placeholder="Select project start time"
             options={timelineOptions}
             required
             {...register('timeline')}
@@ -120,8 +120,8 @@ export const Step2ServiceSelection: React.FC<Step2Props> = ({
           />
 
           <Select
-            label="Bütçe Aralığı"
-            placeholder="Bütçe aralığınızı seçin"
+            label="Budget Range"
+            placeholder="Select your budget range"
             options={budgetOptions}
             required
             {...register('budget')}

@@ -13,43 +13,43 @@ export const Step1CompanyDetails: React.FC<Step1Props> = ({ register, errors }) 
     <div className="space-y-6">
       <div className="text-center mb-8">
         <h2 className="text-2xl font-bold text-gray-900 mb-2">
-          Şirket Bilgileri
+          Company Details
         </h2>
         <p className="text-gray-600">
-          Lütfen şirketiniz hakkında temel bilgileri paylaşın
+          Please provide basic information about your company
         </p>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <Input
-          label="Şirket Adı"
-          placeholder="Şirket adınızı giriniz"
+          label="Company Name"
+          placeholder="Enter your company name"
           required
           {...register('companyName')}
           error={errors.companyName?.message}
         />
 
         <Input
-          label="İletişim Kişisi"
-          placeholder="Adınız ve soyadınız"
+          label="Contact Person"
+          placeholder="Your full name"
           required
           {...register('contactPerson')}
           error={errors.contactPerson?.message}
         />
 
         <Input
-          label="E-posta Adresi"
+          label="Email Address"
           type="email"
-          placeholder="ornek@sirket.com"
+          placeholder="example@company.com"
           required
           {...register('email')}
           error={errors.email?.message}
         />
 
         <Input
-          label="Telefon Numarası"
+          label="Phone Number"
           type="tel"
-          placeholder="+90 555 123 45 67"
+          placeholder="+1 555 123 4567"
           required
           {...register('phone')}
           error={errors.phone?.message}
@@ -57,12 +57,12 @@ export const Step1CompanyDetails: React.FC<Step1Props> = ({ register, errors }) 
 
         <div className="md:col-span-2">
           <Input
-            label="Web Sitesi"
+            label="Website"
             type="url"
-            placeholder="https://www.sirketiniz.com"
+            placeholder="https://www.yourcompany.com"
             {...register('website')}
             error={errors.website?.message}
-            helperText="Mevcut web siteniz varsa paylaşabilirsiniz"
+            helperText="Share your existing website if you have one"
           />
         </div>
       </div>

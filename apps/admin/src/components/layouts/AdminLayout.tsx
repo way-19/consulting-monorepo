@@ -8,7 +8,8 @@ import {
   DollarSign, 
   Settings, 
   LogOut,
-  BarChart3
+  BarChart3,
+  ClipboardList
 } from 'lucide-react';
 import { useAuth } from '@consulting19/shared';
 
@@ -22,6 +23,7 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
 
   const navigation = [
     { name: 'Dashboard', href: '/', icon: Home },
+    { name: 'Form Control', href: '/forms', icon: ClipboardList },
     { name: 'Users', href: '/users', icon: Users },
     { name: 'Countries', href: '/countries', icon: Globe },
     { name: 'Content', href: '/content', icon: FileText },

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Plus, Search, Filter, Clock, Play, Pause, Square, CheckCircle, Calendar, User } from 'lucide-react';
+import { supabase } from '@consulting19/shared/lib/supabase';
 
 interface Task {
   id: string;
@@ -30,11 +31,52 @@ const ConsultantTasks = () => {
   const [activeTimer, setActiveTimer] = useState<string | null>(null);
 
   useEffect(() => {
-    // Simulate loading
-    setTimeout(() => {
-      setLoading(false);
-    }, 1000);
+    fetchTasks();
   }, []);
+
+  const fetchTasks = async () => {
+    try {
+      setLoading(true);
+      
+      // Get current user
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        console.error('No authenticated user');
+        return;
+      }
+
+      // Fetch tasks for the current consultant
+      const { data: tasksData, error } = await supabase
+        .from('tasks')
+        .select(`
+          *,
+          project:projects(
+            title,
+            client:clients(full_name)
+          )
+        `)
+        .eq('consultant_id', user.id)
+        .order('created_at', { ascending: false });
+
+      if (error) {
+        console.error('Error fetching tasks:', error);
+        return;
+      }
+
+      // Transform the data to match our interface
+      const transformedTasks = tasksData?.map(task => ({
+        ...task,
+        client: task.project?.client || null,
+        project: task.project ? { title: task.project.title } : null
+      })) || [];
+
+      setTasks(transformedTasks);
+    } catch (error) {
+      console.error('Error fetching tasks:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const filteredTasks = tasks.filter(task => {
     const matchesSearch = 
@@ -164,11 +206,74 @@ const ConsultantTasks = () => {
               </div>
               
               <div className="space-y-3 min-h-[400px]">
-                {statusTasks.length === 0 && (
+                {statusTasks.length === 0 ? (
                   <div className="text-center py-8 text-gray-500">
                     <div className="text-4xl mb-2">📝</div>
                     <p className="text-sm">No {status.replace('_', ' ')} tasks</p>
                   </div>
+                ) : (
+                  statusTasks.map((task) => (
+                    <div key={task.id} className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 hover:shadow-md transition-shadow">
+                      <div className="flex items-start justify-between mb-2">
+                        <h3 className="font-medium text-gray-900 text-sm">{task.title}</h3>
+                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${getPriorityColor(task.priority)}`}>
+                          {task.priority}
+                        </span>
+                      </div>
+                      
+                      {task.description && (
+                        <p className="text-gray-600 text-sm mb-3 line-clamp-2">{task.description}</p>
+                      )}
+                      
+                      <div className="space-y-2">
+                        {task.project && (
+                          <div className="flex items-center text-xs text-gray-500">
+                            <User className="w-3 h-3 mr-1" />
+                            <span>{task.project.title}</span>
+                          </div>
+                        )}
+                        
+                        {task.client && (
+                          <div className="flex items-center text-xs text-gray-500">
+                            <User className="w-3 h-3 mr-1" />
+                            <span>{task.client.full_name}</span>
+                          </div>
+                        )}
+                        
+                        {task.due_date && (
+                          <div className="flex items-center text-xs text-gray-500">
+                            <Calendar className="w-3 h-3 mr-1" />
+                            <span>{new Date(task.due_date).toLocaleDateString()}</span>
+                          </div>
+                        )}
+                        
+                        <div className="flex items-center justify-between text-xs text-gray-500">
+                          <span>{task.estimated_hours}h estimated</span>
+                          <span>{task.actual_hours}h logged</span>
+                        </div>
+                      </div>
+                      
+                      <div className="flex items-center justify-between mt-3 pt-3 border-t border-gray-100">
+                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(task.status)}`}>
+                          {task.status.replace('_', ' ')}
+                        </span>
+                        
+                        <div className="flex items-center space-x-1">
+                          {task.status === 'in_progress' && (
+                            <button
+                              onClick={() => setActiveTimer(activeTimer === task.id ? null : task.id)}
+                              className={`p-1 rounded ${activeTimer === task.id ? 'text-red-600 hover:text-red-700' : 'text-green-600 hover:text-green-700'}`}
+                            >
+                              {activeTimer === task.id ? <Square className="w-4 h-4" /> : <Play className="w-4 h-4" />}
+                            </button>
+                          )}
+                          <button className="p-1 text-gray-400 hover:text-gray-600">
+                            <Clock className="w-4 h-4" />
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  ))
                 )}
               </div>
             </div>
@@ -192,11 +297,15 @@ const ConsultantTasks = () => {
               <div className="text-sm text-gray-600">Completed</div>
             </div>
             <div className="text-center">
-              <div className="text-2xl font-bold text-orange-600">0h</div>
+              <div className="text-2xl font-bold text-orange-600">
+                {tasks.reduce((sum, task) => sum + (task.estimated_hours || 0), 0)}h
+              </div>
               <div className="text-sm text-gray-600">Estimated Hours</div>
             </div>
             <div className="text-center">
-              <div className="text-2xl font-bold text-purple-600">0h</div>
+              <div className="text-2xl font-bold text-purple-600">
+                {tasks.reduce((sum, task) => sum + (task.actual_hours || 0), 0)}h
+              </div>
               <div className="text-sm text-gray-600">Actual Hours</div>
             </div>
           </div>

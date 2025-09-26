@@ -11,7 +11,9 @@
     "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0"
   },
   "dependencies": {
+    "@consulting19/shared": "file:../../packages/shared",
     "@hookform/resolvers": "^5.2.1",
+    "@stripe/stripe-js": "^7.9.0",
     "@supabase/supabase-js": "^2.56.1",
     "lucide-react": "^0.344.0",
     "react": "^18.3.1",
@@ -20,6 +22,7 @@
     "react-hook-form": "^7.62.0",
     "react-hot-toast": "^2.6.0",
     "react-router-dom": "^6.26.1",
+    "stripe": "^18.5.0",
     "zod": "^4.1.5"
   },
   "devDependencies": {
