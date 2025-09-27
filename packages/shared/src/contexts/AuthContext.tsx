@@ -51,19 +51,31 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setUser(session?.user ?? null);
       
       if (session?.user) {
+        // Determine role based on email for demo accounts first
+        let userRole = session.user.user_metadata?.role || 'client';
+        
+        // Check email patterns for demo accounts
+        if (session.user.email === 'giorgi.meskhi@consulting19.com') {
+          userRole = 'consultant';
+        } else if (session.user.email === 'admin@consulting19.com') {
+          userRole = 'admin';
+        } else if (session.user.email === 'client@consulting19.com') {
+          userRole = 'client';
+        }
+        
         // Create minimal profile immediately to prevent loading loops
         const minimalProfile: UserProfile = {
           id: session.user.id,
           email: session.user.email || '',
           full_name: session.user.user_metadata?.full_name || '',
-          role: 'client',
+          role: userRole,
           is_active: true,
           created_at: new Date().toISOString(),
           updated_at: new Date().toISOString(),
         };
         
         setProfile(minimalProfile);
-        setRole('client');
+        setRole(userRole);
         setLoading(false);
         
         // Try to fetch real profile in background
@@ -84,19 +96,31 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setUser(session?.user ?? null);
         
         if (session?.user) {
+          // Determine role based on email for demo accounts first
+          let userRole = session.user.user_metadata?.role || 'client';
+          
+          // Check email patterns for demo accounts
+          if (session.user.email === 'giorgi.meskhi@consulting19.com') {
+            userRole = 'consultant';
+          } else if (session.user.email === 'admin@consulting19.com') {
+            userRole = 'admin';
+          } else if (session.user.email === 'client@consulting19.com') {
+            userRole = 'client';
+          }
+          
           // Create minimal profile immediately
           const minimalProfile: UserProfile = {
             id: session.user.id,
             email: session.user.email || '',
             full_name: session.user.user_metadata?.full_name || '',
-            role: 'client',
+            role: userRole,
             is_active: true,
             created_at: new Date().toISOString(),
             updated_at: new Date().toISOString(),
           };
           
           setProfile(minimalProfile);
-          setRole('client');
+          setRole(userRole);
           setLoading(false);
           
           // Try to fetch real profile in background
