@@ -1,14 +1,14 @@
-# Marketing App (consulting19.com ana domain için)
+# Ana Consulting19 Deployment - Tüm uygulamalar tek URL'de
 [build]
   publish = "apps/marketing/dist"
-  command = "npm run build:marketing"
+  command = "npm run build:all"
 
 [build.environment]
   NODE_VERSION = "18"
   VITE_SUPABASE_URL = "https://qdwykqrepolavgvfxquw.supabase.co"
   VITE_SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFkd3lrcXJlcG9sYXZndmZ4cXV3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTYwNjgzNDIsImV4cCI6MjA3MTY0NDM0Mn0.WuaXRd_Kgd0ld4hMaeLptJktK3AiGTwRajpAnYgyhPo"
 
-# Marketing App SPA yönlendirmesi
+# SPA yönlendirmesi - tüm route'lar marketing app'e gider
 [[redirects]]
   from = "/*"
   to = "/index.html"
@@ -30,7 +30,7 @@
   [headers.values]
     Cache-Control = "max-age=31536000"
 
-# CORS ayarları
+# Security headers
 [[headers]]
   for = "/*"
   [headers.values]
