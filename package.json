@@ -14,6 +14,8 @@
     "dev:consultant": "npm run dev --workspace=@consulting19/consultant",
     "dev:admin": "npm run dev --workspace=@consulting19/admin",
     "dev:both": "concurrently \"npm run dev:client\" \"npm run dev:consultant\" --names \"CLIENT,CONSULTANT\" --prefix-colors \"blue,green\"",
+    "dev:all": "concurrently \"npm run dev:marketing\" \"npm run dev:client\" \"npm run dev:consultant\" \"npm run dev:admin\" --names \"MARKETING,CLIENT,CONSULTANT,ADMIN\" --prefix-colors \"cyan,blue,green,yellow\"",
+    "dev:test": "concurrently \"npm run dev:client\" \"npm run dev:consultant\" \"npm run dev:admin\" --names \"CLIENT,CONSULTANT,ADMIN\" --prefix-colors \"blue,green,yellow\"",
     "build": "npm run build --workspace=@consulting19/marketing",
     "build:all": "npm run build --workspaces --if-present",
     "lint": "npm run lint --workspaces --if-present",
