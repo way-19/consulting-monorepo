@@ -37,10 +37,10 @@ import SitemapPage from './pages/SitemapPage';
 import CompanyFormationWizard from './pages/CompanyFormationWizard';
 import PaymentSuccess from './pages/PaymentSuccess';
 
-// Import other apps
-import ClientApp from '../../client/src/App';
-import ConsultantApp from '../../consultant/src/App';
-import AdminApp from '../../admin/src/App';
+// Lazy load other apps to prevent circular dependencies
+const ClientApp = React.lazy(() => import('../../client/src/App'));
+const ConsultantApp = React.lazy(() => import('../../consultant/src/App'));
+const AdminApp = React.lazy(() => import('../../admin/src/App'));
 
 function App() {
   return (
@@ -114,9 +114,21 @@ function App() {
               <Route path="/countries/norway" element={<ComingSoonCountryPage country="Norway" flag="🇳🇴" />} />
               
               {/* Other Apps */}
-              <Route path="/client/*" element={<ClientApp />} />
-              <Route path="/consultant/*" element={<ConsultantApp />} />
-              <Route path="/admin/*" element={<AdminApp />} />
+              <Route path="/client/*" element={
+                <React.Suspense fallback={<div className="flex items-center justify-center min-h-screen"><div className="text-lg">Loading...</div></div>}>
+                  <ClientApp />
+                </React.Suspense>
+              } />
+              <Route path="/consultant/*" element={
+                <React.Suspense fallback={<div className="flex items-center justify-center min-h-screen"><div className="text-lg">Loading...</div></div>}>
+                  <ConsultantApp />
+                </React.Suspense>
+              } />
+              <Route path="/admin/*" element={
+                <React.Suspense fallback={<div className="flex items-center justify-center min-h-screen"><div className="text-lg">Loading...</div></div>}>
+                  <AdminApp />
+                </React.Suspense>
+              } />
             </Routes>
           </Router>
         </LanguageProvider>
