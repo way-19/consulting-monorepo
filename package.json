@@ -17,6 +17,10 @@
     "dev:all": "concurrently \"npm run dev:marketing\" \"npm run dev:client\" \"npm run dev:consultant\" \"npm run dev:admin\" --names \"MARKETING,CLIENT,CONSULTANT,ADMIN\" --prefix-colors \"cyan,blue,green,yellow\"",
     "dev:test": "concurrently \"npm run dev:client\" \"npm run dev:consultant\" \"npm run dev:admin\" --names \"CLIENT,CONSULTANT,ADMIN\" --prefix-colors \"blue,green,yellow\"",
     "build": "npm run build --workspace=@consulting19/marketing",
+    "build:marketing": "npm run build --workspace=@consulting19/marketing",
+    "build:client": "npm run build --workspace=@consulting19/client",
+    "build:consultant": "npm run build --workspace=@consulting19/consultant",
+    "build:admin": "npm run build --workspace=@consulting19/admin",
     "build:all": "npm run build --workspaces --if-present",
     "lint": "npm run lint --workspaces --if-present",
     "clean": "rm -rf node_modules apps/*/node_modules packages/*/node_modules apps/*/dist packages/*/dist"

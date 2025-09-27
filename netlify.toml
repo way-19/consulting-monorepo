@@ -1,15 +1,41 @@
+# Ana Marketing Site (Ana domain için)
 [build]
   publish = "apps/marketing/dist"
-  command = "npm run build"
+  command = "npm run build:marketing"
 
 [build.environment]
   NODE_VERSION = "18"
+  VITE_SUPABASE_URL = "https://qdwykqrepolavgvfxquw.supabase.co"
+  VITE_SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFkd3lrcXJlcG9sYXZndmZ4cXV3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTYwNjgzNDIsImV4cCI6MjA3MTY0NDM0Mn0.WuaXRd_Kgd0ld4hMaeLptJktK3AiGTwRajpAnYgyhPo"
 
+# Client App için subdomain yönlendirmesi
+[[redirects]]
+  from = "https://client.consulting19.com/*"
+  to = "https://consulting19-client.netlify.app/:splat"
+  status = 301
+  force = true
+
+# Consultant App için subdomain yönlendirmesi  
+[[redirects]]
+  from = "https://consultant.consulting19.com/*"
+  to = "https://consulting19-consultant.netlify.app/:splat"
+  status = 301
+  force = true
+
+# Admin App için subdomain yönlendirmesi
+[[redirects]]
+  from = "https://admin.consulting19.com/*"
+  to = "https://consulting19-admin.netlify.app/:splat"
+  status = 301
+  force = true
+
+# Ana site için SPA yönlendirmesi
 [[redirects]]
   from = "/*"
   to = "/index.html"
   status = 200
 
+# Cache ayarları
 [[headers]]
   for = "/assets/*"
   [headers.values]
@@ -24,3 +50,12 @@
   for = "/*.css"
   [headers.values]
     Cache-Control = "max-age=31536000"
+
+# CORS ayarları
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Frame-Options = "DENY"
+    X-XSS-Protection = "1; mode=block"
+    X-Content-Type-Options = "nosniff"
+    Referrer-Policy = "strict-origin-when-cross-origin"
