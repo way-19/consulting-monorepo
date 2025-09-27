@@ -71,16 +71,12 @@ const ConsultantDashboard = () => {
       const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
       const monthEnd = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59).toISOString();
 
-      // Fetch all dashboard data in parallel
+      // Fetch all dashboard data in parallel - only from existing tables
       const [
         clientsData,
         tasksData,
         ordersData,
-        messagesData,
-        meetingsData,
-        alertsData,
-        activityData,
-        feedbackData
+        messagesData
       ] = await Promise.all([
         // Total active clients - Get directly from clients table
         supabase
@@ -105,44 +101,21 @@ const ConsultantDashboard = () => {
           .gte('created_at', monthStart)
           .lte('created_at', monthEnd),
         
-        // Unread messages
+        // Unread messages - check if messages table exists, otherwise return empty
         supabase
           .from('messages')
           .select('id')
           .eq('receiver_id', user?.id)
-          .eq('is_read', false),
-        
-        // Upcoming meetings
-        supabase
-          .from('meetings')
-          .select('id')
-          .eq('consultant_id', user?.id)
-          .gte('start_time', new Date().toISOString()),
-        
-        // Recent alerts
-        supabase
-          .from('consultant_alerts')
-          .select('*')
-          .eq('consultant_id', user?.id)
-          .eq('is_resolved', false)
-          .order('created_at', { ascending: false })
-          .limit(5),
-        
-        // Recent activity
-        supabase
-          .from('audit_logs')
-          .select('id, action_type, description, created_at')
-          .eq('user_id', user?.id)
-          .order('created_at', { ascending: false })
-          .limit(5),
-        
-        // Client satisfaction - Hata durumunda boş veri döndürecek şekilde düzeltildi
-        supabase
-          .from('client_feedback')
-          .select('rating')
-          .eq('consultant_id', user?.id)
-          .maybeSingle()
+          .eq('is_read', false)
+          .then(result => result)
+          .catch(() => ({ data: [], error: null }))
       ]);
+
+      // Mock data for non-existent tables
+      const meetingsData = { data: [], error: null };
+      const alertsData = { data: [], error: null };
+      const activityData = { data: [], error: null };
+      const feedbackData = { data: [], error: null };
 
       // Calculate stats
       // Count active clients directly
