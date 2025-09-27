@@ -76,7 +76,7 @@ const ConsultantFinancial: React.FC = () => {
         .from('service_orders')
         .select(`
           *,
-          client:clients(full_name),
+          client:clients(first_name, last_name),
           service:services(name)
         `)
         .eq('consultant_id', currentUser.id)
@@ -137,7 +137,7 @@ const ConsultantFinancial: React.FC = () => {
           date: order.created_at,
           status: order.status === 'completed' ? 'completed' : 
                   order.status === 'approved' || order.status === 'in_progress' ? 'pending' : 'processing',
-          client_name: order.client?.full_name || 'Unknown Client',
+          client_name: order.client ? `${order.client.first_name} ${order.client.last_name}` : 'Unknown Client',
           project_name: order.service?.name || 'Service Order'
         };
       });

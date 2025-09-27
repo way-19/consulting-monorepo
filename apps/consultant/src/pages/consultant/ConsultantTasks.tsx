@@ -13,7 +13,8 @@ interface Task {
   actual_hours: number;
   billable: boolean;
   client: {
-    full_name: string;
+    first_name: string;
+    last_name: string;
   } | null;
   project: {
     title: string;
@@ -52,7 +53,7 @@ const ConsultantTasks = () => {
           *,
           project:projects(
             title,
-            client:clients(full_name)
+            client:clients(first_name, last_name)
           )
         `)
         .eq('consultant_id', user.id)
@@ -236,7 +237,7 @@ const ConsultantTasks = () => {
                         {task.client && (
                           <div className="flex items-center text-xs text-gray-500">
                             <User className="w-3 h-3 mr-1" />
-                            <span>{task.client.full_name}</span>
+                            <span>{`${task.client.first_name} ${task.client.last_name}`}</span>
                           </div>
                         )}
                         
