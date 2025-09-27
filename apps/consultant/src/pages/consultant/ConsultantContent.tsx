@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { FileText, Plus, Edit, Trash2, Eye, Globe, ToggleLeft, ToggleRight, Search, Filter } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { FileText, Plus, Edit, Trash2, Eye, Globe, ToggleLeft, ToggleRight, Search } from 'lucide-react';
 
 interface BlogPost {
   id: string;

@@ -9,7 +9,7 @@ interface MfaSetupProps {
 }
 
 const MfaSetup: React.FC<MfaSetupProps> = ({ isOpen, onClose, onComplete }) => {
-  const { user, enableMfa } = useAuth();
+  const { enableMfa } = useAuth();
   const [step, setStep] = useState(1);
   const [qrCode, setQrCode] = useState('');
   const [secret, setSecret] = useState('');

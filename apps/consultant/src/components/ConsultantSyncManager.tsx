@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { supabase, useAuth } from '@consulting19/shared';
-import { Bell, DollarSign, MessageSquare, Users } from 'lucide-react';
+import { Bell } from 'lucide-react';
 
 interface SyncNotification {
   id: string;

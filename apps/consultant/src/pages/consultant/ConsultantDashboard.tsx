@@ -1,8 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { Helmet } from 'react-helmet-async';
 import { useAuth } from '@consulting19/shared';
 import { 
-  Users, 
   Clock, 
   DollarSign, 
   MessageSquare, 
@@ -10,19 +9,11 @@ import {
   Bell,
   BarChart3,
   Award,
-  Zap,
-  Shield,
   FileText,
   CheckCircle,
   Target,
-  TrendingUp,
-  AlertTriangle,
-  Plus,
   RefreshCw,
-  User,
-  Building,
-  Mail,
-  Phone
+  Users
 } from 'lucide-react';
 import { supabase } from '@consulting19/shared/lib/supabase';
 
@@ -163,9 +154,11 @@ const ConsultantDashboard = () => {
       const upcomingMeetings = meetingsData.data?.length || 0;
       
       // Calculate average client satisfaction
-      const ratings = feedbackData.data?.map(f => f.rating) || [];
+      const ratings = Array.isArray(feedbackData.data) 
+        ? feedbackData.data.map((f: any) => f.rating) 
+        : [];
       const clientSatisfaction = ratings.length > 0 
-        ? ratings.reduce((sum, rating) => sum + rating, 0) / ratings.length 
+        ? ratings.reduce((sum: number, rating: number) => sum + rating, 0) / ratings.length 
         : 0;
 
       setStats({

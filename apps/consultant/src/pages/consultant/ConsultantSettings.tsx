@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { Helmet } from 'react-helmet-async';
 import { useAuth } from '@consulting19/shared';
 import { 
@@ -12,11 +12,7 @@ import {
   AlertTriangle,
   Settings as SettingsIcon,
   Smartphone,
-  Key,
-  Download,
-  DollarSign,
-  Globe,
-  Clock
+  DollarSign
 } from 'lucide-react';
 import { MfaSetup } from '@consulting19/shared';
 import { supabase } from '@consulting19/shared/lib/supabase';
@@ -82,7 +78,7 @@ const ConsultantSettings = () => {
         company: profile.company || '',
         preferred_language: profile.preferred_language || 'en',
         timezone: profile.timezone || 'UTC',
-        commission_rate: profile.commission_rate || 65
+        commission_rate: 65
       });
       setLoading(false);
     }
@@ -219,7 +215,7 @@ const ConsultantSettings = () => {
     setTimeout(() => setSuccessMessage(''), 3000);
   };
 
-  const isMfaEnabled = profile?.mfa_enabled || mfaFactors.some(f => f.is_verified);
+  const isMfaEnabled = mfaFactors.some(f => f.is_verified);
 
   if (loading) {
     return (

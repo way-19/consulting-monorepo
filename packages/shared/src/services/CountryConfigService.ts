@@ -6,7 +6,6 @@ import {
   CountryFormSection 
 } from '../types/country-config';
 import { CrossDomainSync } from './CrossDomainSync';
-import { supabase } from '../lib/supabase';
 
 export class CountryConfigService implements CountryConfigurationManager {
   private static instance: CountryConfigService;
@@ -275,10 +274,12 @@ export class CountryConfigService implements CountryConfigurationManager {
       },
       
       localization: {
+        currency: 'GEL',
         language: 'en',
         dateFormat: 'DD/MM/YYYY',
         numberFormat: 'en-US',
-        timezone: 'Asia/Tbilisi'
+        timeZone: 'Asia/Tbilisi',
+        translations: {}
       },
       
       metadata: {
@@ -499,10 +500,12 @@ export class CountryConfigService implements CountryConfigurationManager {
       },
       
       localization: {
+        currency: 'CRC',
         language: 'en',
         dateFormat: 'MM/DD/YYYY',
         numberFormat: 'en-US',
-        timezone: 'America/Costa_Rica'
+        timeZone: 'America/Costa_Rica',
+        translations: {}
       },
       
       metadata: {
@@ -707,16 +710,22 @@ export class CountryConfigService implements CountryConfigurationManager {
             minimumAge: 18,
             allowedBusinessTypes: [],
             restrictedBusinessTypes: [],
-            complianceRequirements: []
+            complianceRequirements: [],
+            requiredDocuments: [],
+            companyTypes: []
           },
           localization: {
             language: 'en',
             currency: 'USD',
             dateFormat: 'MM/DD/YYYY',
             timeZone: 'UTC',
+            numberFormat: '#,##0.00',
             translations: {}
           },
           metadata: {
+            consultantRequired: true,
+            estimatedProcessingTime: '0 days',
+            supportedLanguages: ['en'],
             region: country.region,
             popularity: 0,
             difficulty: 'medium',
@@ -735,85 +744,5 @@ export class CountryConfigService implements CountryConfigurationManager {
     this.saveToStorage();
   }
 
-  private async loadFromDatabase(): Promise<void> {
-    try {
-      console.log('🔄 Loading country configurations from database...');
-      
-      const { data: dbConfigs, error } = await supabase
-        .from('country_configurations')
-        .select('*')
-        .order('country_code');
 
-      if (error) {
-        console.warn('Failed to load from database:', error);
-        return;
-      }
-
-      if (dbConfigs && dbConfigs.length > 0) {
-        console.log(`📊 Found ${dbConfigs.length} configurations in database`);
-        
-        // Convert database records to CountryConfiguration objects
-        dbConfigs.forEach(dbConfig => {
-          const config: CountryConfiguration = {
-            countryCode: dbConfig.country_code,
-            countryName: dbConfig.country_name,
-            active: dbConfig.is_active,
-            basePrice: 0, // This would need to be calculated from packages
-            timeframe: dbConfig.processing_time || '5-7 business days',
-            currency: dbConfig.currency || 'USD',
-            companyDetailsForm: {
-              sections: [] // This would need to be loaded from related tables
-            },
-            packages: [], // This would need to be loaded from related tables
-            services: [], // This would need to be loaded from related tables
-            legalRequirements: {
-              minimumCapital: dbConfig.minimum_capital || 0,
-              minimumDirectors: dbConfig.minimum_directors || 1,
-              minimumShareholders: dbConfig.minimum_shareholders || 1,
-              residencyRequirement: dbConfig.requires_local_address || false,
-              localDirectorRequired: dbConfig.requires_local_director || false,
-              corporateDirectorAllowed: true,
-              minimumAge: 18,
-              allowedBusinessTypes: [],
-              restrictedBusinessTypes: [],
-              complianceRequirements: [],
-              requiredDocuments: dbConfig.requirements || []
-            },
-            localization: {
-              language: dbConfig.language || 'en',
-              currency: dbConfig.currency || 'USD',
-              dateFormat: dbConfig.date_format || 'MM/DD/YYYY',
-              timezone: dbConfig.time_zone || 'UTC',
-              translations: {}
-            },
-            metadata: {
-              region: 'Unknown',
-              popularity: dbConfig.popularity || 0,
-              difficulty: 'medium',
-              processingTime: dbConfig.processing_time || '5-7 business days',
-              tags: dbConfig.is_active ? ['active'] : ['inactive'],
-              lastUpdated: dbConfig.updated_at || new Date().toISOString(),
-              version: '1.0.0',
-              description: dbConfig.description,
-              benefits: dbConfig.benefits || []
-            }
-          };
-
-          // Only update if the database version is newer or if we don't have this config
-          const existing = this.configurations.get(config.countryCode);
-          if (!existing || (existing.metadata?.lastUpdated && config.metadata?.lastUpdated && 
-              new Date(config.metadata.lastUpdated) > new Date(existing.metadata.lastUpdated))) {
-            this.configurations.set(config.countryCode, config);
-            console.log(`✅ Updated ${config.countryCode} from database`);
-          }
-        });
-
-        // Save updated configurations to localStorage
-        this.saveToStorage();
-        console.log('✅ Database sync completed');
-      }
-    } catch (error) {
-      console.warn('Error loading from database:', error);
-    }
-  }
 }

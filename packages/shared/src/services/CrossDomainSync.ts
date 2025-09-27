@@ -8,8 +8,8 @@ export class CrossDomainSync {
   private static instance: CrossDomainSync;
   private listeners: Set<(data: any) => void> = new Set();
   private targetOrigins: string[] = [
-    'http://localhost:5173', // Marketing app
-    'http://localhost:5174', // Admin app
+    'https://consulting19.com', // Marketing app
+  'https://admin.consulting19.com', // Admin app
   ];
   private broadcastChannel: BroadcastChannel | null = null;
 

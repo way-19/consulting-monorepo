@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { CountryPackage, CountryService } from '@consulting-monorepo/shared/src/types/country-config';
+import React, { useState } from 'react';
+import { CountryPackage, CountryService } from '@consulting19/shared/types/country-config';
 
 interface CustomPackageBuilderProps {
   basePackages: CountryPackage[];

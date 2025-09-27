@@ -1,8 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { Helmet } from 'react-helmet-async';
 import { useAuth } from '@consulting19/shared';
 import { 
-  DollarSign, 
   Clock, 
   FileText, 
   CheckCircle, 
@@ -14,8 +13,7 @@ import {
   Calendar,
   Wallet,
   Shield,
-  Info,
-  ExternalLink
+  Info
 } from 'lucide-react';
 import { supabase } from '@consulting19/shared/lib/supabase';
 
@@ -140,10 +138,7 @@ const ClientBilling = () => {
     alert(`Invoice details for ${invoice.id} will open in a modal or new page`);
   };
 
-  const handleDownloadInvoice = (invoice: Invoice) => {
-    // Placeholder for PDF download
-    alert(`PDF download for invoice ${invoice.id} will be implemented`);
-  };
+
 
   if (loading) {
     return (

@@ -93,7 +93,7 @@ export async function checkSessionMismatch(): Promise<boolean> {
     }
     
     // Try to fetch the user profile to see if it exists
-    const { data: profile, error } = await supabase
+    const { error } = await supabase
       .from('user_profiles')
       .select('id')
       .eq('id', session.user.id)

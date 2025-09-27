@@ -1,4 +1,3 @@
-import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, LanguageProvider, useAuth } from '@consulting19/shared';
 import LoginPage from './pages/auth/LoginPage';
@@ -41,7 +40,7 @@ function App() {
 }
 
 const ProtectedClientRoutes = () => {
-  const { user, profile, loading } = useAuth();
+  const { user, loading } = useAuth();
   
   if (loading) {
     return (

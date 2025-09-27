@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
 import { useAuth } from '@consulting19/shared';
@@ -12,18 +12,11 @@ import {
   FileText, 
   BarChart3,
   DollarSign,
-  Globe,
   Target,
-  TrendingUp,
   Play,
-  Pause,
-  Edit,
-  Settings,
   MessageSquare,
-  Upload,
   Download,
-  Eye,
-  Plus
+  Eye
 } from 'lucide-react';
 import { supabase } from '@consulting19/shared/lib/supabase';
 

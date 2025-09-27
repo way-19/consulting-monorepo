@@ -1,8 +1,5 @@
-import React, { useState, useEffect } from 'react';
 import { Helmet } from 'react-helmet-async';
-import { useAuth } from '@consulting19/shared';
 import { TrendingUp, Target, Award } from 'lucide-react';
-import { supabase } from '@consulting19/shared/lib/supabase';
 
 const ClientProgressTracking = () => {
 

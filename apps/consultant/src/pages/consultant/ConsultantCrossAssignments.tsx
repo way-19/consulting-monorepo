@@ -21,18 +21,11 @@ interface CrossAssignment {
   rating?: number;
 }
 
-interface Application {
-  id: string;
-  assignment_id: string;
-  status: 'pending' | 'accepted' | 'rejected';
-  applied_date: string;
-  message: string;
-}
+
 
 const ConsultantCrossAssignments: React.FC = () => {
   const { user } = useAuth();
   const [assignments, setAssignments] = useState<CrossAssignment[]>([]);
-  const [applications, setApplications] = useState<Application[]>([]);
   const [selectedTab, setSelectedTab] = useState<'available' | 'my-applications' | 'my-assignments'>('available');
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedSkill, setSelectedSkill] = useState('');
@@ -96,18 +89,9 @@ const ConsultantCrossAssignments: React.FC = () => {
       }
     ];
 
-    const mockApplications: Application[] = [
-      {
-        id: '1',
-        assignment_id: '2',
-        status: 'pending',
-        applied_date: '2024-01-10',
-        message: 'I have extensive experience in market research and would love to contribute to this project.'
-      }
-    ];
+
 
     setAssignments(mockAssignments);
-    setApplications(mockApplications);
     setLoading(false);
   }, [user]);
 

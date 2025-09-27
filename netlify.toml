@@ -8,24 +8,24 @@
   VITE_SUPABASE_URL = "https://qdwykqrepolavgvfxquw.supabase.co"
   VITE_SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFkd3lrcXJlcG9sYXZndmZ4cXV3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTYwNjgzNDIsImV4cCI6MjA3MTY0NDM0Mn0.WuaXRd_Kgd0ld4hMaeLptJktK3AiGTwRajpAnYgyhPo"
 
-# Client App için subdomain yönlendirmesi
+# Subdomain yönlendirmeleri - Tek site üzerinden
 [[redirects]]
   from = "https://client.consulting19.com/*"
-  to = "https://consulting19-client.netlify.app/:splat"
+  to = "https://consulting19.com/client/:splat"
   status = 301
   force = true
 
 # Consultant App için subdomain yönlendirmesi  
 [[redirects]]
   from = "https://consultant.consulting19.com/*"
-  to = "https://consulting19-consultant.netlify.app/:splat"
+  to = "https://consulting19.com/consultant/:splat"
   status = 301
   force = true
 
 # Admin App için subdomain yönlendirmesi
 [[redirects]]
   from = "https://admin.consulting19.com/*"
-  to = "https://consulting19-admin.netlify.app/:splat"
+  to = "https://consulting19.com/admin/:splat"
   status = 301
   force = true
 

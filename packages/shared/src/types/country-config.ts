@@ -77,16 +77,26 @@ export interface CountryConfiguration {
     minimumCapital?: number;
     maximumShareholders?: number;
     minimumShareholders?: number;
+    minimumDirectors?: number;
+    minimumAge?: number;
+    residencyRequirement?: boolean;
+    localDirectorRequired?: boolean;
+    corporateDirectorAllowed?: boolean;
+    allowedBusinessTypes?: string[];
+    restrictedBusinessTypes?: string[];
+    complianceRequirements?: string[];
     requiredDocuments: string[];
     companyTypes: { value: string; label: string; description?: string }[];
   };
   
   // Localization
   localization: {
-    language: string;
+    currency: string;
     dateFormat: string;
+    timeZone: string;
+    language: string;
     numberFormat: string;
-    timezone: string;
+    translations: Record<string, string>;
   };
   
   // Additional metadata
@@ -95,6 +105,15 @@ export interface CountryConfiguration {
     estimatedProcessingTime: string;
     supportedLanguages: string[];
     specialNotes?: string[];
+    lastUpdated?: string;
+    region?: string;
+    popularity?: number;
+    difficulty?: string;
+    processingTime?: string;
+    tags?: string[];
+    version?: string;
+    description?: string;
+    benefits?: string[];
   };
 }
 

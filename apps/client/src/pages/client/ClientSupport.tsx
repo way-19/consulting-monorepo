@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { Helmet } from 'react-helmet-async';
 import { useAuth } from '@consulting19/shared';
 import { 
@@ -6,21 +6,16 @@ import {
   Plus, 
   MessageSquare, 
   Search, 
-  Filter,
   AlertTriangle,
   CheckCircle,
   Clock,
   FileText,
   CreditCard,
-  Mail,
   Truck,
   Building,
   Globe,
-  MoreVertical,
   Eye,
   Reply,
-  User,
-  Calendar,
   RefreshCw
 } from 'lucide-react';
 import { supabase } from '@consulting19/shared/lib/supabase';

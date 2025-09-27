@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Bot, X, Send, Zap, MessageSquare } from 'lucide-react';
+import { Bot, X, Send, Zap } from 'lucide-react';
 
 interface AIAgentIconProps {
   autoOpen?: boolean;

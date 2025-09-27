@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { Search, Filter, Plus, Download, Check, X, Upload, Eye, FileText, Calendar, User, RefreshCw, Building } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { Search, Download, Check, X, Upload, Eye, FileText, Calendar, User, RefreshCw, Building } from 'lucide-react';
 import { supabase } from '@consulting19/shared/lib/supabase';
 import { useAuth } from '@consulting19/shared';
 
@@ -8,10 +8,10 @@ interface Client {
   profile_id: string;
   company_name: string;
   status: string;
-  profile: {
+  user_profiles: {
     full_name: string;
     email: string;
-  };
+  } | null;
 }
 
 interface Document {
@@ -108,7 +108,7 @@ const ConsultantDocuments = () => {
           profile_id,
           company_name,
           status,
-          profile:user_profiles!clients_profile_id_fkey(
+          user_profiles!clients_profile_id_fkey(
             full_name,
             email
           )
@@ -122,7 +122,15 @@ const ConsultantDocuments = () => {
         return;
       }
 
-      setClients(clientsData || []);
+      // Transform the data to match our interface
+      const transformedClients = clientsData?.map(client => ({
+        ...client,
+        user_profiles: Array.isArray(client.user_profiles) 
+          ? client.user_profiles[0] || null 
+          : client.user_profiles
+      })) || [];
+      
+      setClients(transformedClients);
     } catch (error) {
       console.error('Error fetching clients:', error);
     } finally {
@@ -347,11 +355,7 @@ const ConsultantDocuments = () => {
     }).format(amount);
   };
 
-  const handleRefresh = () => {
-    setLoading(true);
-    fetchDocuments();
-    fetchClients();
-  };
+
 
   const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -469,7 +473,7 @@ const ConsultantDocuments = () => {
                   <option value="">Choose a specific client to manage their documents</option>
                   {clients.map((client) => (
                     <option key={client.id} value={client.id}>
-                      {client.profile?.full_name} - {client.company_name}
+                      {client.user_profiles?.full_name} - {client.company_name}
                     </option>
                   ))}
                 </select>
@@ -686,7 +690,7 @@ const ConsultantDocuments = () => {
                 </div>
                 <div>
                   <h2 className="text-xl font-semibold text-gray-900">
-                    {selectedClient?.profile?.full_name}
+                    {selectedClient?.user_profiles?.full_name}
                   </h2>
                   <p className="text-gray-600">{selectedClient?.company_name}</p>
                 </div>

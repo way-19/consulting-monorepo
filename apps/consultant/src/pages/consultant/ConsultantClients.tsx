@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { Search, Filter, Plus, MoreVertical, User, Building, Phone, Mail, Calendar } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { Search, MoreVertical, User, Building, Phone, Mail, Calendar } from 'lucide-react';
 import { supabase } from '@consulting19/shared/lib/supabase';
 import { useAuth } from '@consulting19/shared';
 
@@ -16,7 +16,7 @@ interface Client {
     full_name: string;
     email: string;
     phone?: string;
-  };
+  } | null;
 }
 
 const ConsultantClients = () => {
@@ -59,7 +59,15 @@ const ConsultantClients = () => {
           return;
         }
 
-        setClients(clientsData || []);
+        // Transform the data to match our interface
+        const transformedClients = clientsData?.map(client => ({
+          ...client,
+          user_profiles: Array.isArray(client.user_profiles) 
+            ? client.user_profiles[0] || null 
+            : client.user_profiles
+        })) || [];
+        
+        setClients(transformedClients);
       } catch (error) {
         console.error('Error:', error);
       } finally {

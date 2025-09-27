@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { Helmet } from 'react-helmet-async';
 import { useAuth } from '@consulting19/shared';
 import { 
@@ -6,14 +6,10 @@ import {
   Clock, 
   AlertTriangle,
   Search,
-  Filter,
-  Plus,
   Eye,
-  Edit,
   Calendar,
   User,
-  Target,
-  BarChart3
+  Target
 } from 'lucide-react';
 import { supabase } from '@consulting19/shared/lib/supabase';
 

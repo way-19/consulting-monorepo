@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { Clock, Calendar, Globe, Save } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { Calendar, Globe, Save } from 'lucide-react';
 
 interface AvailabilityData {
   timezone: string;

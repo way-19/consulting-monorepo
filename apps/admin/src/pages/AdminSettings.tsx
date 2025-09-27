@@ -215,7 +215,7 @@ const AdminSettings = () => {
 
   const handleSignOut = async () => {
     await signOut();
-    window.location.href = 'http://localhost:5173';
+    window.location.href = 'https://consulting19.com';
   };
 
   const isMfaEnabled = profile?.mfa_enabled || mfaFactors.some(f => f.is_verified);

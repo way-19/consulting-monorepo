@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { Plus, Search, Filter, Clock, Play, Pause, Square, CheckCircle, Calendar, User } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { Plus, Search, Clock, Play, Square, Calendar, User } from 'lucide-react';
 import { supabase } from '@consulting19/shared/lib/supabase';
 
 interface Task {

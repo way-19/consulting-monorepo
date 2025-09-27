@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { DollarSign, TrendingUp, TrendingDown, Calendar, Download, Eye, CreditCard, Wallet } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { DollarSign, TrendingUp, Calendar, Download, Eye, CreditCard, Wallet } from 'lucide-react';
 import { useAuth } from '@consulting19/shared';
 import { supabase } from '@consulting19/shared/lib/supabase';
 

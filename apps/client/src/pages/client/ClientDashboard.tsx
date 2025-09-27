@@ -1,22 +1,17 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { Helmet } from 'react-helmet-async';
 import { useAuth } from '@consulting19/shared';
 import { 
   User, 
-  Clock, 
   DollarSign, 
   MessageSquare, 
   Calendar,
-  Bell,
   FileText,
   CheckCircle,
   Building,
   Mail,
   Phone,
-  MapPin,
   Star,
-  TrendingUp,
-  AlertTriangle,
   RefreshCw,
   ExternalLink
 } from 'lucide-react';
@@ -81,11 +76,6 @@ const ClientDashboard = () => {
   const fetchDashboardData = async () => {
     try {
       setLoading(true);
-      
-      // Get current month start and end dates
-      const now = new Date();
-      const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
-      const monthEnd = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59).toISOString();
 
       // Fetch client data
       const { data: clientData } = await supabase
@@ -241,7 +231,7 @@ const ClientDashboard = () => {
       {/* Welcome Section */}
       <div className="bg-gradient-to-r from-blue-600 to-purple-600 rounded-lg p-6 text-white">
         <h1 className="text-2xl font-bold mb-2">
-          Welcome back, {profile?.first_name}!
+          Welcome back, {profile?.full_name}!
         </h1>
         <p className="text-blue-100">
           Here's an overview of your projects and activities.

@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { Plus, Edit, Trash2, Eye, DollarSign, Globe, Star, ToggleLeft, ToggleRight } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { Plus, Edit, Trash2, Eye, DollarSign, Star, ToggleLeft, ToggleRight } from 'lucide-react';
 
 interface CustomService {
   id: string;
@@ -18,7 +18,6 @@ interface CustomService {
 const ConsultantServices = () => {
   const [services, setServices] = useState<CustomService[]>([]);
   const [loading, setLoading] = useState(true);
-  const [showServiceForm, setShowServiceForm] = useState(false);
 
   useEffect(() => {
     // Simulate loading
@@ -68,7 +67,7 @@ const ConsultantServices = () => {
               <p className="text-gray-600">Create and manage your custom services</p>
             </div>
             <button 
-              onClick={() => setShowServiceForm(true)}
+              onClick={() => console.log('Create service form not implemented')}
               className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
             >
               <Plus className="w-4 h-4 mr-2" />
@@ -161,7 +160,7 @@ const ConsultantServices = () => {
               Create your first custom service to start offering specialized solutions to clients
             </p>
             <button 
-              onClick={() => setShowServiceForm(true)}
+              onClick={() => console.log('Create service form not implemented')}
               className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
             >
               <Plus className="w-4 h-4 mr-2" />

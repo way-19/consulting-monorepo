@@ -1,8 +1,5 @@
-import React, { useState, useEffect } from 'react';
 import { Helmet } from 'react-helmet-async';
-import { Mail, FileText, Truck } from 'lucide-react';
-import { supabase } from '@consulting19/shared/lib/supabase';
-import { useAuth } from '@consulting19/shared';
+import { Mail, Truck } from 'lucide-react';
 
 const ClientMailbox = () => {
 

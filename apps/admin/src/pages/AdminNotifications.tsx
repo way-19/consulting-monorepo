@@ -219,7 +219,7 @@ const AdminNotifications = () => {
 
   const handleSignOut = async () => {
     await signOut();
-    window.location.href = 'http://localhost:5173';
+    window.location.href = 'https://consulting19.com';
   };
 
   if (loading) {

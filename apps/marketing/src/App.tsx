@@ -37,6 +37,11 @@ import SitemapPage from './pages/SitemapPage';
 import CompanyFormationWizard from './pages/CompanyFormationWizard';
 import PaymentSuccess from './pages/PaymentSuccess';
 
+// Import other apps
+import ClientApp from '../../client/src/App';
+import ConsultantApp from '../../consultant/src/App';
+import AdminApp from '../../admin/src/App';
+
 function App() {
   return (
     <HelmetProvider>
@@ -107,6 +112,11 @@ function App() {
               <Route path="/countries/montenegro" element={<ComingSoonCountryPage country="Montenegro" flag="🇲🇪" />} />
               <Route path="/countries/costa-rica" element={<CountryPage />} />
               <Route path="/countries/norway" element={<ComingSoonCountryPage country="Norway" flag="🇳🇴" />} />
+              
+              {/* Other Apps */}
+              <Route path="/client/*" element={<ClientApp />} />
+              <Route path="/consultant/*" element={<ConsultantApp />} />
+              <Route path="/admin/*" element={<AdminApp />} />
             </Routes>
           </Router>
         </LanguageProvider>

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { CountryPackage } from '@consulting-monorepo/shared/src/types/country-config';
+import { CountryPackage } from '@consulting19/shared/types/country-config';
 
 interface PackageComparisonProps {
   packages: CountryPackage[];
@@ -34,7 +34,7 @@ export const PackageComparison: React.FC<PackageComparisonProps> = ({
     const selectedData = getSelectedPackagesData();
     const allFeatures = new Set<string>();
     selectedData.forEach(pkg => {
-      pkg.features.forEach(feature => allFeatures.add(feature));
+      pkg.features.forEach((feature: string) => allFeatures.add(feature));
     });
     return Array.from(allFeatures);
   };

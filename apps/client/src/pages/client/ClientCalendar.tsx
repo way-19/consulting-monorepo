@@ -1,23 +1,14 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Helmet } from 'react-helmet-async';
 import { useAuth } from '@consulting19/shared';
 import { supabase } from '@consulting19/shared/lib/supabase';
 import {
   Calendar as CalendarIcon,
-  Clock,
-  DollarSign,
-  Users,
-  Briefcase,
   CheckCircle,
-  Plus,
   Settings,
   Save,
   User,
-  Building,
-  MessageSquare,
-  Star,
-  X,
-  Bell
+  MessageSquare
 } from 'lucide-react';
 
 interface Department {
@@ -55,8 +46,18 @@ interface Meeting {
   };
 }
 
+interface UserPreferences {
+  enable_email_reminders?: boolean;
+  enable_in_app_reminders?: boolean;
+  default_reminder_time?: number;
+  auto_join_meetings?: boolean;
+  default_slot_duration?: number;
+  preferred_consultant_id?: string;
+  [key: string]: any; // Allow additional properties for dynamic access
+}
+
 const ClientCalendar = () => {
-  const { user, profile } = useAuth();
+  const { user } = useAuth();
   
   // State variables
   const [departments, setDepartments] = useState<Department[]>([]);
@@ -76,8 +77,8 @@ const ClientCalendar = () => {
   const [meetingDescription, setMeetingDescription] = useState('');
   
   // Preferences
-  const [userPreferences, setUserPreferences] = useState<any>({});
-  const [tempPreferences, setTempPreferences] = useState<any>({});
+  const [, setUserPreferences] = useState<UserPreferences>({});
+  const [tempPreferences, setTempPreferences] = useState<UserPreferences>({});
   
   const slotDurationOptions = [30, 60, 90, 120];
 
