@@ -91,11 +91,11 @@ const ConsultantDashboard = () => {
         activityData,
         feedbackData
       ] = await Promise.all([
-        // Total active clients
+        // Total active clients - Get directly from clients table
         supabase
           .from('clients')
-          .select('id')
-          .eq('assigned_consultant_id', user?.id)
+          .select('id, status, assigned_consultant_id')
+          .eq('assigned_consultant_id', profile?.id)
           .eq('status', 'active'),
         
         // Pending tasks
@@ -154,6 +154,7 @@ const ConsultantDashboard = () => {
       ]);
 
       // Calculate stats
+      // Count active clients directly
       const totalClients = clientsData.data?.length || 0;
       const pendingTasks = tasksData.data?.length || 0;
       const monthlyRevenue = ordersData.data?.reduce((sum, order) => sum + Number(order.total_amount), 0) || 0;
@@ -494,14 +495,7 @@ const ConsultantDashboard = () => {
             <p className="text-sm text-gray-600">Common tasks and shortcuts</p>
           </div>
           
-          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
-            <button className="flex flex-col items-center p-4 rounded-xl hover:bg-gray-50 transition-colors group">
-              <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center mb-3 group-hover:bg-blue-200 transition-colors">
-                <Plus className="w-6 h-6 text-blue-600" />
-              </div>
-              <span className="text-sm font-medium text-gray-900">Add Client</span>
-            </button>
-
+          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4">
             <button className="flex flex-col items-center p-4 rounded-xl hover:bg-gray-50 transition-colors group">
               <div className="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center mb-3 group-hover:bg-green-200 transition-colors">
                 <CheckCircle className="w-6 h-6 text-green-600" />

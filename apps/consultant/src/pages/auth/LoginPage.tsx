@@ -7,7 +7,7 @@ import { useAuth, Button, Card } from '@consulting19/shared';
 
 export default function LoginPage() {
   const [email, setEmail] = useState('giorgi.meskhi@consulting19.com');
-  const [password, setPassword] = useState('Consultant123!');
+  const [password, setPassword] = useState('consultant123');
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');

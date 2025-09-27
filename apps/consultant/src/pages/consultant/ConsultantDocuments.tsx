@@ -37,11 +37,12 @@ interface Document {
 const ConsultantDocuments = () => {
   const { user } = useAuth();
   const [clients, setClients] = useState<Client[]>([]);
-  const [selectedClientId, setSelectedClientId] = useState<string>('');
+  const [selectedClientId, setSelectedClientId] = useState<string>('all');
   const [documents, setDocuments] = useState<Document[]>([]);
   const [loading, setLoading] = useState(true);
   const [loadingDocuments, setLoadingDocuments] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
+  const [clientSearchTerm, setClientSearchTerm] = useState('');
   const [activeTab, setActiveTab] = useState<'accounting' | 'official'>('accounting');
   const [uploadingFile, setUploadingFile] = useState(false);
 
@@ -84,7 +85,9 @@ const ConsultantDocuments = () => {
   }, [user]);
 
   useEffect(() => {
-    if (selectedClientId) {
+    if (selectedClientId === 'all') {
+      fetchAllDocuments();
+    } else if (selectedClientId) {
       fetchDocuments();
     } else {
       setDocuments([]);
@@ -124,6 +127,94 @@ const ConsultantDocuments = () => {
       console.error('Error fetching clients:', error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchAllDocuments = async () => {
+    if (!user?.id) return;
+    
+    try {
+      setLoadingDocuments(true);
+
+      // Get consultant profile
+      const { data: consultantProfile, error: profileError } = await supabase
+        .from('user_profiles')
+        .select('id')
+        .eq('user_id', user.id)
+        .eq('role', 'consultant')
+        .single();
+
+      if (profileError || !consultantProfile) {
+        console.error('Consultant profile not found:', profileError);
+        setLoadingDocuments(false);
+        return;
+      }
+
+      // Get consultant's assigned clients through service_orders
+      const { data: serviceOrders, error: ordersError } = await supabase
+        .from('service_orders')
+        .select('client_id')
+        .eq('consultant_id', consultantProfile.id);
+
+      if (ordersError) {
+        console.error('Error fetching service orders:', ordersError);
+        setLoadingDocuments(false);
+        return;
+      }
+
+      const assignedClientIds = serviceOrders?.map(order => order.client_id) || [];
+
+      if (assignedClientIds.length === 0) {
+        setDocuments([]);
+        setLoadingDocuments(false);
+        return;
+      }
+
+      // Build query for documents from all assigned clients
+      let query = supabase
+        .from('documents')
+        .select(`
+          *,
+          client:clients(
+            id,
+            company_name,
+            profile:user_profiles!clients_profile_id_fkey(full_name)
+          )
+        `)
+        .in('client_id', assignedClientIds);
+
+      // Filter by document type based on active tab
+      if (activeTab === 'accounting') {
+        query = query.eq('document_type', 'accounting');
+      } else {
+        query = query.eq('document_type', 'official');
+      }
+
+      // Order by upload date
+      query = query.order('uploaded_at', { ascending: false });
+
+      const { data: documentsData, error } = await query;
+
+      if (error) {
+        console.error('Error fetching documents:', error);
+        return;
+      }
+
+      // Transform data to match interface
+      const transformedDocuments = documentsData?.map(doc => ({
+        ...doc,
+        client: {
+          id: doc.client?.id || '',
+          full_name: doc.client?.profile?.full_name || '',
+          company_name: doc.client?.company_name || ''
+        }
+      })) || [];
+
+      setDocuments(transformedDocuments);
+    } catch (error) {
+      console.error('Error fetching documents:', error);
+    } finally {
+      setLoadingDocuments(false);
     }
   };
 
@@ -223,7 +314,12 @@ const ConsultantDocuments = () => {
       doc.category?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       doc.notes?.toLowerCase().includes(searchTerm.toLowerCase());
     
-    return matchesSearch;
+    const matchesClientSearch = selectedClientId === 'all' 
+      ? (doc.client.full_name.toLowerCase().includes(clientSearchTerm.toLowerCase()) ||
+         doc.client.company_name.toLowerCase().includes(clientSearchTerm.toLowerCase()))
+      : true;
+    
+    return matchesSearch && matchesClientSearch;
   });
 
   const getStatusColor = (status: string) => {
@@ -369,7 +465,8 @@ const ConsultantDocuments = () => {
                   onChange={(e) => setSelectedClientId(e.target.value)}
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 >
-                  <option value="">Choose a client from the dropdown above to manage their documents</option>
+                  <option value="all">All Clients - View documents from all assigned clients</option>
+                  <option value="">Choose a specific client to manage their documents</option>
                   {clients.map((client) => (
                     <option key={client.id} value={client.id}>
                       {client.profile?.full_name} - {client.company_name}
@@ -399,6 +496,186 @@ const ConsultantDocuments = () => {
               Choose a client from the dropdown above to manage their documents
             </p>
           </div>
+        ) : selectedClientId === 'all' ? (
+          <>
+            {/* All Clients Info */}
+             <div className="bg-white rounded-lg shadow-md p-6 mb-6">
+               <div className="flex items-center space-x-4">
+                 <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
+                   <User className="w-6 h-6 text-blue-600" />
+                 </div>
+                 <div>
+                   <h2 className="text-xl font-semibold text-gray-900">
+                     All Assigned Clients
+                   </h2>
+                   <p className="text-gray-600">Viewing documents from all your assigned clients ({clients.length} clients)</p>
+                 </div>
+               </div>
+             </div>
+
+            {/* Tabs */}
+            <div className="bg-white rounded-lg shadow-md mb-6">
+              <div className="border-b border-gray-200">
+                <nav className="-mb-px flex">
+                  <button
+                    onClick={() => setActiveTab('accounting')}
+                    className={`py-4 px-6 text-sm font-medium border-b-2 ${
+                      activeTab === 'accounting'
+                        ? 'border-blue-500 text-blue-600'
+                        : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                    }`}
+                  >
+                    Accounting Documents
+                  </button>
+                  <button
+                    onClick={() => setActiveTab('official')}
+                    className={`py-4 px-6 text-sm font-medium border-b-2 ${
+                      activeTab === 'official'
+                        ? 'border-blue-500 text-blue-600'
+                        : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                    }`}
+                  >
+                    Official Company Documents
+                  </button>
+                </nav>
+              </div>
+
+              {/* Search Bar and Upload */}
+              <div className="p-6 border-b border-gray-200">
+                <div className="flex flex-col space-y-4">
+                  <div className="flex items-center space-x-4">
+                    <div className="relative flex-1">
+                      <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+                      <input
+                        type="text"
+                        placeholder="Search documents..."
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                        className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      />
+                    </div>
+                    
+                    <div className="text-sm text-gray-500 px-4 py-2 bg-gray-100 rounded-lg">
+                      Upload disabled for all clients view
+                    </div>
+                  </div>
+                  
+                  <div className="relative">
+                    <User className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+                    <input
+                      type="text"
+                      placeholder="Filter by client name or company..."
+                      value={clientSearchTerm}
+                      onChange={(e) => setClientSearchTerm(e.target.value)}
+                      className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Documents List */}
+              <div className="p-6">
+                {loadingDocuments ? (
+                  <div className="space-y-4">
+                    {[...Array(3)].map((_, i) => (
+                      <div key={i} className="animate-pulse">
+                        <div className="h-20 bg-gray-200 rounded-lg"></div>
+                      </div>
+                    ))}
+                  </div>
+                ) : filteredDocuments.length > 0 ? (
+                  <div className="space-y-4">
+                    {filteredDocuments.map((doc) => (
+                      <div key={doc.id} className="border border-gray-200 rounded-lg p-4 hover:bg-gray-50 transition-colors">
+                        <div className="flex items-center justify-between">
+                          <div className="flex-1">
+                            <div className="flex items-center space-x-3 mb-2">
+                              <FileText className="w-5 h-5 text-blue-600" />
+                              <h3 className="text-lg font-semibold text-gray-900">{doc.name}</h3>
+                              <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(doc.status)}`}>
+                                {doc.status}
+                              </span>
+                              <div className="flex items-center space-x-2 ml-auto">
+                                <User className="w-4 h-4 text-gray-500" />
+                                <span className="text-sm text-gray-600 font-medium">
+                                  {doc.client.full_name} - {doc.client.company_name}
+                                </span>
+                              </div>
+                            </div>
+                            
+                            <div className="flex items-center space-x-4 text-sm text-gray-500 mb-2">
+                              {doc.category && (
+                                <span className="bg-gray-100 px-2 py-1 rounded text-xs">
+                                  {doc.category}
+                                </span>
+                              )}
+                              {doc.file_size && (
+                                <span>{formatFileSize(doc.file_size)}</span>
+                              )}
+                              <div className="flex items-center">
+                                <Calendar className="w-4 h-4 mr-1" />
+                                <span>
+                                  {activeTab === 'accounting' && doc.transaction_date 
+                                    ? `Transaction: ${new Date(doc.transaction_date).toLocaleDateString()}`
+                                    : `Uploaded: ${new Date(doc.uploaded_at).toLocaleDateString()}`
+                                  }
+                                </span>
+                              </div>
+                              {activeTab === 'accounting' && doc.amount && (
+                                <span className="font-medium text-green-600">
+                                  {formatCurrency(doc.amount, doc.currency || 'EUR')}
+                                </span>
+                              )}
+                            </div>
+
+                            {doc.notes && (
+                              <p className="text-sm text-gray-600">{doc.notes}</p>
+                            )}
+                          </div>
+
+                          <div className="flex items-center space-x-2">
+                            <button className="inline-flex items-center px-3 py-2 text-sm border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
+                              <Eye className="w-4 h-4 mr-1" />
+                              Preview
+                            </button>
+                            <button className="inline-flex items-center px-3 py-2 text-sm border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
+                              <Download className="w-4 h-4 mr-1" />
+                              Download
+                            </button>
+                            {doc.status === 'uploaded' && (
+                              <>
+                                <button className="inline-flex items-center px-3 py-2 text-sm bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors">
+                                  <Check className="w-4 h-4 mr-1" />
+                                  Approve
+                                </button>
+                                <button className="inline-flex items-center px-3 py-2 text-sm bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors">
+                                  <X className="w-4 h-4 mr-1" />
+                                  Reject
+                                </button>
+                              </>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-12">
+                    <FileText className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+                    <h3 className="text-xl font-semibold text-gray-900 mb-2">
+                      No {activeTab} documents found
+                    </h3>
+                    <p className="text-gray-600 mb-6">
+                      {activeTab === 'accounting' 
+                        ? 'No accounting documents have been uploaded by your assigned clients yet.'
+                        : 'No official documents have been uploaded by your assigned clients yet.'
+                      }
+                    </p>
+                  </div>
+                )}
+              </div>
+            </div>
+           </>
         ) : (
           <>
             {/* Selected Client Info */}
@@ -445,19 +722,34 @@ const ConsultantDocuments = () => {
 
               {/* Search Bar and Upload */}
               <div className="p-6 border-b border-gray-200">
-                <div className="flex items-center space-x-4">
-                  <div className="relative flex-1">
-                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
-                    <input
-                      type="text"
-                      placeholder="Search documents..."
-                      value={searchTerm}
-                      onChange={(e) => setSearchTerm(e.target.value)}
-                      className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    />
+                <div className="flex flex-col space-y-4">
+                  <div className="flex items-center space-x-4">
+                    <div className="relative flex-1">
+                      <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+                      <input
+                        type="text"
+                        placeholder="Search documents..."
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                        className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      />
+                    </div>
+                    
+                    <UploadButton id="document-upload-header" />
                   </div>
                   
-                  <UploadButton id="document-upload-header" />
+                  {selectedClientId === 'all' && (
+                    <div className="relative">
+                      <User className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+                      <input
+                        type="text"
+                        placeholder="Filter by client name or company..."
+                        value={clientSearchTerm}
+                        onChange={(e) => setClientSearchTerm(e.target.value)}
+                        className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      />
+                    </div>
+                  )}
                 </div>
               </div>
 
@@ -483,6 +775,14 @@ const ConsultantDocuments = () => {
                               <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(doc.status)}`}>
                                 {doc.status}
                               </span>
+                              {selectedClientId === 'all' && (
+                                <div className="flex items-center space-x-2 ml-auto">
+                                  <User className="w-4 h-4 text-gray-500" />
+                                  <span className="text-sm text-gray-600 font-medium">
+                                    {doc.client.full_name} - {doc.client.company_name}
+                                  </span>
+                                </div>
+                              )}
                             </div>
                             
                             <div className="flex items-center space-x-4 text-sm text-gray-500 mb-2">
