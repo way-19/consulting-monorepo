@@ -222,7 +222,9 @@ const ConsultantDashboard = () => {
           <div className="flex items-center justify-between">
             <div>
               <h1 className="text-3xl font-bold mb-2">
-                Welcome back, {profile?.full_name || user?.email?.split('@')[0] || 'Consultant'}!
+                Welcome back, {profile?.full_name || 
+                  (profile?.first_name && profile?.last_name ? `${profile.first_name} ${profile.last_name}` : '') ||
+                  user?.email?.split('@')[0] || 'Consultant'}!
               </h1>
               <p className="text-blue-100 text-lg">
                 Manage your clients and grow your consulting business

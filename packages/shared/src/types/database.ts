@@ -2,7 +2,9 @@
 export interface UserProfile {
   id: string;
   email: string;
-  full_name: string;
+  first_name?: string;
+  last_name?: string;
+  full_name?: string; // Computed field or legacy field
   display_name?: string;
   role: 'admin' | 'consultant' | 'client';
   country_id?: string;

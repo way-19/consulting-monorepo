@@ -9,7 +9,9 @@ interface Client {
   company_name: string;
   status: string;
   user_profiles: {
-    full_name: string;
+    first_name?: string;
+    last_name?: string;
+    full_name?: string; // Keep for backward compatibility
     email: string;
   } | null;
 }
@@ -29,7 +31,9 @@ interface Document {
   uploaded_at: string;
   client: {
     id: string;
-    full_name: string;
+    first_name?: string;
+    last_name?: string;
+    full_name?: string; // Keep for backward compatibility
     company_name: string;
   };
 }

@@ -18,7 +18,8 @@ import { MfaSetup } from '@consulting19/shared';
 import { supabase } from '@consulting19/shared/lib/supabase';
 
 interface ProfileData {
-  full_name: string;
+  first_name: string;
+  last_name: string;
   display_name: string;
   phone: string;
   company: string;
@@ -30,7 +31,8 @@ interface ProfileData {
 const ConsultantSettings = () => {
   const { user, profile, refreshProfile, mfaFactors, disableMfa } = useAuth();
   const [profileData, setProfileData] = useState<ProfileData>({
-    full_name: '',
+    first_name: '',
+    last_name: '',
     display_name: '',
     phone: '',
     company: '',
@@ -71,8 +73,13 @@ const ConsultantSettings = () => {
 
   useEffect(() => {
     if (profile) {
+      // Handle both full_name (legacy) and first_name/last_name (new schema)
+      const fullName = profile.full_name || '';
+      const [firstName = '', lastName = ''] = fullName.split(' ', 2);
+      
       setProfileData({
-        full_name: profile.full_name || '',
+        first_name: profile.first_name || firstName,
+        last_name: profile.last_name || lastName,
         display_name: profile.display_name || '',
         phone: profile.phone || '',
         company: profile.company || '',
@@ -94,7 +101,8 @@ const ConsultantSettings = () => {
       const { error: profileError } = await supabase
         .from('user_profiles')
         .update({
-          full_name: profileData.full_name,
+          first_name: profileData.first_name,
+          last_name: profileData.last_name,
           display_name: profileData.display_name,
           phone: profileData.phone,
           company: profileData.company,
@@ -276,14 +284,27 @@ const ConsultantSettings = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Full Name *
+                First Name *
               </label>
               <input
                 type="text"
-                value={profileData.full_name}
-                onChange={(e) => setProfileData(prev => ({ ...prev, full_name: e.target.value }))}
+                value={profileData.first_name}
+                onChange={(e) => setProfileData(prev => ({ ...prev, first_name: e.target.value }))}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                placeholder="Enter your full name"
+                placeholder="Enter your first name"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Last Name *
+              </label>
+              <input
+                type="text"
+                value={profileData.last_name}
+                onChange={(e) => setProfileData(prev => ({ ...prev, last_name: e.target.value }))}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                placeholder="Enter your last name"
               />
             </div>
 

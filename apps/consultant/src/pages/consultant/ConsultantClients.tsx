@@ -13,7 +13,9 @@ interface Client {
   created_at: string;
   updated_at: string;
   user_profiles: {
-    full_name: string;
+    first_name?: string;
+    last_name?: string;
+    full_name?: string; // Keep for backward compatibility
     email: string;
     phone?: string;
   } | null;
@@ -79,8 +81,13 @@ const ConsultantClients = () => {
   }, [user, profile]);
 
   const filteredClients = clients.filter(client => {
+    const fullName = client.user_profiles?.full_name || 
+      (client.user_profiles?.first_name && client.user_profiles?.last_name 
+        ? `${client.user_profiles.first_name} ${client.user_profiles.last_name}` 
+        : '');
+    
     const matchesSearch = 
-      client.user_profiles?.full_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      fullName.toLowerCase().includes(searchTerm.toLowerCase()) ||
       client.company_name?.toLowerCase().includes(searchTerm.toLowerCase());
     
     const matchesStatus = statusFilter === 'all' || client.status === statusFilter;
@@ -197,7 +204,10 @@ const ConsultantClients = () => {
                       </div>
                       <div className="flex-1 min-w-0">
                         <h3 className="font-semibold text-gray-900 truncate text-lg">
-                          {client.user_profiles?.full_name || 'Unknown'}
+                          {client.user_profiles?.full_name || 
+                           (client.user_profiles?.first_name && client.user_profiles?.last_name 
+                             ? `${client.user_profiles.first_name} ${client.user_profiles.last_name}` 
+                             : 'Unknown')}
                         </h3>
                         {client.company_name && (
                           <div className="flex items-center mt-1">

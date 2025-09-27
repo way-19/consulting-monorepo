@@ -108,7 +108,9 @@ const ConsultantLayout: React.FC<ConsultantLayoutProps> = ({ children }) => {
               </div>
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-semibold text-gray-900 truncate">
-                  {profile?.full_name || user?.email?.split('@')[0] || 'Consultant'}
+                  {profile?.full_name || 
+                   (profile?.first_name && profile?.last_name ? `${profile.first_name} ${profile.last_name}` : '') ||
+                   user?.email?.split('@')[0] || 'Consultant'}
                 </p>
                 <p className="text-xs text-gray-500 truncate">{user?.email}</p>
               </div>
