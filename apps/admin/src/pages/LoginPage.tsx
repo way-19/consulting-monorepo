@@ -4,7 +4,7 @@ import { Eye, EyeOff, Mail, Lock } from 'lucide-react';
 import { useAuth, Button, Card } from '@consulting19/shared';
 
 const LoginPage = () => {
-  const [email, setEmail] = useState('admin@consulting19.com');
+  const [email, setEmail] = useState('admin.temp@consulting19.com');
   const [password, setPassword] = useState('admin123');
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -51,7 +51,7 @@ const LoginPage = () => {
               <div className="bg-white p-3 rounded-lg border border-blue-100">
                 <div className="text-xs font-semibold text-red-700 mb-1">👑 Admin Panel</div>
                 <div className="text-xs text-blue-800">
-                  <div><strong>Email:</strong> admin@consulting19.com</div>
+                  <div><strong>Email:</strong> admin.temp@consulting19.com</div>
                   <div><strong>Password:</strong> admin123</div>
                   <div className="text-gray-600 mt-1">• System management • All data • Settings</div>
                 </div>

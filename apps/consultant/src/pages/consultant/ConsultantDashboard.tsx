@@ -107,8 +107,6 @@ const ConsultantDashboard = () => {
           .select('id')
           .eq('receiver_id', user?.id)
           .eq('is_read', false)
-          .then(result => result)
-          .catch(() => ({ data: [], error: null }))
       ]);
 
       // Mock data for non-existent tables
@@ -121,8 +119,8 @@ const ConsultantDashboard = () => {
       // Count active clients directly
       const totalClients = clientsData.data?.length || 0;
       const pendingTasks = tasksData.data?.length || 0;
-      const monthlyRevenue = ordersData.data?.reduce((sum, order) => sum + Number(order.total_amount), 0) || 0;
-      const commissionEarned = ordersData.data?.reduce((sum, order) => sum + Number(order.consultant_commission_amount), 0) || 0;
+      const monthlyRevenue = ordersData.data?.reduce((sum: number, order: any) => sum + Number(order.total_amount), 0) || 0;
+      const commissionEarned = ordersData.data?.reduce((sum: number, order: any) => sum + Number(order.consultant_commission_amount), 0) || 0;
       const unreadMessages = messagesData.data?.length || 0;
       const upcomingMeetings = meetingsData.data?.length || 0;
       

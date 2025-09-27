@@ -327,7 +327,7 @@ const ConsultantDocuments = () => {
       doc.notes?.toLowerCase().includes(searchTerm.toLowerCase());
     
     const matchesClientSearch = selectedClientId === 'all' 
-      ? (doc.client.full_name.toLowerCase().includes(clientSearchTerm.toLowerCase()) ||
+      ? (doc.client.full_name?.toLowerCase().includes(clientSearchTerm.toLowerCase()) ||
          doc.client.company_name.toLowerCase().includes(clientSearchTerm.toLowerCase()))
       : true;
     
