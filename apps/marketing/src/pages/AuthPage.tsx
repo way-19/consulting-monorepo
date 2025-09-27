@@ -71,8 +71,8 @@ const AuthPage = () => {
         if (error) {
           setError(error.message);
         } else {
-          // Redirect to dashboard after successful registration
-          window.location.href = 'https://client.consulting19.com';
+          // Redirect to client dashboard after successful registration (default for new users)
+          window.location.href = '/client';
         }
       } else {
         const { error } = await signIn(formData.email, formData.password);
@@ -80,8 +80,16 @@ const AuthPage = () => {
         if (error) {
           setError(error.message);
         } else {
-          // Redirect to dashboard after successful login
-          window.location.href = 'https://client.consulting19.com';
+          // Wait a moment for auth context to update, then redirect based on user role
+          setTimeout(() => {
+            if (formData.email === 'giorgi.meskhi@consulting19.com') {
+              window.location.href = '/consultant';
+            } else if (formData.email === 'admin@consulting19.com') {
+              window.location.href = '/admin';
+            } else {
+              window.location.href = '/client';
+            }
+          }, 500);
         }
       }
     } catch (error) {
