@@ -10,60 +10,79 @@
 -- 3. Create consultant-client assignment
 -- ========================================
 
--- Step 1: Insert/Update user_profiles for consultant
-INSERT INTO user_profiles (id, user_id, email, first_name, last_name, role, is_active)
-VALUES (
-    '2efa54a0-08a4-49e3-9ccb-d63adf2db2c0',
-    '2efa54a0-08a4-49e3-9ccb-d63adf2db2c0',
-    'giorgi.meskhi@consulting19.com',
-    'Giorgi',
-    'Meskhi',
-    'consultant',
-    true
-)
-ON CONFLICT (id) DO UPDATE
-SET 
-    user_id = EXCLUDED.user_id,
-    email = EXCLUDED.email,
-    first_name = EXCLUDED.first_name,
-    last_name = EXCLUDED.last_name,
-    role = EXCLUDED.role,
-    updated_at = NOW();
+-- Step 1: Check if user_profiles table exists, if not skip this part
+DO $$
+BEGIN
+    -- Insert/Update user_profiles for consultant
+    IF EXISTS (SELECT FROM pg_tables WHERE schemaname = 'public' AND tablename = 'user_profiles') THEN
+        INSERT INTO user_profiles (id, user_id, email, first_name, last_name, role, is_active)
+        VALUES (
+            '2efa54a0-08a4-49e3-9ccb-d63adf2db2c0',
+            '2efa54a0-08a4-49e3-9ccb-d63adf2db2c0',
+            'giorgi.meskhi@consulting19.com',
+            'Giorgi',
+            'Meskhi',
+            'consultant',
+            true
+        )
+        ON CONFLICT (id) DO UPDATE
+        SET 
+            user_id = EXCLUDED.user_id,
+            email = EXCLUDED.email,
+            first_name = EXCLUDED.first_name,
+            last_name = EXCLUDED.last_name,
+            role = EXCLUDED.role,
+            updated_at = NOW();
+            
+        -- Insert/Update user_profiles for client
+        INSERT INTO user_profiles (id, user_id, email, first_name, last_name, role, is_active)
+        VALUES (
+            '44175993-eda1-42e7-ab18-bba2f16d721b',
+            '44175993-eda1-42e7-ab18-bba2f16d721b',
+            'client@consulting19.com',
+            'Test',
+            'Client',
+            'client',
+            true
+        )
+        ON CONFLICT (id) DO UPDATE
+        SET 
+            user_id = EXCLUDED.user_id,
+            email = EXCLUDED.email,
+            first_name = EXCLUDED.first_name,
+            last_name = EXCLUDED.last_name,
+            role = EXCLUDED.role,
+            updated_at = NOW();
+        
+        RAISE NOTICE '✅ user_profiles updated';
+    ELSE
+        RAISE NOTICE '⚠️ user_profiles table not found, skipping';
+    END IF;
+END $$;
 
--- Step 2: Insert/Update user_profiles for client
-INSERT INTO user_profiles (id, user_id, email, first_name, last_name, role, is_active)
-VALUES (
-    '44175993-eda1-42e7-ab18-bba2f16d721b',
-    '44175993-eda1-42e7-ab18-bba2f16d721b',
-    'client@consulting19.com',
-    'Test',
-    'Client',
-    'client',
-    true
-)
-ON CONFLICT (id) DO UPDATE
-SET 
-    user_id = EXCLUDED.user_id,
-    email = EXCLUDED.email,
-    first_name = EXCLUDED.first_name,
-    last_name = EXCLUDED.last_name,
-    role = EXCLUDED.role,
-    updated_at = NOW();
-
--- Step 3: Update consultant_profiles (if exists)
+-- Step 2: Update consultant_profiles (skip INSERT, only UPDATE)
 UPDATE consultant_profiles
 SET 
     user_id = '2efa54a0-08a4-49e3-9ccb-d63adf2db2c0',
     updated_at = NOW()
 WHERE email = 'giorgi.meskhi@consulting19.com';
 
--- Step 4: Update clients table
-UPDATE clients
+-- Step 3: Update or Insert clients
+INSERT INTO clients (user_id, profile_id, email, first_name, last_name, company_name, preferred_language)
+VALUES (
+    '44175993-eda1-42e7-ab18-bba2f16d721b',
+    '44175993-eda1-42e7-ab18-bba2f16d721b',
+    'client@consulting19.com',
+    'Test',
+    'Client',
+    'Test Company LLC',
+    'en'
+)
+ON CONFLICT (email) DO UPDATE
 SET 
-    user_id = '44175993-eda1-42e7-ab18-bba2f16d721b',
-    profile_id = '44175993-eda1-42e7-ab18-bba2f16d721b',
-    updated_at = NOW()
-WHERE email = 'client@consulting19.com';
+    user_id = EXCLUDED.user_id,
+    profile_id = EXCLUDED.profile_id,
+    updated_at = NOW();
 
 -- Step 5: Create user assignment (consultant -> client)
 INSERT INTO user_assignments (consultant_id, client_id, status, notes)
