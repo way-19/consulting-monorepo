@@ -65,11 +65,24 @@ const ClientTasks = () => {
     try {
       setLoading(true);
       
-      // Get client ID
+      // Get client profile ID first
+      const { data: profileData, error: profileError } = await supabase
+        .from('user_profiles')
+        .select('id')
+        .eq('user_id', user?.id)
+        .eq('role', 'client')
+        .single();
+
+      if (profileError || !profileData) {
+        console.error('Client profile not found:', profileError);
+        return;
+      }
+
+      // Get client ID using profile_id
       const { data: clientData, error: clientError } = await supabase
         .from('clients')
         .select('id')
-        .eq('profile_id', user?.id)
+        .eq('profile_id', profileData.id)
         .maybeSingle();
 
       if (clientError || !clientData) {

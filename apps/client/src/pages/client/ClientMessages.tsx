@@ -64,11 +64,25 @@ const ClientMessages = () => {
     try {
       setLoading(true);
       
-      // Get client ID and assigned consultant
+      // Get client profile ID first
+      const { data: profileData, error: profileError } = await supabase
+        .from('user_profiles')
+        .select('id')
+        .eq('user_id', user?.id)
+        .eq('role', 'client')
+        .single();
+
+      if (profileError || !profileData) {
+        console.error('Client profile not found:', profileError);
+        setLoading(false);
+        return;
+      }
+
+      // Get client ID and assigned consultant using profile_id
       const { data: clientData, error: clientError } = await supabase
         .from('clients')
         .select('id, assigned_consultant_id')
-        .eq('profile_id', user?.id)
+        .eq('profile_id', profileData.id)
         .single();
 
       if (clientError || !clientData) {

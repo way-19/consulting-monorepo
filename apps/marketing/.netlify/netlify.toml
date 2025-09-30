@@ -1,0 +1,70 @@
+headersOrigin = "config"
+redirectsOrigin = "config"
+plugins = []
+
+[functions]
+
+[functions."*"]
+
+[build]
+publish = "C:\\consulting-monorepo\\apps\\marketing\\apps\\marketing\\dist"
+publishOrigin = "config"
+commandOrigin = "config"
+base = "C:\\consulting-monorepo\\apps\\marketing"
+command = "npm run build:all"
+
+[build.environment]
+NODE_VERSION = "18"
+VITE_SUPABASE_URL = "https://qdwykqrepolavgvfxquw.supabase.co"
+VITE_SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFkd3lrcXJlcG9sYXZndmZ4cXV3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTYwNjgzNDIsImV4cCI6MjA3MTY0NDM0Mn0.WuaXRd_Kgd0ld4hMaeLptJktK3AiGTwRajpAnYgyhPo"
+
+[build.processing]
+
+[build.processing.css]
+
+[build.processing.html]
+
+[build.processing.images]
+
+[build.processing.js]
+
+[build.services]
+
+[[headers]]
+for = "/assets/*"
+
+[headers.values]
+Cache-Control = "max-age=31536000"
+
+[[headers]]
+for = "/*.js"
+
+[headers.values]
+Cache-Control = "max-age=31536000"
+
+[[headers]]
+for = "/*.css"
+
+[headers.values]
+Cache-Control = "max-age=31536000"
+
+[[headers]]
+for = "/*"
+
+[headers.values]
+X-Frame-Options = "DENY"
+X-XSS-Protection = "1; mode=block"
+X-Content-Type-Options = "nosniff"
+Referrer-Policy = "strict-origin-when-cross-origin"
+
+[[redirects]]
+from = "/*"
+to = "/index.html"
+status = 200.0
+force = false
+
+[redirects.query]
+
+[redirects.conditions]
+
+[redirects.headers]

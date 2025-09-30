@@ -1,0 +1,54 @@
+{
+  "dashboard": {
+    "title": "Dashboard",
+    "welcome": "Welcome to Consultant Panel",
+    "stats": {
+      "activeClients": "Active Clients",
+      "pendingTasks": "Pending Tasks",
+      "totalDocuments": "Total Documents",
+      "completedOrders": "Completed Orders",
+      "totalRevenue": "Total Revenue",
+      "responseTime": "Avg Response Time"
+    },
+    "quickActions": "Quick Actions",
+    "recentActivity": "Recent Activity",
+    "financialOverview": "Financial Overview"
+  },
+  "navigation": {
+    "dashboard": "Dashboard",
+    "clients": "Clients",
+    "documents": "Documents",
+    "content": "Content",
+    "availability": "Availability",
+    "settings": "Settings",
+    "logout": "Logout"
+  },
+  "common": {
+    "loading": "Loading...",
+    "error": "Error",
+    "success": "Success",
+    "save": "Save",
+    "cancel": "Cancel",
+    "edit": "Edit",
+    "delete": "Delete",
+    "view": "View",
+    "search": "Search",
+    "filter": "Filter",
+    "export": "Export",
+    "import": "Import",
+    "refresh": "Refresh"
+  },
+  "notifications": {
+    "title": "Notifications",
+    "noNotifications": "No notifications",
+    "markAsRead": "Mark as read",
+    "markAllAsRead": "Mark all as read"
+  },
+  "language": {
+    "title": "Language",
+    "english": "English",
+    "turkish": "Türkçe",
+    "portuguese": "Português",
+    "spanish": "Español"
+  }
+}

@@ -80,6 +80,8 @@ INSERT INTO service_categories (name_en, name_tr, name_es, name_pt, description_
 ('Marketing Services', 'Pazarlama Hizmetleri', 'Servicios de Marketing', 'Serviços de Marketing', 'Marketing and advertising consulting', 'Pazarlama ve reklam danışmanlığı', 'Consultoría de marketing y publicidad', 'Consultoria de marketing e publicidade')
 ON CONFLICT DO NOTHING;
 
+-- Test users and clients for development will be added later via application
+
 -- Insert some basic services
 INSERT INTO services (category_id, name_en, name_tr, name_es, name_pt, description_en, description_tr, description_es, description_pt, base_price) VALUES
 (1, 'Business Plan Development', 'İş Planı Geliştirme', 'Desarrollo de Plan de Negocios', 'Desenvolvimento de Plano de Negócios', 'Comprehensive business plan creation', 'Kapsamlı iş planı oluşturma', 'Creación integral de plan de negocios', 'Criação abrangente de plano de negócios', 500.00),

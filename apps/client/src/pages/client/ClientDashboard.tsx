@@ -77,12 +77,32 @@ const ClientDashboard = () => {
     try {
       setLoading(true);
 
+      // Get client profile ID first
+      const { data: profileData, error: profileError } = await supabase
+        .from('user_profiles')
+        .select('id')
+        .eq('user_id', user?.id)
+        .eq('role', 'client')
+        .single();
+
+      if (profileError || !profileData) {
+        console.error('Client profile not found:', profileError);
+        return;
+      }
+
       // Fetch client data
       const { data: clientData } = await supabase
         .from('clients')
-        .select('assigned_consultant_id')
-        .eq('user_id', user?.id)
+        .select('id, assigned_consultant_id')
+        .eq('profile_id', profileData.id)
         .single();
+
+      if (!clientData) {
+        console.error('Client data not found');
+        return;
+      }
+
+      const clientId = clientData.id;
 
       // Fetch assigned consultant details
       if (clientData?.assigned_consultant_id) {
@@ -124,42 +144,42 @@ const ClientDashboard = () => {
         supabase
           .from('projects')
           .select('id, name, status, progress, created_at')
-          .eq('client_id', user?.id)
+          .eq('client_id', clientId)
           .in('status', ['active', 'in_progress']),
         
         // Completed tasks
         supabase
           .from('tasks')
           .select('id')
-          .eq('client_id', user?.id)
+          .eq('client_id', clientId)
           .eq('status', 'completed'),
         
         // Total spent
         supabase
           .from('service_orders')
           .select('total_amount')
-          .eq('client_id', user?.id)
+          .eq('client_id', clientId)
           .in('status', ['completed', 'paid']),
         
         // Unread messages
         supabase
           .from('messages')
           .select('id')
-          .eq('receiver_id', user?.id)
+          .eq('receiver_id', profileData.id)
           .eq('is_read', false),
         
         // Upcoming meetings
         supabase
           .from('meetings')
           .select('id')
-          .eq('client_id', user?.id)
+          .eq('client_id', clientId)
           .gte('start_time', new Date().toISOString()),
         
         // Documents uploaded
         supabase
           .from('documents')
           .select('id')
-          .eq('client_id', user?.id),
+          .eq('client_id', clientId),
         
         // Recent activity
         supabase

@@ -3,7 +3,7 @@
 
 -- Create documents table
 CREATE TABLE IF NOT EXISTS documents (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     client_id UUID REFERENCES clients(id) ON DELETE CASCADE,
     consultant_id UUID REFERENCES user_profiles(id) ON DELETE SET NULL,
     document_type VARCHAR(50) NOT NULL, -- 'accounting' or 'official'

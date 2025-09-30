@@ -1,0 +1,54 @@
+{
+  "dashboard": {
+    "title": "Kontrol Paneli",
+    "welcome": "Danışman Paneline Hoş Geldiniz",
+    "stats": {
+      "activeClients": "Aktif Müşteriler",
+      "pendingTasks": "Bekleyen Görevler",
+      "totalDocuments": "Toplam Belgeler",
+      "completedOrders": "Tamamlanan Siparişler",
+      "totalRevenue": "Toplam Gelir",
+      "responseTime": "Ort. Yanıt Süresi"
+    },
+    "quickActions": "Hızlı İşlemler",
+    "recentActivity": "Son Aktiviteler",
+    "financialOverview": "Mali Durum"
+  },
+  "navigation": {
+    "dashboard": "Kontrol Paneli",
+    "clients": "Müşteriler",
+    "documents": "Belgeler",
+    "content": "İçerik",
+    "availability": "Müsaitlik",
+    "settings": "Ayarlar",
+    "logout": "Çıkış"
+  },
+  "common": {
+    "loading": "Yükleniyor...",
+    "error": "Hata",
+    "success": "Başarılı",
+    "save": "Kaydet",
+    "cancel": "İptal",
+    "edit": "Düzenle",
+    "delete": "Sil",
+    "view": "Görüntüle",
+    "search": "Ara",
+    "filter": "Filtrele",
+    "export": "Dışa Aktar",
+    "import": "İçe Aktar",
+    "refresh": "Yenile"
+  },
+  "notifications": {
+    "title": "Bildirimler",
+    "noNotifications": "Bildirim yok",
+    "markAsRead": "Okundu olarak işaretle",
+    "markAllAsRead": "Tümünü okundu işaretle"
+  },
+  "language": {
+    "title": "Dil",
+    "english": "English",
+    "turkish": "Türkçe",
+    "portuguese": "Português",
+    "spanish": "Español"
+  }
+}

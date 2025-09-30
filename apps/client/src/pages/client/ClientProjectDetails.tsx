@@ -62,11 +62,24 @@ const ClientProjectDetails = () => {
     try {
       setLoading(true);
       
-      // Get client ID
+      // Get client profile ID first
+      const { data: profileData, error: profileError } = await supabase
+        .from('user_profiles')
+        .select('id')
+        .eq('user_id', user?.id)
+        .eq('role', 'client')
+        .single();
+
+      if (profileError || !profileData) {
+        setError('Client profile not found');
+        return;
+      }
+
+      // Get client ID using profile_id
       const { data: clientData, error: clientError } = await supabase
         .from('clients')
         .select('id')
-        .eq('profile_id', user?.id)
+        .eq('profile_id', profileData.id)
         .single();
 
       if (clientError || !clientData) {

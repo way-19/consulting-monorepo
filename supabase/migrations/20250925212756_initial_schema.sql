@@ -2,7 +2,7 @@
 -- This creates all the necessary tables and relationships
 
 -- Enable necessary extensions
-CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+-- Note: gen_random_uuid() is available by default in Supabase
 
 -- Countries table
 CREATE TABLE IF NOT EXISTS countries (
@@ -56,7 +56,7 @@ CREATE TABLE IF NOT EXISTS services (
 
 -- Consultant profiles table
 CREATE TABLE IF NOT EXISTS consultant_profiles (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE,
     first_name VARCHAR(50) NOT NULL,
     last_name VARCHAR(50) NOT NULL,
@@ -106,7 +106,7 @@ CREATE TABLE IF NOT EXISTS consultant_country_services (
 
 -- Clients table
 CREATE TABLE IF NOT EXISTS clients (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE,
     first_name VARCHAR(50) NOT NULL,
     last_name VARCHAR(50) NOT NULL,
@@ -121,7 +121,7 @@ CREATE TABLE IF NOT EXISTS clients (
 
 -- Service orders table
 CREATE TABLE IF NOT EXISTS service_orders (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     client_id UUID REFERENCES clients(id) ON DELETE CASCADE,
     consultant_id UUID REFERENCES consultant_profiles(id) ON DELETE CASCADE,
     service_id INTEGER REFERENCES services(id),
@@ -138,7 +138,7 @@ CREATE TABLE IF NOT EXISTS service_orders (
 
 -- Service purchases table (completed transactions)
 CREATE TABLE IF NOT EXISTS service_purchases (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     order_id UUID REFERENCES service_orders(id) ON DELETE CASCADE,
     client_id UUID REFERENCES clients(id) ON DELETE CASCADE,
     consultant_id UUID REFERENCES consultant_profiles(id) ON DELETE CASCADE,
@@ -154,7 +154,7 @@ CREATE TABLE IF NOT EXISTS service_purchases (
 
 -- Commission payouts table
 CREATE TABLE IF NOT EXISTS commission_payouts (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     consultant_id UUID REFERENCES consultant_profiles(id) ON DELETE CASCADE,
     period_start DATE NOT NULL,
     period_end DATE NOT NULL,
@@ -167,7 +167,7 @@ CREATE TABLE IF NOT EXISTS commission_payouts (
 
 -- Commission payout items table
 CREATE TABLE IF NOT EXISTS commission_payout_items (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     payout_id UUID REFERENCES commission_payouts(id) ON DELETE CASCADE,
     purchase_id UUID REFERENCES service_purchases(id) ON DELETE CASCADE,
     service_amount DECIMAL(10,2) NOT NULL,
@@ -177,7 +177,7 @@ CREATE TABLE IF NOT EXISTS commission_payout_items (
 
 -- Messages table for communication
 CREATE TABLE IF NOT EXISTS messages (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     sender_id UUID REFERENCES auth.users(id) ON DELETE CASCADE,
     recipient_id UUID REFERENCES auth.users(id) ON DELETE CASCADE,
     order_id UUID REFERENCES service_orders(id) ON DELETE SET NULL,
@@ -189,7 +189,7 @@ CREATE TABLE IF NOT EXISTS messages (
 
 -- Message attachments table
 CREATE TABLE IF NOT EXISTS message_attachments (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     message_id UUID REFERENCES messages(id) ON DELETE CASCADE,
     file_name VARCHAR(255) NOT NULL,
     file_path VARCHAR(500) NOT NULL,
@@ -200,7 +200,7 @@ CREATE TABLE IF NOT EXISTS message_attachments (
 
 -- Conversation participants table
 CREATE TABLE IF NOT EXISTS conversation_participants (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     order_id UUID REFERENCES service_orders(id) ON DELETE CASCADE,
     user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE,
     joined_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
@@ -209,7 +209,7 @@ CREATE TABLE IF NOT EXISTS conversation_participants (
 
 -- Notifications table
 CREATE TABLE IF NOT EXISTS notifications (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE,
     title VARCHAR(200) NOT NULL,
     message TEXT NOT NULL,
@@ -282,7 +282,7 @@ CREATE TABLE IF NOT EXISTS country_settings (
 
 -- Blog posts table
 CREATE TABLE IF NOT EXISTS blog_posts (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     author_id UUID REFERENCES auth.users(id) ON DELETE SET NULL,
     title_en VARCHAR(200),
     title_tr VARCHAR(200),

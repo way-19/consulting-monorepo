@@ -3,7 +3,7 @@
 
 -- Country configurations table
 CREATE TABLE IF NOT EXISTS country_configurations (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     country_code VARCHAR(2) UNIQUE NOT NULL REFERENCES countries(code) ON DELETE CASCADE,
     country_name VARCHAR(100) NOT NULL,
     is_active BOOLEAN DEFAULT true,
@@ -35,7 +35,7 @@ CREATE TABLE IF NOT EXISTS country_configurations (
 
 -- Company details form configuration
 CREATE TABLE IF NOT EXISTS country_form_sections (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     country_config_id UUID REFERENCES country_configurations(id) ON DELETE CASCADE,
     section_id VARCHAR(50) NOT NULL,
     title VARCHAR(200) NOT NULL,
@@ -47,7 +47,7 @@ CREATE TABLE IF NOT EXISTS country_form_sections (
 
 -- Form fields configuration
 CREATE TABLE IF NOT EXISTS country_form_fields (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     section_id UUID REFERENCES country_form_sections(id) ON DELETE CASCADE,
     field_id VARCHAR(50) NOT NULL,
     field_type VARCHAR(20) NOT NULL, -- text, number, textarea, select, checkbox, radio
@@ -73,7 +73,7 @@ CREATE TABLE IF NOT EXISTS country_form_fields (
 
 -- Country packages configuration
 CREATE TABLE IF NOT EXISTS country_packages (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     country_config_id UUID REFERENCES country_configurations(id) ON DELETE CASCADE,
     package_id VARCHAR(50) NOT NULL,
     name VARCHAR(200) NOT NULL,
@@ -94,7 +94,7 @@ CREATE TABLE IF NOT EXISTS country_packages (
 
 -- Country additional services configuration
 CREATE TABLE IF NOT EXISTS country_services (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     country_config_id UUID REFERENCES country_configurations(id) ON DELETE CASCADE,
     service_id VARCHAR(50) NOT NULL,
     name VARCHAR(200) NOT NULL,
@@ -112,7 +112,7 @@ CREATE TABLE IF NOT EXISTS country_services (
 
 -- Country configuration audit log
 CREATE TABLE IF NOT EXISTS country_config_audit (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     country_config_id UUID REFERENCES country_configurations(id) ON DELETE CASCADE,
     action VARCHAR(20) NOT NULL, -- create, update, delete
     changed_by UUID REFERENCES auth.users(id) ON DELETE SET NULL,

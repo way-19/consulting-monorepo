@@ -1,0 +1,54 @@
+{
+  "dashboard": {
+    "title": "Painel",
+    "welcome": "Bem-vindo ao Painel do Consultor",
+    "stats": {
+      "activeClients": "Clientes Ativos",
+      "pendingTasks": "Tarefas Pendentes",
+      "totalDocuments": "Total de Documentos",
+      "completedOrders": "Pedidos Concluídos",
+      "totalRevenue": "Receita Total",
+      "responseTime": "Tempo Médio de Resposta"
+    },
+    "quickActions": "Ações Rápidas",
+    "recentActivity": "Atividade Recente",
+    "financialOverview": "Visão Financeira"
+  },
+  "navigation": {
+    "dashboard": "Painel",
+    "clients": "Clientes",
+    "documents": "Documentos",
+    "content": "Conteúdo",
+    "availability": "Disponibilidade",
+    "settings": "Configurações",
+    "logout": "Sair"
+  },
+  "common": {
+    "loading": "Carregando...",
+    "error": "Erro",
+    "success": "Sucesso",
+    "save": "Salvar",
+    "cancel": "Cancelar",
+    "edit": "Editar",
+    "delete": "Excluir",
+    "view": "Visualizar",
+    "search": "Pesquisar",
+    "filter": "Filtrar",
+    "export": "Exportar",
+    "import": "Importar",
+    "refresh": "Atualizar"
+  },
+  "notifications": {
+    "title": "Notificações",
+    "noNotifications": "Sem notificações",
+    "markAsRead": "Marcar como lida",
+    "markAllAsRead": "Marcar todas como lidas"
+  },
+  "language": {
+    "title": "Idioma",
+    "english": "English",
+    "turkish": "Türkçe",
+    "portuguese": "Português",
+    "spanish": "Español"
+  }
+}

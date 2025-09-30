@@ -3,7 +3,7 @@
 
 -- Packages table (global packages)
 CREATE TABLE IF NOT EXISTS packages (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     name VARCHAR(100) NOT NULL,
     description TEXT,
     price DECIMAL(10,2) NOT NULL,
@@ -18,7 +18,7 @@ CREATE TABLE IF NOT EXISTS packages (
 
 -- Additional services table
 CREATE TABLE IF NOT EXISTS additional_services (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     name VARCHAR(100) NOT NULL,
     description TEXT,
     base_price DECIMAL(10,2) NOT NULL,
@@ -31,7 +31,7 @@ CREATE TABLE IF NOT EXISTS additional_services (
 
 -- Banks table
 CREATE TABLE IF NOT EXISTS banks (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     name VARCHAR(100) NOT NULL,
     country_code VARCHAR(2),
     price DECIMAL(10,2) DEFAULT 0,
