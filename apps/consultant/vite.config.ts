@@ -14,7 +14,8 @@ export default defineConfig({
     exclude: ['lucide-react'],
   },
   server: {
-    port: 5176,
-    host: true,
+    port: 3000,
+    host: '0.0.0.0',
+    allowedHosts: ['.replit.dev', '.repl.co'],
   },
 });

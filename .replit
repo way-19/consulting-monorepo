@@ -17,6 +17,14 @@ author = "agent"
 task = "workflow.run"
 args = "Marketing Site"
 
+[[workflows.workflow.tasks]]
+task = "workflow.run"
+args = "Client Dashboard"
+
+[[workflows.workflow.tasks]]
+task = "workflow.run"
+args = "Consultant Dashboard"
+
 [[workflows.workflow]]
 name = "Marketing Site"
 author = "agent"
@@ -29,12 +37,44 @@ waitForPort = 5000
 [workflows.workflow.metadata]
 outputType = "webview"
 
+[[workflows.workflow]]
+name = "Client Dashboard"
+author = "agent"
+
+[workflows.workflow.metadata]
+outputType = "console"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "npm run dev:client"
+waitForPort = 5173
+
+[[workflows.workflow]]
+name = "Consultant Dashboard"
+author = "agent"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "npm run dev:consultant"
+waitForPort = 3000
+
+[workflows.workflow.metadata]
+outputType = "console"
+
 [[ports]]
 localPort = 5000
 externalPort = 80
 
 [[ports]]
 localPort = 45589
+externalPort = 3000
+
+[[ports]]
+localPort = 5173
+externalPort = 5173
+
+[[ports]]
+localPort = 3000
 externalPort = 3000
 
 [deployment]
