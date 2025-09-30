@@ -85,17 +85,21 @@ const ClientDashboard = () => {
         .eq('role', 'client')
         .single();
 
+      console.log('🔍 Profile Data:', profileData, 'Error:', profileError);
+
       if (profileError || !profileData) {
         console.error('Client profile not found:', profileError);
         return;
       }
 
       // Fetch client data
-      const { data: clientData } = await supabase
+      const { data: clientData, error: clientError } = await supabase
         .from('clients')
         .select('id, assigned_consultant_id')
         .eq('profile_id', profileData.id)
         .single();
+
+      console.log('🔍 Client Data:', clientData, 'Error:', clientError);
 
       if (!clientData) {
         console.error('Client data not found');
@@ -106,11 +110,14 @@ const ClientDashboard = () => {
 
       // Fetch assigned consultant details
       if (clientData?.assigned_consultant_id) {
-        const { data: consultantData } = await supabase
+        console.log('🔍 Fetching consultant:', clientData.assigned_consultant_id);
+        const { data: consultantData, error: consultantError } = await supabase
           .from('user_profiles')
-          .select('id, first_name, last_name, email, phone, specialization, profile_image')
+          .select('id, first_name, last_name, email, phone, avatar_url')
           .eq('id', clientData.assigned_consultant_id)
           .single();
+
+        console.log('🔍 Consultant Data:', consultantData, 'Error:', consultantError);
 
         if (consultantData) {
           // Get consultant rating
@@ -123,11 +130,16 @@ const ClientDashboard = () => {
             ? ratingData.reduce((sum, r) => sum + r.rating, 0) / ratingData.length
             : 0;
 
+          console.log('✅ Setting consultant:', consultantData.first_name, consultantData.last_name);
           setAssignedConsultant({
             ...consultantData,
             rating: avgRating
           });
+        } else {
+          console.error('❌ No consultant data received');
         }
+      } else {
+        console.log('❌ No assigned_consultant_id in client data');
       }
 
       // Fetch dashboard stats in parallel
