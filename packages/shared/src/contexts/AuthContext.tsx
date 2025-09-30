@@ -1,369 +1,160 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import { User, Session } from '@supabase/supabase-js';
-import { supabase } from '../lib/supabase';
 import type { UserProfile } from '../types/database';
-import { checkSessionMismatch, forceResetSession } from '../utils/sessionReset';
+
+const AUTH_API_URL = 'http://localhost:3001/api/auth';
+const TOKEN_KEY = 'auth_token';
 
 interface AuthContextType {
-  user: User | null;
-  session: Session | null;
-  profile: UserProfile | null;
-  role: string | null;
+  user: UserProfile | null;
   loading: boolean;
-  mfaFactors: any[];
   signIn: (email: string, password: string) => Promise<{ error: any }>;
   signUp: (email: string, password: string, metadata?: any) => Promise<{ error: any }>;
   signOut: () => Promise<{ error: any }>;
   resetPassword: (email: string) => Promise<{ error: any }>;
   refreshProfile: () => Promise<void>;
-  enableMfa: (verificationCode?: string) => Promise<{ data?: any; error?: any }>;
-  disableMfa: (factorId: string) => Promise<{ error?: any }>;
-  resetSession: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [user, setUser] = useState<User | null>(null);
-  const [session, setSession] = useState<Session | null>(null);
-  const [profile, setProfile] = useState<UserProfile | null>(null);
-  const [role, setRole] = useState<string | null>(null);
+  const [user, setUser] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
-  const [mfaFactors, setMfaFactors] = useState<any[]>([]);
 
   useEffect(() => {
-    // Get initial session
-    supabase.auth.getSession().then(async ({ data: { session } }) => {
-      console.log('Initial session:', session?.user?.email);
-      
-      // Check for session mismatch before proceeding
-      if (session?.user) {
-        const hasMismatch = await checkSessionMismatch();
-        if (hasMismatch) {
-          console.log('🔄 Session mismatch detected, resetting...');
-          await forceResetSession();
-          // After reset, the page will reload automatically
-          return;
-        }
-      }
-      
-      setSession(session);
-      setUser(session?.user ?? null);
-      
-      if (session?.user) {
-        // Determine role based on email for demo accounts first
-        let userRole = session.user.user_metadata?.role || 'client';
-        
-        // Check email patterns for demo accounts
-        if (session.user.email === 'giorgi.meskhi@consulting19.com') {
-          userRole = 'consultant';
-        } else if (session.user.email === 'admin@consulting19.com') {
-          userRole = 'admin';
-        } else if (session.user.email === 'client@consulting19.com') {
-          userRole = 'client';
-        }
-        
-        // Create minimal profile immediately to prevent loading loops
-        const minimalProfile: UserProfile = {
-          id: session.user.id,
-          email: session.user.email || '',
-          full_name: session.user.user_metadata?.full_name || '',
-          role: userRole,
-          is_active: true,
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString(),
-        };
-        
-        setProfile(minimalProfile);
-        setRole(userRole);
-        setLoading(false);
-        
-        // Try to fetch real profile in background
-        fetchProfile(session.user.id);
-        
-        // Load MFA factors
-        loadMfaFactors();
-      } else {
-        setLoading(false);
-      }
-    });
-
-    // Listen for auth changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
-        console.log('Auth state change:', event, session?.user?.email);
-        setSession(session);
-        setUser(session?.user ?? null);
-        
-        if (session?.user) {
-          // Determine role based on email for demo accounts first
-          let userRole = session.user.user_metadata?.role || 'client';
-          
-          // Check email patterns for demo accounts
-          if (session.user.email === 'giorgi.meskhi@consulting19.com') {
-            userRole = 'consultant';
-          } else if (session.user.email === 'admin@consulting19.com') {
-            userRole = 'admin';
-          } else if (session.user.email === 'client@consulting19.com') {
-            userRole = 'client';
-          }
-          
-          // Create minimal profile immediately
-          const minimalProfile: UserProfile = {
-            id: session.user.id,
-            email: session.user.email || '',
-            full_name: session.user.user_metadata?.full_name || '',
-            role: userRole,
-            is_active: true,
-            created_at: new Date().toISOString(),
-            updated_at: new Date().toISOString(),
-          };
-          
-          setProfile(minimalProfile);
-          setRole(userRole);
-          setLoading(false);
-          
-          // Try to fetch real profile in background
-          fetchProfile(session.user.id);
-          
-          // Load MFA factors
-          loadMfaFactors();
-        } else {
-          setProfile(null);
-          setRole(null);
-          setMfaFactors([]);
-          setLoading(false);
-        }
-      }
-    );
-
-    return () => subscription.unsubscribe();
+    // Check for existing token on mount
+    checkAuth();
   }, []);
 
-  const loadMfaFactors = async () => {
-    try {
-      const factors = await supabase.auth.mfa.listFactors();
-      setMfaFactors(factors.data?.totp || []);
-    } catch (error) {
-      console.warn('Failed to load MFA factors:', error);
-      setMfaFactors([]);
+  const checkAuth = async () => {
+    const token = localStorage.getItem(TOKEN_KEY);
+    
+    if (!token) {
+      setLoading(false);
+      return;
     }
-  };
 
-  const fetchProfile = async (userId: string) => {
     try {
-      console.log('Fetching profile for user:', userId);
-      
-      // Try to fetch from database first
-      const { data: dbProfile, error } = await supabase
-        .from('user_profiles')
-        .select('*')
-        .eq('id', userId)
-        .single();
-
-      if (dbProfile && !error) {
-        setProfile(dbProfile);
-        setRole(dbProfile.role);
-        console.log('Profile loaded from DB:', dbProfile.role);
-        return;
-      }
-
-      // Fallback to session data if database fetch fails
-      console.log('Using session data for profile, DB error:', error);
-      const sessionUser = user;
-      if (sessionUser) {
-        // Determine role based on email for demo accounts
-        let userRole = sessionUser.user_metadata?.role || 'client';
-        
-        // Check email patterns for demo accounts
-        if (sessionUser.email === 'giorgi.meskhi@consulting19.com') {
-          userRole = 'consultant';
-        } else if (sessionUser.email === 'admin@consulting19.com') {
-          userRole = 'admin';
-        } else if (sessionUser.email === 'client@consulting19.com') {
-          userRole = 'client';
+      const response = await fetch(`${AUTH_API_URL}/me`, {
+        headers: {
+          'Authorization': `Bearer ${token}`
         }
-        
-        console.log('Setting role from email pattern:', sessionUser.email, '->', userRole);
-        
-        const sessionProfile: UserProfile = {
-          id: sessionUser.id,
-          email: sessionUser.email || '',
-          full_name: sessionUser.user_metadata?.full_name || '',
-          display_name: sessionUser.user_metadata?.display_name,
-          role: userRole,
-          country_id: sessionUser.user_metadata?.country_id,
-          phone: sessionUser.user_metadata?.phone,
-          company: sessionUser.user_metadata?.company,
-          avatar_url: sessionUser.user_metadata?.avatar_url,
-          preferred_language: sessionUser.user_metadata?.preferred_language || 'en',
-          timezone: sessionUser.user_metadata?.timezone || 'UTC',
-          is_active: true,
-          metadata: sessionUser.user_metadata || {},
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString(),
-        };
-      
-        setProfile(sessionProfile);
-        setRole(userRole);
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setUser(data.user);
+      } else {
+        // Invalid token, clear it
+        localStorage.removeItem(TOKEN_KEY);
       }
-    } catch (err) {
-      console.warn('Profile fetch failed:', err);
-      // Keep the minimal profile we already set
+    } catch (error) {
+      console.error('Auth check failed:', error);
+      localStorage.removeItem(TOKEN_KEY);
+    } finally {
+      setLoading(false);
     }
   };
 
   const refreshProfile = async () => {
-    if (user) {
-      await fetchProfile(user.id);
-    }
+    await checkAuth();
   };
 
   const signIn = async (email: string, password: string) => {
-    const { error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
-    return { error };
+    try {
+      const response = await fetch(`${AUTH_API_URL}/login`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ email, password })
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        return { error: data.error || 'Login failed' };
+      }
+
+      // Save token and user
+      localStorage.setItem(TOKEN_KEY, data.token);
+      setUser(data.user);
+
+      return { error: null };
+    } catch (error: any) {
+      return { error: error.message || 'Network error' };
+    }
   };
 
   const signUp = async (email: string, password: string, metadata?: any) => {
-    const { data, error } = await supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        data: metadata,
-      },
-    });
+    try {
+      const response = await fetch(`${AUTH_API_URL}/register`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          email,
+          password,
+          first_name: metadata?.first_name || '',
+          last_name: metadata?.last_name || '',
+          role: metadata?.role || 'client'
+        })
+      });
 
-    // Create user profile after successful signup
-    if (!error && data.user) {
-      const { error: profileError } = await supabase
-        .from('user_profiles')
-        .insert({
-          id: data.user.id,
-          email: data.user.email!,
-          full_name: metadata?.full_name || '',
-          role: metadata?.role || 'client',
-          country_id: metadata?.country_id,
-          phone: metadata?.phone,
-          company: metadata?.company,
-        });
+      const data = await response.json();
 
-      if (profileError) {
-        console.error('Error creating profile:', profileError);
+      if (!response.ok) {
+        return { error: data.error || 'Registration failed' };
       }
-    }
 
-    return { error };
+      // Save token and user
+      localStorage.setItem(TOKEN_KEY, data.token);
+      setUser(data.user);
+
+      return { error: null };
+    } catch (error: any) {
+      return { error: error.message || 'Network error' };
+    }
   };
 
   const signOut = async () => {
-    const { error } = await supabase.auth.signOut();
-    return { error };
+    try {
+      const token = localStorage.getItem(TOKEN_KEY);
+      
+      if (token) {
+        await fetch(`${AUTH_API_URL}/logout`, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+      }
+
+      localStorage.removeItem(TOKEN_KEY);
+      setUser(null);
+
+      return { error: null };
+    } catch (error: any) {
+      return { error: error.message || 'Logout failed' };
+    }
   };
 
   const resetPassword = async (email: string) => {
-    const { error } = await supabase.auth.resetPasswordForEmail(email);
-    return { error };
-  };
-
-  const enableMfa = async (verificationCode?: string) => {
-    try {
-      if (!verificationCode) {
-        // First step: enroll TOTP factor
-        const { data, error } = await supabase.auth.mfa.enroll({
-          factorType: 'totp',
-          friendlyName: 'Authenticator App'
-        });
-        
-        if (error) {
-          return { error };
-        }
-        
-        return { data };
-      } else {
-        // Second step: verify and enable
-        const factors = await supabase.auth.mfa.listFactors();
-        if (factors.data?.totp && factors.data.totp.length > 0) {
-          const factorId = factors.data.totp[0].id;
-          
-          const { data, error } = await supabase.auth.mfa.challengeAndVerify({
-            factorId,
-            code: verificationCode
-          });
-          
-          if (!error) {
-            // Refresh MFA factors
-            const updatedFactors = await supabase.auth.mfa.listFactors();
-            setMfaFactors(updatedFactors.data?.totp || []);
-          }
-          
-          return { data, error };
-        }
-        
-        return { error: new Error('No TOTP factor found') };
-      }
-    } catch (error) {
-      return { error };
-    }
-  };
-
-  const disableMfa = async (factorId: string) => {
-    try {
-      const { error } = await supabase.auth.mfa.unenroll({ factorId });
-      
-      if (!error) {
-        // Refresh MFA factors
-        const updatedFactors = await supabase.auth.mfa.listFactors();
-        setMfaFactors(updatedFactors.data?.totp || []);
-      }
-      
-      return { error };
-    } catch (error) {
-      return { error };
-    }
-  };
-
-  const resetSession = async () => {
-    try {
-      console.log('🔄 Manual session reset triggered...');
-      await forceResetSession();
-      
-      // Reset all state
-      setUser(null);
-      setSession(null);
-      setProfile(null);
-      setRole(null);
-      setMfaFactors([]);
-      setLoading(false);
-      
-      // Reload the page to ensure clean state
-      if (typeof window !== 'undefined') {
-        window.location.reload();
-      }
-    } catch (error) {
-      console.error('Error during manual session reset:', error);
-    }
+    // TODO: Implement password reset functionality
+    console.warn('Password reset not implemented yet');
+    return { error: 'Not implemented' };
   };
 
   return (
     <AuthContext.Provider 
       value={{
         user,
-        session,
-        profile,
-        role,
         loading,
-        mfaFactors,
         signIn,
         signUp,
         signOut,
         resetPassword,
         refreshProfile,
-        enableMfa,
-        disableMfa,
-        resetSession,
       }}
     >
       {children}
@@ -378,3 +169,6 @@ export const useAuth = () => {
   }
   return context;
 };
+
+// Backward compatibility aliases
+export { useAuth as useAuthContext };
