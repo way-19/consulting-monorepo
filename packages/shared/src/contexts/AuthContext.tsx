@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import type { UserProfile } from '../types/database';
 
-const AUTH_API_URL = 'http://localhost:3001/api/auth';
+const AUTH_API_URL = '/api/auth';
 const TOKEN_KEY = 'auth_token';
 
 interface AuthContextType {

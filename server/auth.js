@@ -10,8 +10,14 @@ dotenv.config();
 const app = express();
 const PORT = 3001;
 
-// JWT Secret (in production, use environment variable)
-const JWT_SECRET = process.env.JWT_SECRET || 'consulting19-secret-key-change-in-production';
+// JWT Secret (MANDATORY - must be set in environment)
+const JWT_SECRET = process.env.JWT_SECRET;
+
+if (!JWT_SECRET) {
+  console.error('❌ FATAL: JWT_SECRET environment variable is not set!');
+  process.exit(1);
+}
+
 const JWT_EXPIRES_IN = '7d';
 
 // Database connection
@@ -99,13 +105,21 @@ app.get('/api/auth/me', authenticateToken, async (req, res) => {
   }
 });
 
-// Register endpoint (optional - for new user creation)
+// Register endpoint (DISABLED for security - use admin interface to create users)
 app.post('/api/auth/register', async (req, res) => {
   try {
     const { email, password, first_name, last_name, role } = req.body;
 
-    if (!email || !password || !first_name || !last_name || !role) {
+    if (!email || !password || !first_name || !last_name) {
       return res.status(400).json({ error: 'All fields are required' });
+    }
+
+    // SECURITY: Only allow 'client' role for public registration
+    // Admin and consultant accounts must be created by administrators
+    const userRole = 'client';
+
+    if (role && role !== 'client') {
+      return res.status(403).json({ error: 'Cannot self-assign privileged roles. Only client registration is allowed.' });
     }
 
     // Check if user exists
@@ -121,12 +135,12 @@ app.post('/api/auth/register', async (req, res) => {
     // Hash password
     const password_hash = await bcrypt.hash(password, 10);
 
-    // Create user
+    // Create user with client role only
     const result = await pool.query(
       `INSERT INTO user_profiles (user_id, email, password_hash, first_name, last_name, role, created_at, updated_at)
        VALUES (uuid_generate_v4(), $1, $2, $3, $4, $5, NOW(), NOW())
        RETURNING id, user_id, email, role, first_name, last_name`,
-      [email, password_hash, first_name, last_name, role]
+      [email, password_hash, first_name, last_name, userRole]
     );
 
     const user = result.rows[0];
