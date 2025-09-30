@@ -1,0 +1,81 @@
+chunk-OTGXDCXC.js?v=49a77023:21551 Download the React DevTools for a better development experience: https://reactjs.org/link/react-devtools
+supabase.ts:8 Supabase URL from env: https://qdwykqrepolavgvfxquw.supabase.co
+supabase.ts:9 Supabase Anon Key from env: *****
+App.tsx:42 Consultant App - User: undefined Profile role: undefined Loading: true
+App.tsx:42 Consultant App - User: undefined Profile role: undefined Loading: true
+AuthContext.tsx:94 Auth state change: SIGNED_IN giorgi.meskhi@consulting19.com
+AuthContext.tsx:155 Fetching profile for user: 2efa54a0-08a4-49e3-9ccb-d63adf2db2c0
+App.tsx:42 Consultant App - User: giorgi.meskhi@consulting19.com Profile role: consultant Loading: false
+App.tsx:42 Consultant App - User: giorgi.meskhi@consulting19.com Profile role: consultant Loading: false
+AuthContext.tsx:37 Initial session: giorgi.meskhi@consulting19.com
+AuthContext.tsx:37 Initial session: giorgi.meskhi@consulting19.com
+AuthContext.tsx:94 Auth state change: INITIAL_SESSION giorgi.meskhi@consulting19.com
+AuthContext.tsx:155 Fetching profile for user: 2efa54a0-08a4-49e3-9ccb-d63adf2db2c0
+App.tsx:42 Consultant App - User: giorgi.meskhi@consulting19.com Profile role: consultant Loading: false
+App.tsx:42 Consultant App - User: giorgi.meskhi@consulting19.com Profile role: consultant Loading: false
+App.tsx:42 Consultant App - User: giorgi.meskhi@consulting19.com Profile role: consultant Loading: false
+App.tsx:42 Consultant App - User: giorgi.meskhi@consulting19.com Profile role: consultant Loading: false
+App.tsx:42 Consultant App - User: giorgi.meskhi@consulting19.com Profile role: consultant Loading: false
+App.tsx:42 Consultant App - User: giorgi.meskhi@consulting19.com Profile role: consultant Loading: false
+qdwykqrepolavgvfxquw.supabase.co/rest/v1/user_profiles?select=*&id=eq.2efa54a0-08a4-49e3-9ccb-d63adf2db2c0:1  Failed to load resource: the server responded with a status of 406 ()
+AuthContext.tsx:172 Using session data for profile, DB error: Object
+qdwykqrepolavgvfxquw.supabase.co/rest/v1/service_orders?select=total_amount%2Cconsultant_commission_amount&consultant_id=eq.2efa54a0-08a4-49e3-9ccb-d63adf2db2c0&status=in.%28completed%2Cpaid%29&created_at=gte.2025-08-31T21%3A00%3A00.000Z&created_at=lte.2025-09-30T20%3A59%3A59.000Z:1  Failed to load resource: the server responded with a status of 400 ()
+qdwykqrepolavgvfxquw.supabase.co/rest/v1/user_profiles?select=id&id=eq.2efa54a0-08a4-49e3-9ccb-d63adf2db2c0:1  Failed to load resource: the server responded with a status of 406 ()
+sessionReset.ts:104 ⚠️ Session user ID has no corresponding profile
+checkSessionMismatch @ sessionReset.ts:104
+AuthContext.tsx:43 🔄 Session mismatch detected, resetting...
+sessionReset.ts:9 🧹 Forcing session reset...
+qdwykqrepolavgvfxquw.supabase.co/rest/v1/user_profiles?select=*&id=eq.2efa54a0-08a4-49e3-9ccb-d63adf2db2c0:1  Failed to load resource: the server responded with a status of 406 ()
+AuthContext.tsx:172 Using session data for profile, DB error: Object
+qdwykqrepolavgvfxquw.supabase.co/rest/v1/service_orders?select=total_amount%2Cconsultant_commission_amount&consultant_id=eq.2efa54a0-08a4-49e3-9ccb-d63adf2db2c0&status=in.%28completed%2Cpaid%29&created_at=gte.2025-08-31T21%3A00%3A00.000Z&created_at=lte.2025-09-30T20%3A59%3A59.000Z:1  Failed to load resource: the server responded with a status of 400 ()
+qdwykqrepolavgvfxquw.supabase.co/rest/v1/user_profiles?select=id&id=eq.2efa54a0-08a4-49e3-9ccb-d63adf2db2c0:1  Failed to load resource: the server responded with a status of 406 ()
+sessionReset.ts:104 ⚠️ Session user ID has no corresponding profile
+checkSessionMismatch @ sessionReset.ts:104
+AuthContext.tsx:43 🔄 Session mismatch detected, resetting...
+sessionReset.ts:9 🧹 Forcing session reset...
+qdwykqrepolavgvfxquw.supabase.co/rest/v1/service_orders?select=total_amount%2Cconsultant_commission_amount&consultant_id=eq.2efa54a0-08a4-49e3-9ccb-d63adf2db2c0&status=in.%28completed%2Cpaid%29&created_at=gte.2025-08-31T21%3A00%3A00.000Z&created_at=lte.2025-09-30T20%3A59%3A59.000Z:1  Failed to load resource: the server responded with a status of 400 ()
+AuthContext.tsx:94 Auth state change: SIGNED_OUT undefined
+AuthContext.tsx:94 Auth state change: SIGNED_OUT undefined
+sessionReset.ts:37 ✅ Cleared 0 cached session keys
+sessionReset.ts:67 ✅ Session reset completed
+sessionReset.ts:37 ✅ Cleared 0 cached session keys
+App.tsx:42 Consultant App - User: undefined Profile role: undefined Loading: false
+App.tsx:42 Consultant App - User: undefined Profile role: undefined Loading: false
+sessionReset.ts:67 ✅ Session reset completed
+AuthContext.tsx:94 Auth state change: SIGNED_IN giorgi.meskhi@consulting19.com
+AuthContext.tsx:155 Fetching profile for user: 2efa54a0-08a4-49e3-9ccb-d63adf2db2c0
+App.tsx:42 Consultant App - User: giorgi.meskhi@consulting19.com Profile role: consultant Loading: false
+App.tsx:42 Consultant App - User: giorgi.meskhi@consulting19.com Profile role: consultant Loading: false
+App.tsx:42 Consultant App - User: giorgi.meskhi@consulting19.com Profile role: consultant Loading: false
+App.tsx:42 Consultant App - User: giorgi.meskhi@consulting19.com Profile role: consultant Loading: false
+qdwykqrepolavgvfxquw.supabase.co/rest/v1/user_profiles?select=*&id=eq.2efa54a0-08a4-49e3-9ccb-d63adf2db2c0:1  Failed to load resource: the server responded with a status of 406 ()
+AuthContext.tsx:172 Using session data for profile, DB error: Object
+qdwykqrepolavgvfxquw.supabase.co/rest/v1/service_orders?select=total_amount%2Cconsultant_commission_amount&consultant_id=eq.2efa54a0-08a4-49e3-9ccb-d63adf2db2c0&status=in.%28completed%2Cpaid%29&created_at=gte.2025-08-31T21%3A00%3A00.000Z&created_at=lte.2025-09-30T20%3A59%3A59.000Z:1  Failed to load resource: the server responded with a status of 400 ()
+qdwykqrepolavgvfxquw.supabase.co/rest/v1/service_orders?select=total_amount%2Cconsultant_commission_amount&consultant_id=eq.2efa54a0-08a4-49e3-9ccb-d63adf2db2c0&status=in.%28completed%2Cpaid%29&created_at=gte.2025-08-31T21%3A00%3A00.000Z&created_at=lte.2025-09-30T20%3A59%3A59.000Z:1  Failed to load resource: the server responded with a status of 400 ()
+AuthContext.tsx:94 Auth state change: SIGNED_IN giorgi.meskhi@consulting19.com
+AuthContext.tsx:155 Fetching profile for user: 2efa54a0-08a4-49e3-9ccb-d63adf2db2c0
+App.tsx:42 Consultant App - User: giorgi.meskhi@consulting19.com Profile role: consultant Loading: false
+App.tsx:42 Consultant App - User: giorgi.meskhi@consulting19.com Profile role: consultant Loading: false
+App.tsx:42 Consultant App - User: giorgi.meskhi@consulting19.com Profile role: consultant Loading: false
+App.tsx:42 Consultant App - User: giorgi.meskhi@consulting19.com Profile role: consultant Loading: false
+@supabase_supabase-js.js?v=49a77023:4293  GET https://qdwykqrepolavgvfxquw.supabase.co/rest/v1/service_orders?select=total_amount%2Cconsultant_commission_amount&consultant_id=eq.2efa54a0-08a4-49e3-9ccb-d63adf2db2c0&status=in.%28completed%2Cpaid%29&created_at=gte.2025-08-31T21%3A00%3A00.000Z&created_at=lte.2025-09-30T20%3A59%3A59.000Z 400 (Bad Request)
+(anonymous) @ @supabase_supabase-js.js?v=49a77023:4293
+(anonymous) @ @supabase_supabase-js.js?v=49a77023:4314
+fulfilled @ @supabase_supabase-js.js?v=49a77023:4266
+Promise.then
+step @ @supabase_supabase-js.js?v=49a77023:4279
+(anonymous) @ @supabase_supabase-js.js?v=49a77023:4281
+__awaiter6 @ @supabase_supabase-js.js?v=49a77023:4263
+(anonymous) @ @supabase_supabase-js.js?v=49a77023:4304
+then @ @supabase_supabase-js.js?v=49a77023:90
+@supabase_supabase-js.js?v=49a77023:4293  GET https://qdwykqrepolavgvfxquw.supabase.co/rest/v1/user_profiles?select=*&id=eq.2efa54a0-08a4-49e3-9ccb-d63adf2db2c0 406 (Not Acceptable)
+(anonymous) @ @supabase_supabase-js.js?v=49a77023:4293
+(anonymous) @ @supabase_supabase-js.js?v=49a77023:4314
+fulfilled @ @supabase_supabase-js.js?v=49a77023:4266
+Promise.then
+step @ @supabase_supabase-js.js?v=49a77023:4279
+(anonymous) @ @supabase_supabase-js.js?v=49a77023:4281
+__awaiter6 @ @supabase_supabase-js.js?v=49a77023:4263
+(anonymous) @ @supabase_supabase-js.js?v=49a77023:4304
+then @ @supabase_supabase-js.js?v=49a77023:90
+AuthContext.tsx:172 Using session data for profile, DB error: {code: 'PGRST116', details: 'The result contains 0 rows', hint: null, message: 'Cannot coerce the result to a single JSON object'}
