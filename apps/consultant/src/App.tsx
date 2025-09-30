@@ -1,5 +1,5 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import { AuthProvider, useAuth } from '@consulting19/shared';
+import { AuthProvider, LanguageProvider, useAuth } from '@consulting19/shared';
 import LoginPage from './pages/auth/LoginPage';
 import ConsultantDashboard from './pages/consultant/ConsultantDashboard';
 import ConsultantClients from './pages/consultant/ConsultantClients';
@@ -16,8 +16,9 @@ import ConsultantLayout from './components/layouts/ConsultantLayout';
 
 function App() {
   return (
-    <AuthProvider>
-      <Router
+    <LanguageProvider>
+      <AuthProvider>
+        <Router
         future={{
           v7_startTransition: true,
           v7_relativeSplatPath: true,
@@ -30,7 +31,8 @@ function App() {
           </Routes>
         </div>
       </Router>
-    </AuthProvider>
+      </AuthProvider>
+    </LanguageProvider>
   );
 }
 
