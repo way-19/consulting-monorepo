@@ -39,16 +39,27 @@ SET user_id = EXCLUDED.user_id,
     role = EXCLUDED.role,
     updated_at = NOW();
 
--- 3. Update consultant_profiles with user_id
+-- 3. Update consultant_profiles with user_id (consultant already exists)
 UPDATE consultant_profiles
-SET user_id = '2efa54a0-08a4-49e3-9ccb-d63adf2db2c0'
+SET user_id = '2efa54a0-08a4-49e3-9ccb-d63adf2db2c0',
+    updated_at = NOW()
 WHERE email = 'giorgi.meskhi@consulting19.com';
 
--- 4. Update clients with user_id and profile_id
-UPDATE clients
-SET user_id = '44175993-eda1-42e7-ab18-bba2f16d721b',
-    profile_id = '44175993-eda1-42e7-ab18-bba2f16d721b'
-WHERE email = 'client@consulting19.com';
+-- 4. Update or Insert clients
+INSERT INTO clients (user_id, profile_id, email, first_name, last_name, company_name, preferred_language)
+VALUES (
+    '44175993-eda1-42e7-ab18-bba2f16d721b',
+    '44175993-eda1-42e7-ab18-bba2f16d721b',
+    'client@consulting19.com',
+    'Test',
+    'Client',
+    'Test Company LLC',
+    'en'
+)
+ON CONFLICT (email) DO UPDATE
+SET user_id = EXCLUDED.user_id,
+    profile_id = EXCLUDED.profile_id,
+    updated_at = NOW();
 
 -- 5. Create user assignment (consultant -> client)
 INSERT INTO user_assignments (consultant_id, client_id, status, notes)
