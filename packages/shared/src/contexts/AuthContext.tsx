@@ -13,6 +13,7 @@ interface AuthContextType {
   signOut: () => Promise<{ error: any }>;
   resetPassword: (email: string) => Promise<{ error: any }>;
   refreshProfile: () => Promise<void>;
+  enableMfa: (verificationCode?: string) => Promise<{ data?: any; error?: any }>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -175,6 +176,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return { error: 'Not implemented' };
   };
 
+  const enableMfa = async (_verificationCode?: string) => {
+    // TODO: Implement MFA functionality
+    console.warn('MFA not implemented yet');
+    return { error: 'Not implemented' };
+  };
+
   return (
     <AuthContext.Provider 
       value={{
@@ -186,6 +193,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         signOut,
         resetPassword,
         refreshProfile,
+        enableMfa,
       }}
     >
       {children}
@@ -214,8 +222,8 @@ export const createAuthenticatedFetch = () => {
     }
 
     // Don't override Content-Type if already set (for file uploads, etc.)
-    const headers: HeadersInit = {
-      ...options.headers,
+    const headers: Record<string, string> = {
+      ...options.headers as Record<string, string>,
       'Authorization': `Bearer ${token}`,
     };
 

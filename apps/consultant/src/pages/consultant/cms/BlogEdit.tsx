@@ -3,7 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { createAuthenticatedFetch } from '@consulting19/shared';
 import { Save, ArrowLeft, Languages, Loader, Trash2 } from 'lucide-react';
 
-const authFetch = createAuthenticatedFetch('http://localhost:3002');
+const authFetch = createAuthenticatedFetch();
 
 const BlogEdit = () => {
   const { id } = useParams();
@@ -33,7 +33,6 @@ const BlogEdit = () => {
   const [saving, setSaving] = useState(false);
   const [loading, setLoading] = useState(!isNew);
   const [translating, setTranslating] = useState(false);
-  const [uploadingImage, setUploadingImage] = useState(false);
 
   useEffect(() => {
     if (!isNew) {
@@ -126,7 +125,6 @@ const BlogEdit = () => {
   const uploadImage = async () => {
     if (!imageFile) return null;
 
-    setUploadingImage(true);
     try {
       const formDataUpload = new FormData();
       formDataUpload.append('image', imageFile);
@@ -144,8 +142,6 @@ const BlogEdit = () => {
     } catch (error) {
       console.error('Error uploading image:', error);
       return null;
-    } finally {
-      setUploadingImage(false);
     }
   };
 

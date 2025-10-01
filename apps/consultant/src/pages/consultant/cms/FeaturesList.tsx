@@ -1,8 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { createAuthenticatedFetch } from '@consulting19/shared';
 import { Plus, Save, Trash2, Loader, Languages } from 'lucide-react';
 
-const authFetch = createAuthenticatedFetch('http://localhost:3002');
+const authFetch = createAuthenticatedFetch();
 
 interface Feature {
   id?: string;

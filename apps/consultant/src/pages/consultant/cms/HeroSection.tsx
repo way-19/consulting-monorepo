@@ -1,8 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { createAuthenticatedFetch } from '@consulting19/shared';
 import { Save, Languages, Loader, User } from 'lucide-react';
 
-const authFetch = createAuthenticatedFetch('http://localhost:3002');
+const authFetch = createAuthenticatedFetch();
 
 const HeroSection = () => {
   const [heroData, setHeroData] = useState({

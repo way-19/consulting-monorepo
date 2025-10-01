@@ -2,10 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { createAuthenticatedFetch } from '@consulting19/shared';
 import { 
   Globe, Plus, Edit, Trash2, Eye, EyeOff, Save, X, Upload, Image as ImageIcon,
-  Languages, CheckCircle, AlertCircle, Loader, FileText, List, Layout
+  Languages, Loader, FileText, List, Layout
 } from 'lucide-react';
 
-const authFetch = createAuthenticatedFetch('http://localhost:3002');
+const authFetch = createAuthenticatedFetch();
 
 interface CMSPage {
   id: string;
@@ -297,7 +297,7 @@ const ConsultantContent = () => {
               </div>
             ) : (
               <div className="space-y-4">
-                {sections.map((section, index) => (
+                {sections.map((section) => (
                   <div
                     key={section.id}
                     className="bg-white rounded-lg border border-gray-200 p-6 hover:shadow-md transition-shadow"
@@ -432,7 +432,7 @@ const SectionEditor: React.FC<{
 
   const handleSave = async () => {
     try {
-      const authFetch = createAuthenticatedFetch('http://localhost:3002');
+      const authFetch = createAuthenticatedFetch();
       
       if (section.id === 'new') {
         await authFetch('/api/cms-content/blocks', {
@@ -584,7 +584,7 @@ const HeroEditor: React.FC<any> = ({ formData, setFormData, onTranslate, transla
 };
 
 // Services Editor (placeholder)
-const ServicesEditor: React.FC<any> = ({ formData, setFormData }) => {
+const ServicesEditor: React.FC<any> = () => {
   return (
     <div className="text-gray-600">
       <p>Services editor with per-service FAQ - coming in next update...</p>
@@ -593,7 +593,7 @@ const ServicesEditor: React.FC<any> = ({ formData, setFormData }) => {
 };
 
 // Features Editor (placeholder)
-const FeaturesEditor: React.FC<any> = ({ formData, setFormData }) => {
+const FeaturesEditor: React.FC<any> = () => {
   return (
     <div className="text-gray-600">
       <p>Features editor - coming in next update...</p>

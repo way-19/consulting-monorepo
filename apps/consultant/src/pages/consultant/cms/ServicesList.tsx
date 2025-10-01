@@ -1,9 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { createAuthenticatedFetch } from '@consulting19/shared';
 import { Plus, Edit, Trash2, Eye, EyeOff, Loader } from 'lucide-react';
 
-const authFetch = createAuthenticatedFetch('http://localhost:3002');
+const authFetch = createAuthenticatedFetch();
 
 interface Service {
   id: string;
