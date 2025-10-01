@@ -11,7 +11,6 @@ import {
   Folder, 
   Mail, 
   TrendingUp, 
-  Clock,
   HelpCircle, 
   Settings, 
   LogOut, 

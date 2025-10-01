@@ -8,6 +8,7 @@ interface Consultant {
   last_name: string;
   email: string;
   country_code?: string;
+  spoken_languages?: string[];
 }
 
 interface AvailableSlot {
