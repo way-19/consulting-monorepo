@@ -32,17 +32,25 @@ const ServiceEdit = () => {
     description_tr: '',
     description_pt: '',
     description_es: '',
+    seo_keywords_en: '',
+    seo_keywords_tr: '',
+    seo_keywords_pt: '',
+    seo_keywords_es: '',
     duration: '',
     category: '',
     link: '',
     show_on_homepage: true,
-    order_index: 0
+    order_index: 0,
+    featured_image_id: null
   });
 
   const [faqs, setFaqs] = useState<FAQ[]>([]);
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [loading, setLoading] = useState(!isNew);
   const [saving, setSaving] = useState(false);
   const [translating, setTranslating] = useState(false);
+  const [uploadingImage, setUploadingImage] = useState(false);
 
   useEffect(() => {
     if (!isNew) {
@@ -50,6 +58,12 @@ const ServiceEdit = () => {
       fetchFAQs();
     }
   }, [id]);
+
+  useEffect(() => {
+    if (formData.featured_image_id && !imagePreview) {
+      setImagePreview(`http://localhost:3002/api/cms-content/media/${formData.featured_image_id}/data`);
+    }
+  }, [formData.featured_image_id]);
 
   const fetchService = async () => {
     try {
@@ -80,8 +94,12 @@ const ServiceEdit = () => {
     }
   };
 
-  const handleTranslate = async (field: 'title' | 'description') => {
-    const text = field === 'title' ? formData.title_en : formData.description_en;
+  const handleTranslate = async (field: 'title' | 'description' | 'seo_keywords') => {
+    let text = '';
+    if (field === 'title') text = formData.title_en;
+    else if (field === 'description') text = formData.description_en;
+    else if (field === 'seo_keywords') text = formData.seo_keywords_en;
+    
     if (!text) return;
 
     setTranslating(true);
@@ -108,16 +126,78 @@ const ServiceEdit = () => {
     }
   };
 
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setImageFile(file);
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setImagePreview(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const uploadImage = async () => {
+    if (!imageFile) return null;
+
+    setUploadingImage(true);
+    try {
+      const formDataUpload = new FormData();
+      formDataUpload.append('image', imageFile);
+
+      const response = await authFetch('/api/cms-content/media', {
+        method: 'POST',
+        body: formDataUpload
+      });
+
+      const data = await response.json();
+      if (data.success) {
+        return data.image.id;
+      }
+      return null;
+    } catch (error) {
+      console.error('Error uploading image:', error);
+      return null;
+    } finally {
+      setUploadingImage(false);
+    }
+  };
+
+  const deleteImage = async () => {
+    if (!formData.featured_image_id) return;
+
+    try {
+      await authFetch(`/api/cms-content/media/${formData.featured_image_id}`, {
+        method: 'DELETE'
+      });
+      setFormData({ ...formData, featured_image_id: null });
+      setImagePreview(null);
+      setImageFile(null);
+    } catch (error) {
+      console.error('Error deleting image:', error);
+    }
+  };
+
   const handleSave = async () => {
     setSaving(true);
     try {
+      let featured_image_id = formData.featured_image_id;
+      
+      if (imageFile) {
+        const uploadedId = await uploadImage();
+        if (uploadedId) {
+          featured_image_id = uploadedId;
+        }
+      }
+
       const url = isNew ? '/api/cms-content/services' : `/api/cms-content/services/${id}`;
       const method = isNew ? 'POST' : 'PATCH';
 
       const response = await authFetch(url, {
         method,
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ...formData, country_code: 'GE' })
+        body: JSON.stringify({ ...formData, featured_image_id, country_code: 'GE' })
       });
 
       if (response.ok) {
@@ -349,6 +429,105 @@ const ServiceEdit = () => {
                 className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
               />
               <label className="ml-2 text-sm text-gray-700">Show on homepage</label>
+            </div>
+          </div>
+        </div>
+
+        {/* Service Image */}
+        <div className="bg-white rounded-lg shadow p-6">
+          <h2 className="text-xl font-semibold text-gray-900 mb-4">Service Image</h2>
+          
+          <div className="space-y-4">
+            {imagePreview ? (
+              <div className="relative">
+                <img src={imagePreview} alt="Service preview" className="w-full max-w-md rounded-lg" />
+                <button
+                  onClick={() => {
+                    if (formData.featured_image_id) {
+                      deleteImage();
+                    } else {
+                      setImageFile(null);
+                      setImagePreview(null);
+                    }
+                  }}
+                  className="absolute top-2 right-2 p-2 bg-red-600 text-white rounded-lg hover:bg-red-700"
+                >
+                  <Trash2 className="w-4 h-4" />
+                </button>
+              </div>
+            ) : (
+              <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center">
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={handleImageChange}
+                  className="hidden"
+                  id="service-image"
+                />
+                <label htmlFor="service-image" className="cursor-pointer">
+                  <div className="text-gray-600 mb-2">Click to upload service image</div>
+                  <div className="text-sm text-gray-500">PNG, JPG up to 5MB</div>
+                </label>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* SEO Keywords */}
+        <div className="bg-white rounded-lg shadow p-6">
+          <h2 className="text-xl font-semibold text-gray-900 mb-4">SEO Meta Keywords</h2>
+          
+          <div className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                SEO Keywords (English)
+              </label>
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  value={formData.seo_keywords_en}
+                  onChange={(e) => setFormData({ ...formData, seo_keywords_en: e.target.value })}
+                  className="flex-1 px-4 py-2 border border-gray-300 rounded-lg"
+                  placeholder="e.g., company formation, business setup, georgia"
+                />
+                <button
+                  onClick={() => handleTranslate('seo_keywords')}
+                  disabled={translating || !formData.seo_keywords_en}
+                  className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:bg-gray-300"
+                >
+                  <Languages className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-3 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Keywords (Turkish)</label>
+                <input
+                  type="text"
+                  value={formData.seo_keywords_tr}
+                  onChange={(e) => setFormData({ ...formData, seo_keywords_tr: e.target.value })}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Keywords (Portuguese)</label>
+                <input
+                  type="text"
+                  value={formData.seo_keywords_pt}
+                  onChange={(e) => setFormData({ ...formData, seo_keywords_pt: e.target.value })}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Keywords (Spanish)</label>
+                <input
+                  type="text"
+                  value={formData.seo_keywords_es}
+                  onChange={(e) => setFormData({ ...formData, seo_keywords_es: e.target.value })}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg"
+                />
+              </div>
             </div>
           </div>
         </div>

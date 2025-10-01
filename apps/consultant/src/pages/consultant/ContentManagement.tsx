@@ -1,7 +1,7 @@
 import React from 'react';
 import { Routes, Route, NavLink, Navigate } from 'react-router-dom';
 import { 
-  Home, List, Grid, HelpCircle, FileText, Image as ImageIcon, Settings 
+  Home, List, Grid, HelpCircle, FileText
 } from 'lucide-react';
 import HeroSection from './cms/HeroSection';
 import ServicesList from './cms/ServicesList';
@@ -10,18 +10,14 @@ import FeaturesList from './cms/FeaturesList';
 import GeneralFAQ from './cms/GeneralFAQ';
 import BlogList from './cms/BlogList';
 import BlogEdit from './cms/BlogEdit';
-import MediaLibrary from './cms/MediaLibrary';
-import SEOSettings from './cms/SEOSettings';
 
 const ContentManagement = () => {
   const navItems = [
-    { path: '/content/hero', label: 'Hero Section', icon: Home },
+    { path: '/content/hero', label: 'Consultant Profile', icon: Home },
     { path: '/content/services', label: 'Services', icon: List },
-    { path: '/content/features', label: 'Features', icon: Grid },
+    { path: '/content/features', label: 'Key Features', icon: Grid },
     { path: '/content/faq', label: 'General FAQ', icon: HelpCircle },
     { path: '/content/blog', label: 'Blog/News', icon: FileText },
-    { path: '/content/media', label: 'Media Library', icon: ImageIcon },
-    { path: '/content/seo', label: 'SEO Settings', icon: Settings },
   ];
 
   return (
@@ -65,10 +61,8 @@ const ContentManagement = () => {
           <Route path="features" element={<FeaturesList />} />
           <Route path="faq" element={<GeneralFAQ />} />
           <Route path="blog" element={<BlogList />} />
-          <Route path="blog/new" element={<BlogEdit />} />
+          <Route path="blog/new/edit" element={<BlogEdit />} />
           <Route path="blog/:id/edit" element={<BlogEdit />} />
-          <Route path="media" element={<MediaLibrary />} />
-          <Route path="seo" element={<SEOSettings />} />
         </Routes>
       </div>
     </div>

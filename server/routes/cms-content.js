@@ -659,6 +659,44 @@ router.get('/media/:id/data', authenticateToken, async (req, res) => {
   }
 });
 
+// DELETE /api/cms-content/media/:id - Delete image
+router.delete('/media/:id', authenticateToken, async (req, res) => {
+  try {
+    if (req.user.role !== 'consultant') {
+      return res.status(403).json({ 
+        success: false, 
+        error: 'Unauthorized: Only consultants can delete images' 
+      });
+    }
+
+    const { id } = req.params;
+
+    // Delete with ownership check
+    const result = await pool.query(
+      'DELETE FROM cms_images WHERE id = $1 AND uploaded_by = $2 RETURNING id',
+      [id, req.user.id]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ 
+        success: false, 
+        error: 'Image not found or unauthorized' 
+      });
+    }
+
+    res.json({
+      success: true,
+      message: 'Image deleted successfully'
+    });
+  } catch (error) {
+    console.error('Error deleting image:', error);
+    res.status(500).json({ 
+      success: false, 
+      error: 'Failed to delete image' 
+    });
+  }
+});
+
 // POST /api/cms-content/translate - Translate content using DeepL API
 router.post('/translate', authenticateToken, async (req, res) => {
   try {
