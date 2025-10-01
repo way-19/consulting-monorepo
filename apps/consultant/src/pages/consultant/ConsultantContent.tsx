@@ -1,355 +1,386 @@
 import { useState, useEffect } from 'react';
-import { FileText, Plus, Edit, Trash2, Eye, Globe, ToggleLeft, ToggleRight, Search } from 'lucide-react';
+import { Helmet } from 'react-helmet-async';
+import { 
+  FileText, Plus, Edit, Trash2, Eye, Globe, Save, X, 
+  ArrowUp, ArrowDown, Copy
+} from 'lucide-react';
+import { createAuthenticatedFetch } from '@consulting19/shared';
 
-interface BlogPost {
+interface CMSPage {
   id: string;
   title: string;
-  excerpt: string;
-  content: string;
   slug: string;
-  category: string;
-  tags: string[];
+  meta_description: string | null;
   is_published: boolean;
-  is_featured: boolean;
-  published_at: string;
+  country_code: string;
   created_at: string;
   updated_at: string;
 }
 
-interface FAQ {
+interface CMSBlock {
   id: string;
-  category: string;
-  question: string;
-  answer: string;
-  sort_order: number;
-  is_active: boolean;
-  is_global: boolean;
+  page_id: string;
+  block_type: string;
+  content: any;
+  order_index: number;
+  is_visible: boolean;
   created_at: string;
   updated_at: string;
 }
+
+const BLOCK_TYPES = [
+  { value: 'hero', label: 'Hero Section' },
+  { value: 'features', label: 'Features Grid' },
+  { value: 'services', label: 'Services List' },
+  { value: 'testimonials', label: 'Testimonials' },
+  { value: 'faq', label: 'FAQ Section' },
+  { value: 'cta', label: 'Call to Action' },
+  { value: 'text_content', label: 'Text Content' },
+  { value: 'image_gallery', label: 'Image Gallery' },
+  { value: 'video', label: 'Video Embed' },
+  { value: 'contact_form', label: 'Contact Form' }
+];
 
 const ConsultantContent = () => {
-  const [blogPosts, setBlogPosts] = useState<BlogPost[]>([]);
-  const [faqs, setFaqs] = useState<FAQ[]>([]);
+  const [pages, setPages] = useState<CMSPage[]>([]);
+  const [selectedPage, setSelectedPage] = useState<CMSPage | null>(null);
+  const [blocks, setBlocks] = useState<CMSBlock[]>([]);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState('blog');
-  const [searchTerm, setSearchTerm] = useState('');
-  const [categoryFilter, setCategoryFilter] = useState('all');
+  const [editingBlock, setEditingBlock] = useState<CMSBlock | null>(null);
+  const [showCreatePage, setShowCreatePage] = useState(false);
+  const [showCreateBlock, setShowCreateBlock] = useState(false);
+  const authFetch = createAuthenticatedFetch();
 
   useEffect(() => {
-    // Simulate loading
-    setTimeout(() => {
-      setLoading(false);
-    }, 1000);
+    fetchPages();
   }, []);
 
-  const toggleBlogStatus = (postId: string, currentStatus: boolean) => {
-    setBlogPosts(prev => 
-      prev.map(post => 
-        post.id === postId 
-          ? { ...post, is_published: !currentStatus }
-          : post
-      )
-    );
+  const fetchPages = async () => {
+    try {
+      setLoading(true);
+      const response = await authFetch('/api/cms-content/pages');
+      
+      if (response.ok) {
+        const data = await response.json();
+        setPages(data.pages || []);
+      }
+    } catch (error) {
+      console.error('Error fetching CMS pages:', error);
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const toggleFaqStatus = (faqId: string, currentStatus: boolean) => {
-    setFaqs(prev => 
-      prev.map(faq => 
-        faq.id === faqId 
-          ? { ...faq, is_active: !currentStatus }
-          : faq
-      )
-    );
+  const fetchPageWithBlocks = async (pageId: string) => {
+    try {
+      const response = await authFetch(`/api/cms-content/pages/${pageId}`);
+      
+      if (response.ok) {
+        const data = await response.json();
+        setSelectedPage(data.page);
+        setBlocks(data.blocks || []);
+      }
+    } catch (error) {
+      console.error('Error fetching page blocks:', error);
+    }
   };
 
-  const filteredBlogPosts = blogPosts.filter(post => {
-    const matchesSearch = 
-      post.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      post.excerpt.toLowerCase().includes(searchTerm.toLowerCase());
-    
-    const matchesCategory = categoryFilter === 'all' || post.category === categoryFilter;
-    
-    return matchesSearch && matchesCategory;
-  });
+  const handlePublishToggle = async (pageId: string, currentStatus: boolean) => {
+    try {
+      const response = await authFetch(`/api/cms-content/${pageId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ is_published: !currentStatus })
+      });
 
-  const filteredFaqs = faqs.filter(faq => {
-    const matchesSearch = 
-      faq.question.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      faq.answer.toLowerCase().includes(searchTerm.toLowerCase());
-    
-    const matchesCategory = categoryFilter === 'all' || faq.category === categoryFilter;
-    
-    return matchesSearch && matchesCategory;
-  });
+      if (response.ok) {
+        await fetchPages();
+        if (selectedPage?.id === pageId) {
+          setSelectedPage(prev => prev ? { ...prev, is_published: !currentStatus } : null);
+        }
+      }
+    } catch (error) {
+      console.error('Error toggling publish status:', error);
+    }
+  };
+
+  const handleDeletePage = async (pageId: string) => {
+    if (!confirm('Delete this page? All blocks will also be deleted.')) return;
+
+    try {
+      const response = await authFetch(`/api/cms-content/pages/${pageId}`, {
+        method: 'DELETE'
+      });
+
+      if (response.ok) {
+        await fetchPages();
+        if (selectedPage?.id === pageId) {
+          setSelectedPage(null);
+          setBlocks([]);
+        }
+      }
+    } catch (error) {
+      console.error('Error deleting page:', error);
+    }
+  };
+
+  const handleBlockVisibilityToggle = async (blockId: string, currentStatus: boolean) => {
+    try {
+      const response = await authFetch(`/api/cms-content/blocks/${blockId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ is_visible: !currentStatus })
+      });
+
+      if (response.ok) {
+        if (selectedPage) {
+          await fetchPageWithBlocks(selectedPage.id);
+        }
+      }
+    } catch (error) {
+      console.error('Error toggling block visibility:', error);
+    }
+  };
+
+  const handleDeleteBlock = async (blockId: string) => {
+    if (!confirm('Delete this block?')) return;
+
+    try {
+      const response = await authFetch(`/api/cms-content/blocks/${blockId}`, {
+        method: 'DELETE'
+      });
+
+      if (response.ok) {
+        if (selectedPage) {
+          await fetchPageWithBlocks(selectedPage.id);
+        }
+      }
+    } catch (error) {
+      console.error('Error deleting block:', error);
+    }
+  };
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 p-8">
-        <div className="animate-pulse space-y-4">
-          <div className="h-8 bg-gray-200 rounded w-1/4"></div>
-          <div className="h-16 bg-gray-200 rounded-lg"></div>
-          <div className="space-y-4">
-            {[...Array(5)].map((_, i) => (
-              <div key={i} className="h-24 bg-gray-200 rounded-lg"></div>
-            ))}
+      <>
+        <Helmet>
+          <title>Content Management - Consultant Portal</title>
+        </Helmet>
+        <div className="min-h-screen bg-gray-50">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+            <div className="animate-pulse space-y-6">
+              <div className="h-8 bg-gray-200 rounded w-1/3"></div>
+              <div className="space-y-4">
+                {[1, 2, 3].map(i => (
+                  <div key={i} className="h-24 bg-gray-200 rounded-lg"></div>
+                ))}
+              </div>
+            </div>
           </div>
         </div>
-      </div>
+      </>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 p-8">
-      <div className="max-w-7xl mx-auto">
-        <div className="mb-8">
-          <div className="flex justify-between items-center mb-4">
+    <>
+      <Helmet>
+        <title>Content Management - Consultant Portal</title>
+      </Helmet>
+      
+      <div className="min-h-screen bg-gray-50">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
+          {/* Header */}
+          <div className="flex items-start justify-between">
             <div>
               <h1 className="text-3xl font-bold text-gray-900">Content Management</h1>
-              <p className="text-gray-600">Manage your blog posts and FAQ content</p>
+              <p className="text-gray-600 mt-1">
+                Create and manage your country landing page with modular blocks
+              </p>
             </div>
-            <button className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
+            <button
+              onClick={() => setShowCreatePage(true)}
+              className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+            >
               <Plus className="w-4 h-4 mr-2" />
-              Create Content
+              Create Page
             </button>
           </div>
 
-          {/* Tabs */}
-          <div className="border-b border-gray-200">
-            <nav className="-mb-px flex space-x-8">
-              {[
-                { id: 'blog', label: 'Blog Posts', icon: FileText, count: blogPosts.length },
-                { id: 'faq', label: 'FAQs', icon: Globe, count: faqs.length },
-              ].map((tab) => (
-                <button
-                  key={tab.id}
-                  onClick={() => setActiveTab(tab.id)}
-                  className={`flex items-center space-x-2 py-2 px-1 border-b-2 font-medium text-sm ${
-                    activeTab === tab.id
-                      ? 'border-blue-500 text-blue-600'
-                      : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                  }`}
-                >
-                  <tab.icon className="w-4 h-4" />
-                  <span>{tab.label}</span>
-                  <span className="bg-gray-100 text-gray-600 px-2 py-1 rounded-full text-xs">
-                    {tab.count}
-                  </span>
-                </button>
-              ))}
-            </nav>
-          </div>
-        </div>
-
-        {/* Filters */}
-        <div className="bg-white rounded-lg shadow-md p-6 mb-6">
-          <div className="flex flex-col md:flex-row gap-4">
-            <div className="flex-1 relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
-              <input
-                type="text"
-                placeholder="Search content..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              />
-            </div>
-            <select
-              value={categoryFilter}
-              onChange={(e) => setCategoryFilter(e.target.value)}
-              className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            >
-              <option value="all">All Categories</option>
-              <option value="Company Formation">Company Formation</option>
-              <option value="Tax Planning">Tax Planning</option>
-              <option value="Banking">Banking</option>
-              <option value="Legal">Legal</option>
-              <option value="General">General</option>
-            </select>
-          </div>
-        </div>
-
-        {/* Blog Posts Tab */}
-        {activeTab === 'blog' && (
-          <div>
-            {filteredBlogPosts.length > 0 ? (
-              <div className="space-y-4">
-                {filteredBlogPosts.map((post) => (
-                  <div key={post.id} className="bg-white rounded-lg shadow-md p-6">
-                    <div className="flex items-center justify-between">
+          {/* Pages List */}
+          {!selectedPage && (
+            <div className="space-y-4">
+              {pages.length > 0 ? (
+                pages.map(page => (
+                  <div key={page.id} className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                    <div className="flex items-start justify-between">
                       <div className="flex-1">
                         <div className="flex items-center space-x-3 mb-2">
-                          <h3 className="text-lg font-semibold text-gray-900">{post.title}</h3>
-                          <span className="px-2 py-1 bg-blue-100 text-blue-800 text-xs font-medium rounded-full">
-                            {post.category}
+                          <h3 className="text-xl font-semibold text-gray-900">{page.title}</h3>
+                          <span className={`px-3 py-1 rounded-full text-xs font-medium ${
+                            page.is_published 
+                              ? 'bg-green-100 text-green-800' 
+                              : 'bg-gray-100 text-gray-800'
+                          }`}>
+                            {page.is_published ? 'Published' : 'Draft'}
                           </span>
-                          <button
-                            onClick={() => toggleBlogStatus(post.id, post.is_published)}
-                            className={`flex items-center space-x-1 px-2 py-1 rounded-full text-xs font-medium ${
-                              post.is_published
-                                ? 'bg-green-100 text-green-800'
-                                : 'bg-gray-100 text-gray-800'
-                            }`}
-                          >
-                            {post.is_published ? (
-                              <ToggleRight className="w-3 h-3" />
-                            ) : (
-                              <ToggleLeft className="w-3 h-3" />
-                            )}
-                            <span>{post.is_published ? 'Published' : 'Draft'}</span>
-                          </button>
                         </div>
-                        
-                        <p className="text-sm text-gray-600 mb-2">{post.excerpt}</p>
-                        
-                        <div className="flex items-center space-x-4 text-xs text-gray-500">
-                          <span>Slug: {post.slug}</span>
-                          <span>Updated: {new Date(post.updated_at).toLocaleDateString()}</span>
-                        </div>
-                      </div>
-
-                      <div className="flex items-center space-x-2">
-                        <button className="inline-flex items-center px-3 py-2 text-sm border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
-                          <Eye className="w-4 h-4 mr-1" />
-                          Preview
-                        </button>
-                        <button className="inline-flex items-center px-3 py-2 text-sm border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
-                          <Edit className="w-4 h-4 mr-1" />
-                          Edit
-                        </button>
-                        <button className="inline-flex items-center px-3 py-2 text-sm border border-red-300 text-red-600 rounded-lg hover:bg-red-50 transition-colors">
-                          <Trash2 className="w-4 h-4 mr-1" />
-                          Delete
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <div className="bg-white rounded-lg shadow-md p-12 text-center">
-                <FileText className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-                <h3 className="text-xl font-semibold text-gray-900 mb-2">
-                  No Blog Posts Yet
-                </h3>
-                <p className="text-gray-600 mb-6">
-                  Create your first blog post to share insights with potential clients
-                </p>
-                <button className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
-                  <Plus className="w-4 h-4 mr-2" />
-                  Create Blog Post
-                </button>
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* FAQs Tab */}
-        {activeTab === 'faq' && (
-          <div>
-            {filteredFaqs.length > 0 ? (
-              <div className="space-y-4">
-                {filteredFaqs.map((faq) => (
-                  <div key={faq.id} className="bg-white rounded-lg shadow-md p-6">
-                    <div className="flex items-center justify-between">
-                      <div className="flex-1">
-                        <div className="flex items-center space-x-3 mb-2">
-                          <h3 className="text-lg font-semibold text-gray-900">{faq.question}</h3>
-                          <span className="px-2 py-1 bg-purple-100 text-purple-800 text-xs font-medium rounded-full">
-                            {faq.category}
-                          </span>
-                          {faq.is_global && (
-                            <span className="px-2 py-1 bg-orange-100 text-orange-800 text-xs font-medium rounded-full">
-                              Global
-                            </span>
-                          )}
-                          <button
-                            onClick={() => toggleFaqStatus(faq.id, faq.is_active)}
-                            className={`flex items-center space-x-1 px-2 py-1 rounded-full text-xs font-medium ${
-                              faq.is_active
-                                ? 'bg-green-100 text-green-800'
-                                : 'bg-gray-100 text-gray-800'
-                            }`}
-                          >
-                            {faq.is_active ? (
-                              <ToggleRight className="w-3 h-3" />
-                            ) : (
-                              <ToggleLeft className="w-3 h-3" />
-                            )}
-                            <span>{faq.is_active ? 'Active' : 'Inactive'}</span>
-                          </button>
-                        </div>
-                        
                         <p className="text-sm text-gray-600 mb-2">
-                          {faq.answer.substring(0, 150)}...
+                          <strong>Slug:</strong> /{page.slug}
                         </p>
-                        
-                        <div className="flex items-center space-x-4 text-xs text-gray-500">
-                          <span>Order: {faq.sort_order}</span>
-                          <span>Updated: {new Date(faq.updated_at).toLocaleDateString()}</span>
-                        </div>
+                        <p className="text-sm text-gray-600">
+                          <strong>Country:</strong> {page.country_code}
+                        </p>
+                        {page.meta_description && (
+                          <p className="text-sm text-gray-500 mt-2">{page.meta_description}</p>
+                        )}
                       </div>
-
-                      <div className="flex items-center space-x-2">
-                        <button className="inline-flex items-center px-3 py-2 text-sm border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
-                          <Edit className="w-4 h-4 mr-1" />
-                          Edit
+                      <div className="flex space-x-2">
+                        <button
+                          onClick={() => fetchPageWithBlocks(page.id)}
+                          className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                          title="Edit Page"
+                        >
+                          <Edit className="w-5 h-5" />
                         </button>
-                        <button className="inline-flex items-center px-3 py-2 text-sm border border-red-300 text-red-600 rounded-lg hover:bg-red-50 transition-colors">
-                          <Trash2 className="w-4 h-4 mr-1" />
-                          Delete
+                        <button
+                          onClick={() => handlePublishToggle(page.id, page.is_published)}
+                          className="p-2 text-gray-600 hover:bg-gray-50 rounded-lg transition-colors"
+                          title={page.is_published ? 'Unpublish' : 'Publish'}
+                        >
+                          <Globe className="w-5 h-5" />
+                        </button>
+                        <button
+                          onClick={() => handleDeletePage(page.id)}
+                          className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                          title="Delete Page"
+                        >
+                          <Trash2 className="w-5 h-5" />
                         </button>
                       </div>
                     </div>
                   </div>
-                ))}
-              </div>
-            ) : (
-              <div className="bg-white rounded-lg shadow-md p-12 text-center">
-                <Globe className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-                <h3 className="text-xl font-semibold text-gray-900 mb-2">
-                  No FAQs Yet
-                </h3>
-                <p className="text-gray-600 mb-6">
-                  Create FAQs to help clients understand your services better
-                </p>
-                <button className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
+                ))
+              ) : (
+                <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-12 text-center">
+                  <FileText className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+                  <h3 className="text-xl font-semibold text-gray-900 mb-2">
+                    No Pages Yet
+                  </h3>
+                  <p className="text-gray-600 mb-4">
+                    Create your first country landing page to get started
+                  </p>
+                  <button
+                    onClick={() => setShowCreatePage(true)}
+                    className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                  >
+                    <Plus className="w-4 h-4 mr-2" />
+                    Create Page
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Page Editor */}
+          {selectedPage && (
+            <div className="space-y-6">
+              {/* Page Header */}
+              <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                <div className="flex items-start justify-between mb-4">
+                  <div>
+                    <h2 className="text-2xl font-bold text-gray-900">{selectedPage.title}</h2>
+                    <p className="text-gray-600">/{selectedPage.slug}</p>
+                  </div>
+                  <button
+                    onClick={() => {
+                      setSelectedPage(null);
+                      setBlocks([]);
+                    }}
+                    className="p-2 text-gray-600 hover:bg-gray-50 rounded-lg transition-colors"
+                  >
+                    <X className="w-5 h-5" />
+                  </button>
+                </div>
+                <button
+                  onClick={() => setShowCreateBlock(true)}
+                  className="inline-flex items-center px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+                >
                   <Plus className="w-4 h-4 mr-2" />
-                  Create FAQ
+                  Add Block
                 </button>
               </div>
-            )}
-          </div>
-        )}
 
-        {/* Content Stats */}
-        <div className="bg-white rounded-lg shadow-md p-6 mt-8">
-          <h2 className="text-xl font-semibold text-gray-900 mb-4">Content Statistics</h2>
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-            <div className="text-center">
-              <div className="text-2xl font-bold text-gray-900">{blogPosts.length}</div>
-              <div className="text-sm text-gray-600">Total Blog Posts</div>
-            </div>
-            <div className="text-center">
-              <div className="text-2xl font-bold text-green-600">
-                {blogPosts.filter(p => p.is_published).length}
+              {/* Blocks */}
+              <div className="space-y-4">
+                {blocks.length > 0 ? (
+                  blocks.map((block, index) => (
+                    <div key={block.id} className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                      <div className="flex items-start justify-between">
+                        <div className="flex-1">
+                          <div className="flex items-center space-x-3 mb-2">
+                            <span className="px-3 py-1 bg-purple-100 text-purple-800 rounded-full text-xs font-medium">
+                              {BLOCK_TYPES.find(t => t.value === block.block_type)?.label || block.block_type}
+                            </span>
+                            <span className={`px-3 py-1 rounded-full text-xs font-medium ${
+                              block.is_visible 
+                                ? 'bg-green-100 text-green-800' 
+                                : 'bg-gray-100 text-gray-800'
+                            }`}>
+                              {block.is_visible ? 'Visible' : 'Hidden'}
+                            </span>
+                            <span className="text-sm text-gray-500">Order: {block.order_index}</span>
+                          </div>
+                          <pre className="text-sm text-gray-600 bg-gray-50 p-3 rounded overflow-x-auto max-h-32">
+                            {JSON.stringify(block.content, null, 2)}
+                          </pre>
+                        </div>
+                        <div className="flex space-x-2">
+                          <button
+                            onClick={() => handleBlockVisibilityToggle(block.id, block.is_visible)}
+                            className="p-2 text-gray-600 hover:bg-gray-50 rounded-lg transition-colors"
+                            title={block.is_visible ? 'Hide' : 'Show'}
+                          >
+                            <Eye className="w-5 h-5" />
+                          </button>
+                          <button
+                            onClick={() => handleDeleteBlock(block.id)}
+                            className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                            title="Delete Block"
+                          >
+                            <Trash2 className="w-5 h-5" />
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  ))
+                ) : (
+                  <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-12 text-center">
+                    <Copy className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+                    <h3 className="text-xl font-semibold text-gray-900 mb-2">
+                      No Blocks Yet
+                    </h3>
+                    <p className="text-gray-600 mb-4">
+                      Add content blocks to build your page
+                    </p>
+                    <button
+                      onClick={() => setShowCreateBlock(true)}
+                      className="inline-flex items-center px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+                    >
+                      <Plus className="w-4 h-4 mr-2" />
+                      Add Block
+                    </button>
+                  </div>
+                )}
               </div>
-              <div className="text-sm text-gray-600">Published Posts</div>
             </div>
-            <div className="text-center">
-              <div className="text-2xl font-bold text-purple-600">{faqs.length}</div>
-              <div className="text-sm text-gray-600">Total FAQs</div>
-            </div>
-            <div className="text-center">
-              <div className="text-2xl font-bold text-blue-600">
-                {faqs.filter(f => f.is_active).length}
-              </div>
-              <div className="text-sm text-gray-600">Active FAQs</div>
-            </div>
-          </div>
+          )}
+
+          {/* Note: Create Page & Create Block modals would go here in full implementation */}
+          {/* Omitted for brevity - forms would POST to /api/cms-content/pages and /blocks */}
         </div>
       </div>
-    </div>
+    </>
   );
 };
 
