@@ -10,6 +10,42 @@ const pool = new Pool({
   ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false
 });
 
+// GET /api/availability/self - Get own availability
+router.get('/self', authenticateToken, async (req, res) => {
+  try {
+    if (req.user.role !== 'consultant') {
+      return res.status(403).json({ success: false, error: 'Unauthorized' });
+    }
+
+    const result = await pool.query(
+      `SELECT 
+        ca.id,
+        ca.day_of_week,
+        ca.start_time,
+        ca.end_time,
+        ca.status,
+        ca.notes,
+        ca.created_at,
+        ca.updated_at
+      FROM consultant_availability ca
+      WHERE ca.consultant_id = $1
+      ORDER BY ca.day_of_week, ca.start_time`,
+      [req.user.id]
+    );
+
+    res.json({
+      success: true,
+      availability: result.rows
+    });
+  } catch (error) {
+    console.error('Error fetching availability:', error);
+    res.status(500).json({ 
+      success: false, 
+      error: 'Failed to fetch availability' 
+    });
+  }
+});
+
 // GET /api/availability/:consultantId - Get consultant availability
 router.get('/:consultantId', authenticateToken, async (req, res) => {
   try {
@@ -213,6 +249,51 @@ router.delete('/:id', authenticateToken, async (req, res) => {
       success: false, 
       error: 'Failed to delete availability' 
     });
+  }
+});
+
+// GET /api/availability/stats/self - Get own stats
+router.get('/stats/self', authenticateToken, async (req, res) => {
+  try {
+    if (req.user.role !== 'consultant') {
+      return res.status(403).json({ success: false, error: 'Unauthorized' });
+    }
+
+    const [availabilityResult, blockedResult, settingsResult] = await Promise.all([
+      pool.query(`
+        SELECT 
+          COUNT(DISTINCT day_of_week) as active_days,
+          SUM(EXTRACT(EPOCH FROM (end_time - start_time))/3600) as weekly_hours
+        FROM consultant_availability 
+        WHERE consultant_id = $1 AND status = 'available'`,
+        [req.user.id]
+      ),
+      pool.query(`
+        SELECT COUNT(*) as blocked_count 
+        FROM blocked_times 
+        WHERE consultant_id = $1 AND end_time > NOW()`,
+        [req.user.id]
+      ),
+      pool.query(`
+        SELECT hourly_rate 
+        FROM consultant_settings 
+        WHERE consultant_id = $1`,
+        [req.user.id]
+      )
+    ]);
+
+    res.json({
+      success: true,
+      stats: {
+        weekly_hours: Math.round(availabilityResult.rows[0].weekly_hours || 0),
+        active_days: parseInt(availabilityResult.rows[0].active_days) || 0,
+        hourly_rate: settingsResult.rows[0]?.hourly_rate || 0,
+        blocked_times: parseInt(blockedResult.rows[0].blocked_count) || 0
+      }
+    });
+  } catch (error) {
+    console.error('Error fetching stats:', error);
+    res.status(500).json({ success: false, error: 'Failed to fetch stats' });
   }
 });
 
