@@ -17,7 +17,8 @@ router.get('/', authenticateToken, async (req, res) => {
     
     let query = `
       SELECT id, user_id, email, role, first_name, last_name, avatar_url, 
-             preferred_language, timezone, is_active, created_at, phone, company
+             preferred_language, timezone, is_active, created_at, phone, company, 
+             spoken_languages, country_code
       FROM user_profiles 
       WHERE 1=1
     `;
