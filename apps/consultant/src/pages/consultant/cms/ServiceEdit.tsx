@@ -250,6 +250,51 @@ const ServiceEdit = () => {
     }
   };
 
+  const translateFAQ = async (index: number) => {
+    const faq = faqs[index];
+    if (!faq.question_en || !faq.answer_en) return;
+
+    setTranslating(true);
+    try {
+      const [questionRes, answerRes] = await Promise.all([
+        authFetch('/api/cms-content/translate', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ text: faq.question_en })
+        }),
+        authFetch('/api/cms-content/translate', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ text: faq.answer_en })
+        })
+      ]);
+
+      const [questionData, answerData] = await Promise.all([
+        questionRes.json(),
+        answerRes.json()
+      ]);
+
+      if (questionData.success && answerData.success) {
+        const updated = [...faqs];
+        updated[index] = {
+          ...updated[index],
+          question_tr: questionData.translations.tr,
+          question_pt: questionData.translations.pt,
+          question_es: questionData.translations.es,
+          answer_tr: answerData.translations.tr,
+          answer_pt: answerData.translations.pt,
+          answer_es: answerData.translations.es
+        };
+        setFaqs(updated);
+        await saveFAQ(updated[index], index);
+      }
+    } catch (error) {
+      console.error('Translation error:', error);
+    } finally {
+      setTranslating(false);
+    }
+  };
+
   const deleteFAQ = async (faqId: string, index: number) => {
     if (faqId) {
       try {
@@ -554,17 +599,28 @@ const ServiceEdit = () => {
                   <div key={index} className="border border-gray-200 rounded-lg p-4">
                     <div className="flex items-start justify-between mb-3">
                       <h3 className="font-medium text-gray-900">FAQ #{index + 1}</h3>
-                      <button
-                        onClick={() => faq.id && deleteFAQ(faq.id, index)}
-                        className="text-red-600 hover:text-red-900"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
+                      <div className="flex items-center space-x-2">
+                        <button
+                          onClick={() => translateFAQ(index)}
+                          disabled={translating || !faq.question_en || !faq.answer_en}
+                          className="inline-flex items-center px-3 py-1 bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:bg-gray-300 text-sm"
+                        >
+                          {translating ? <Loader className="w-4 h-4 mr-1 animate-spin" /> : <Languages className="w-4 h-4 mr-1" />}
+                          Translate
+                        </button>
+                        <button
+                          onClick={() => faq.id && deleteFAQ(faq.id, index)}
+                          className="text-red-600 hover:text-red-900"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
                     </div>
 
-                    <div className="space-y-3">
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Question (EN)</label>
+                    <div className="space-y-4">
+                      {/* English */}
+                      <div className="space-y-2">
+                        <label className="block text-sm font-medium text-gray-700">Question (EN)</label>
                         <input
                           type="text"
                           value={faq.question_en}
@@ -572,9 +628,7 @@ const ServiceEdit = () => {
                           onBlur={() => saveFAQ(faq, index)}
                           className="w-full px-3 py-2 border border-gray-300 rounded-lg"
                         />
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Answer (EN)</label>
+                        <label className="block text-sm font-medium text-gray-700 mt-2">Answer (EN)</label>
                         <textarea
                           value={faq.answer_en}
                           onChange={(e) => updateFAQ(index, 'answer_en', e.target.value)}
@@ -582,6 +636,78 @@ const ServiceEdit = () => {
                           rows={2}
                           className="w-full px-3 py-2 border border-gray-300 rounded-lg"
                         />
+                      </div>
+
+                      {/* Turkish */}
+                      <div className="grid grid-cols-2 gap-3 pt-2 border-t">
+                        <div>
+                          <label className="block text-sm font-medium text-gray-600">Question (TR)</label>
+                          <input
+                            type="text"
+                            value={faq.question_tr || ''}
+                            onChange={(e) => updateFAQ(index, 'question_tr', e.target.value)}
+                            onBlur={() => saveFAQ(faq, index)}
+                            className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-600">Answer (TR)</label>
+                          <textarea
+                            value={faq.answer_tr || ''}
+                            onChange={(e) => updateFAQ(index, 'answer_tr', e.target.value)}
+                            onBlur={() => saveFAQ(faq, index)}
+                            rows={2}
+                            className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm"
+                          />
+                        </div>
+                      </div>
+
+                      {/* Portuguese */}
+                      <div className="grid grid-cols-2 gap-3">
+                        <div>
+                          <label className="block text-sm font-medium text-gray-600">Question (PT)</label>
+                          <input
+                            type="text"
+                            value={faq.question_pt || ''}
+                            onChange={(e) => updateFAQ(index, 'question_pt', e.target.value)}
+                            onBlur={() => saveFAQ(faq, index)}
+                            className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-600">Answer (PT)</label>
+                          <textarea
+                            value={faq.answer_pt || ''}
+                            onChange={(e) => updateFAQ(index, 'answer_pt', e.target.value)}
+                            onBlur={() => saveFAQ(faq, index)}
+                            rows={2}
+                            className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm"
+                          />
+                        </div>
+                      </div>
+
+                      {/* Spanish */}
+                      <div className="grid grid-cols-2 gap-3">
+                        <div>
+                          <label className="block text-sm font-medium text-gray-600">Question (ES)</label>
+                          <input
+                            type="text"
+                            value={faq.question_es || ''}
+                            onChange={(e) => updateFAQ(index, 'question_es', e.target.value)}
+                            onBlur={() => saveFAQ(faq, index)}
+                            className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-600">Answer (ES)</label>
+                          <textarea
+                            value={faq.answer_es || ''}
+                            onChange={(e) => updateFAQ(index, 'answer_es', e.target.value)}
+                            onBlur={() => saveFAQ(faq, index)}
+                            rows={2}
+                            className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm"
+                          />
+                        </div>
                       </div>
                     </div>
                   </div>
