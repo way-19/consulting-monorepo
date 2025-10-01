@@ -133,7 +133,8 @@ consulting19/
     * Backend: 7 endpoints (create, approve, reject, received, sent, client, stats, active-countries)
     * Client: Modal form to request services from other countries
     * Consultant: Received/Sent tabs, approve/reject workflow with optional rejection reason
-    * Business: 15% referral commission (DB default), country activation checks
+    * Business: **NEW COMMISSION STRUCTURE** - 30% system, 65% assigned consultant, 5% referring consultant
+    * Commission rates stored per assignment: system_commission_rate, assigned_consultant_rate, referring_consultant_rate
     * Security: RBAC + ownership + self-assignment prevention
   - ✅ **Content Management System (CMS)**: Modular page builder for country landing pages
     * Database: cms_pages + cms_blocks (modular block system with JSONB content)

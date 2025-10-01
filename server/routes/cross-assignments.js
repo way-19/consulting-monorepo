@@ -440,15 +440,30 @@ router.get('/stats', authenticateToken, async (req, res) => {
         COUNT(*) FILTER (WHERE target_consultant_id = $1 AND status = 'pending') as received_pending,
         COUNT(*) FILTER (WHERE target_consultant_id = $1 AND status = 'approved') as received_approved,
         COUNT(*) FILTER (WHERE referring_consultant_id = $1 AND status = 'pending') as sent_pending,
-        COUNT(*) FILTER (WHERE referring_consultant_id = $1 AND status = 'approved') as sent_approved
+        COUNT(*) FILTER (WHERE referring_consultant_id = $1 AND status = 'approved') as sent_approved,
+        AVG(system_commission_rate) as avg_system_rate,
+        AVG(assigned_consultant_rate) as avg_assigned_rate,
+        AVG(referring_consultant_rate) as avg_referring_rate
        FROM cross_assignments
        WHERE target_consultant_id = $1 OR referring_consultant_id = $1`,
       [req.user.id]
     );
 
+    const stats = result.rows[0];
+
     res.json({
       success: true,
-      stats: result.rows[0]
+      stats: {
+        received_pending: parseInt(stats.received_pending) || 0,
+        received_approved: parseInt(stats.received_approved) || 0,
+        sent_pending: parseInt(stats.sent_pending) || 0,
+        sent_approved: parseInt(stats.sent_approved) || 0,
+        commission_rates: {
+          system: parseFloat(stats.avg_system_rate) || 30.0,
+          assigned_consultant: parseFloat(stats.avg_assigned_rate) || 65.0,
+          referring_consultant: parseFloat(stats.avg_referring_rate) || 5.0
+        }
+      }
     });
   } catch (error) {
     console.error('Error fetching assignment stats:', error);

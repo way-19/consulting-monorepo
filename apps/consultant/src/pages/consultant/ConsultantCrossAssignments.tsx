@@ -27,9 +27,22 @@ interface CrossAssignment {
   rejected_at?: string | null;
 }
 
+interface AssignmentStats {
+  received_pending: number;
+  received_approved: number;
+  sent_pending: number;
+  sent_approved: number;
+  commission_rates: {
+    system: number;
+    assigned_consultant: number;
+    referring_consultant: number;
+  };
+}
+
 const ConsultantCrossAssignments = () => {
   const [receivedAssignments, setReceivedAssignments] = useState<CrossAssignment[]>([]);
   const [sentAssignments, setSentAssignments] = useState<CrossAssignment[]>([]);
+  const [stats, setStats] = useState<AssignmentStats | null>(null);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<'received' | 'sent'>('received');
   const [rejectionReason, setRejectionReason] = useState('');
@@ -38,6 +51,7 @@ const ConsultantCrossAssignments = () => {
 
   useEffect(() => {
     fetchAssignments();
+    fetchStats();
   }, []);
 
   const fetchAssignments = async () => {
@@ -61,6 +75,19 @@ const ConsultantCrossAssignments = () => {
       console.error('Error fetching assignments:', error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchStats = async () => {
+    try {
+      const response = await authFetch('/api/cross-assignments/stats');
+      
+      if (response.ok) {
+        const data = await response.json();
+        setStats(data.stats);
+      }
+    } catch (error) {
+      console.error('Error fetching stats:', error);
     }
   };
 
@@ -186,6 +213,38 @@ const ConsultantCrossAssignments = () => {
               Collaborate with consultants in other countries and earn referral commissions
             </p>
           </div>
+
+          {/* Commission Structure Card */}
+          {stats && (
+            <div className="bg-gradient-to-r from-purple-50 to-blue-50 rounded-lg border border-purple-200 p-6">
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-lg font-semibold text-gray-900">Commission Structure</h2>
+                <DollarSign className="w-6 h-6 text-purple-600" />
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="bg-white rounded-lg p-4 shadow-sm">
+                  <div className="text-sm text-gray-600 mb-1">System Fee</div>
+                  <div className="text-2xl font-bold text-gray-900">
+                    {stats.commission_rates.system.toFixed(0)}%
+                  </div>
+                </div>
+                <div className="bg-white rounded-lg p-4 shadow-sm">
+                  <div className="text-sm text-gray-600 mb-1">Assigned Consultant</div>
+                  <div className="text-2xl font-bold text-green-600">
+                    {stats.commission_rates.assigned_consultant.toFixed(0)}%
+                  </div>
+                  <div className="text-xs text-gray-500 mt-1">You earn when providing service</div>
+                </div>
+                <div className="bg-white rounded-lg p-4 shadow-sm">
+                  <div className="text-sm text-gray-600 mb-1">Referring Consultant</div>
+                  <div className="text-2xl font-bold text-blue-600">
+                    {stats.commission_rates.referring_consultant.toFixed(0)}%
+                  </div>
+                  <div className="text-xs text-gray-500 mt-1">You earn when referring clients</div>
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* Tabs */}
           <div className="border-b border-gray-200">
@@ -354,7 +413,8 @@ const ConsultantCrossAssignments = () => {
                         <div className="bg-green-50 border border-green-200 rounded-lg p-4">
                           <p className="text-sm text-green-900">
                             <strong>✓ Approved:</strong> You can now work with this client. 
-                            The referring consultant will earn a 15% commission on your services.
+                            <strong>Commission Structure:</strong> You earn <strong>65%</strong> of service fees, 
+                            the referring consultant earns <strong>5%</strong>, and <strong>30%</strong> goes to the system.
                           </p>
                         </div>
                       </div>
@@ -433,7 +493,7 @@ const ConsultantCrossAssignments = () => {
                           <div className="flex items-center text-sm text-gray-600">
                             <DollarSign className="w-4 h-4 mr-2 text-green-600" />
                             <span className="text-green-600">
-                              <strong>Commission Rate:</strong> 15%
+                              <strong>Your Referral Commission:</strong> 5%
                             </span>
                           </div>
                         )}
@@ -452,7 +512,8 @@ const ConsultantCrossAssignments = () => {
                       <div className="bg-green-50 border border-green-200 rounded-lg p-4">
                         <p className="text-sm text-green-900">
                           <strong>✓ Approved:</strong> The consultant has accepted this request. 
-                          You will earn a 15% commission on services provided to this client.
+                          <strong>Commission Structure:</strong> You earn <strong>5%</strong> referral fee, 
+                          the assigned consultant earns <strong>65%</strong>, and <strong>30%</strong> goes to the system.
                         </p>
                       </div>
                     )}
