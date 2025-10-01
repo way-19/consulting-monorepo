@@ -22,6 +22,7 @@ import availabilityRouter from './routes/availability.js';
 import mailboxRouter from './routes/mailbox.js';
 import fileManagerRouter from './routes/file-manager.js';
 import consultantServicesRouter from './routes/consultant-services.js';
+import crossAssignmentsRouter from './routes/cross-assignments.js';
 
 dotenv.config();
 
@@ -109,6 +110,7 @@ app.use('/api/availability', availabilityRouter);
 app.use('/api/mailbox', mailboxRouter);
 app.use('/api/file-manager', fileManagerRouter);
 app.use('/api/consultant-services', consultantServicesRouter);
+app.use('/api/cross-assignments', crossAssignmentsRouter);
 
 // 404 handler
 app.use((req, res) => {
