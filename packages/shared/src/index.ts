@@ -1,5 +1,5 @@
 // Auth
-export { AuthProvider, useAuth } from './contexts/AuthContext';
+export { AuthProvider, useAuth, createAuthenticatedFetch } from './contexts/AuthContext';
 
 // Language
 export { LanguageProvider, useLanguage } from './contexts/LanguageContext';

@@ -1,25 +1,18 @@
 import { useState, useEffect } from 'react';
 import { Search, Download, Check, X, Upload, Eye, FileText, Calendar, User, RefreshCw, Building } from 'lucide-react';
-import { supabase } from '@consulting19/shared/lib/supabase';
-import { useAuth } from '@consulting19/shared';
+import { useAuth, createAuthenticatedFetch } from '@consulting19/shared';
 
 interface Client {
   id: string;
   profile_id: string;
   company_name: string;
   status: string;
-  user_profiles: {
-    first_name?: string;
-    last_name?: string;
-    full_name?: string; // Keep for backward compatibility
-    email: string;
-  } | null;
 }
 
 interface Document {
   id: string;
   name: string;
-  type: 'accounting' | 'official';
+  document_type: 'accounting' | 'official';
   category: string;
   status: string;
   file_path: string;
@@ -29,13 +22,8 @@ interface Document {
   currency: string | null;
   transaction_date: string | null;
   uploaded_at: string;
-  client: {
-    id: string;
-    first_name?: string;
-    last_name?: string;
-    full_name?: string; // Keep for backward compatibility
-    company_name: string;
-  };
+  company_name: string;
+  client_name: string;
 }
 
 const ConsultantDocuments = () => {
@@ -50,52 +38,14 @@ const ConsultantDocuments = () => {
   const [activeTab, setActiveTab] = useState<'accounting' | 'official'>('accounting');
   const [uploadingFile, setUploadingFile] = useState(false);
 
-  // Upload button component to avoid duplication
-  const UploadButton = ({ id, className = "" }: { id: string; className?: string }) => (
-    <div className="relative">
-      <input
-        type="file"
-        accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
-        className="hidden"
-        id={id}
-        onChange={handleFileUpload}
-        disabled={uploadingFile || selectedClientId === 'all'}
-      />
-      <label
-        htmlFor={id}
-        className={`inline-flex items-center px-4 py-2 rounded-lg transition-colors cursor-pointer ${
-          uploadingFile || selectedClientId === 'all'
-            ? 'bg-gray-400 text-white cursor-not-allowed'
-            : 'bg-blue-600 text-white hover:bg-blue-700'
-        } ${className}`}
-      >
-        {uploadingFile ? (
-          <>
-            <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
-            Uploading...
-          </>
-        ) : (
-          <>
-            <Upload className="w-4 h-4 mr-2" />
-            Upload {activeTab === 'accounting' ? 'Accounting' : 'Official'} Document
-          </>
-        )}
-      </label>
-    </div>
-  );
+  const authFetch = createAuthenticatedFetch();
 
   useEffect(() => {
     fetchClients();
   }, [user]);
 
   useEffect(() => {
-    if (selectedClientId === 'all') {
-      fetchAllDocuments();
-    } else if (selectedClientId) {
-      fetchDocuments();
-    } else {
-      setDocuments([]);
-    }
+    fetchDocuments();
   }, [selectedClientId, activeTab]);
 
   const fetchClients = async () => {
@@ -104,129 +54,20 @@ const ConsultantDocuments = () => {
       
       if (!user) return;
 
-      // Get consultant's assigned clients
-      const { data: clientsData, error } = await supabase
-        .from('clients')
-        .select(`
-          id,
-          profile_id,
-          company_name,
-          status,
-          user_profiles!clients_profile_id_fkey(
-            full_name,
-            email
-          )
-        `)
-        .eq('assigned_consultant_id', user.id)
-        .eq('status', 'active')
-        .order('company_name');
+      const response = await authFetch('/api/clients', {
+        method: 'GET'
+      });
 
-      if (error) {
-        console.error('Error fetching clients:', error);
-        return;
+      if (!response.ok) {
+        throw new Error('Failed to fetch clients');
       }
 
-      // Transform the data to match our interface
-      const transformedClients = clientsData?.map(client => ({
-        ...client,
-        user_profiles: Array.isArray(client.user_profiles) 
-          ? client.user_profiles[0] || null 
-          : client.user_profiles
-      })) || [];
-      
-      setClients(transformedClients);
+      const data = await response.json();
+      setClients(data.clients || []);
     } catch (error) {
       console.error('Error fetching clients:', error);
     } finally {
       setLoading(false);
-    }
-  };
-
-  const fetchAllDocuments = async () => {
-    if (!user?.id) return;
-    
-    try {
-      setLoadingDocuments(true);
-
-      // Get consultant profile
-      const { data: consultantProfile, error: profileError } = await supabase
-        .from('user_profiles')
-        .select('id')
-        .eq('user_id', user.id)
-        .eq('role', 'consultant')
-        .single();
-
-      if (profileError || !consultantProfile) {
-        console.error('Consultant profile not found:', profileError);
-        setLoadingDocuments(false);
-        return;
-      }
-
-      // Get consultant's assigned clients through service_orders
-      const { data: serviceOrders, error: ordersError } = await supabase
-        .from('service_orders')
-        .select('client_id')
-        .eq('consultant_id', consultantProfile.id);
-
-      if (ordersError) {
-        console.error('Error fetching service orders:', ordersError);
-        setLoadingDocuments(false);
-        return;
-      }
-
-      const assignedClientIds = serviceOrders?.map(order => order.client_id) || [];
-
-      if (assignedClientIds.length === 0) {
-        setDocuments([]);
-        setLoadingDocuments(false);
-        return;
-      }
-
-      // Build query for documents from all assigned clients
-      let query = supabase
-        .from('documents')
-        .select(`
-          *,
-          client:clients(
-            id,
-            company_name,
-            profile:user_profiles!clients_profile_id_fkey(full_name)
-          )
-        `)
-        .in('client_id', assignedClientIds);
-
-      // Filter by document type based on active tab
-      if (activeTab === 'accounting') {
-        query = query.eq('document_type', 'accounting');
-      } else {
-        query = query.eq('document_type', 'official');
-      }
-
-      // Order by upload date
-      query = query.order('uploaded_at', { ascending: false });
-
-      const { data: documentsData, error } = await query;
-
-      if (error) {
-        console.error('Error fetching documents:', error);
-        return;
-      }
-
-      // Transform data to match interface
-      const transformedDocuments = documentsData?.map(doc => ({
-        ...doc,
-        client: {
-          id: doc.client?.id || '',
-          full_name: doc.client?.profile?.full_name || '',
-          company_name: doc.client?.company_name || ''
-        }
-      })) || [];
-
-      setDocuments(transformedDocuments);
-    } catch (error) {
-      console.error('Error fetching documents:', error);
-    } finally {
-      setLoadingDocuments(false);
     }
   };
 
@@ -236,83 +77,26 @@ const ConsultantDocuments = () => {
     try {
       setLoadingDocuments(true);
       
-      if (!selectedClientId) return;
+      const queryParams = new URLSearchParams({
+        document_type: activeTab,
+        page: '1',
+        limit: '100'
+      });
 
-      // Get consultant profile
-      const { data: consultantProfile, error: profileError } = await supabase
-        .from('user_profiles')
-        .select('id')
-        .eq('user_id', user.id)
-        .eq('role', 'consultant')
-        .single();
-
-      if (profileError || !consultantProfile) {
-        console.error('Consultant profile not found:', profileError);
-        setLoadingDocuments(false);
-        return;
+      if (selectedClientId && selectedClientId !== 'all') {
+        queryParams.append('client_id', selectedClientId);
       }
 
-      // Get consultant's assigned clients through service_orders
-      const { data: serviceOrders, error: ordersError } = await supabase
-        .from('service_orders')
-        .select('client_id')
-        .eq('consultant_id', consultantProfile.id);
+      const response = await authFetch(`/api/documents?${queryParams}`, {
+        method: 'GET'
+      });
 
-      if (ordersError) {
-        console.error('Error fetching service orders:', ordersError);
-        setLoadingDocuments(false);
-        return;
+      if (!response.ok) {
+        throw new Error('Failed to fetch documents');
       }
 
-      const assignedClientIds = serviceOrders?.map(order => order.client_id) || [];
-
-      if (assignedClientIds.length === 0 || !assignedClientIds.includes(selectedClientId)) {
-        setDocuments([]);
-        setLoadingDocuments(false);
-        return;
-      }
-
-      // Build query for documents
-      let query = supabase
-        .from('documents')
-        .select(`
-          *,
-          client:clients(
-            id,
-            company_name,
-            profile:user_profiles!clients_profile_id_fkey(full_name)
-          )
-        `)
-        .eq('client_id', selectedClientId);
-
-      // Filter by document type based on active tab
-      if (activeTab === 'accounting') {
-        query = query.eq('document_type', 'accounting');
-      } else {
-        query = query.eq('document_type', 'official');
-      }
-
-      // Order by upload date
-      query = query.order('uploaded_at', { ascending: false });
-
-      const { data: documentsData, error } = await query;
-
-      if (error) {
-        console.error('Error fetching documents:', error);
-        return;
-      }
-
-      // Transform data to match interface
-      const transformedDocuments = documentsData?.map(doc => ({
-        ...doc,
-        client: {
-          id: doc.client?.id || '',
-          full_name: doc.client?.profile?.full_name || '',
-          company_name: doc.client?.company_name || ''
-        }
-      })) || [];
-
-      setDocuments(transformedDocuments);
+      const data = await response.json();
+      setDocuments(data.documents || []);
     } catch (error) {
       console.error('Error fetching documents:', error);
     } finally {
@@ -327,8 +111,8 @@ const ConsultantDocuments = () => {
       doc.notes?.toLowerCase().includes(searchTerm.toLowerCase());
     
     const matchesClientSearch = selectedClientId === 'all' 
-      ? (doc.client.full_name?.toLowerCase().includes(clientSearchTerm.toLowerCase()) ||
-         doc.client.company_name.toLowerCase().includes(clientSearchTerm.toLowerCase()))
+      ? (doc.client_name?.toLowerCase().includes(clientSearchTerm.toLowerCase()) ||
+         doc.company_name?.toLowerCase().includes(clientSearchTerm.toLowerCase()))
       : true;
     
     return matchesSearch && matchesClientSearch;
@@ -336,7 +120,8 @@ const ConsultantDocuments = () => {
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'uploaded': return 'bg-blue-100 text-blue-800';
+      case 'uploaded': 
+      case 'pending': return 'bg-blue-100 text-blue-800';
       case 'reviewed': return 'bg-yellow-100 text-yellow-800';
       case 'approved': return 'bg-green-100 text-green-800';
       case 'rejected': return 'bg-red-100 text-red-800';
@@ -359,79 +144,82 @@ const ConsultantDocuments = () => {
     }).format(amount);
   };
 
-
-
   const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
-    if (!file || !selectedClientId) {
-      alert('Please select a client first');
+    if (!file || !selectedClientId || selectedClientId === 'all') {
+      alert('Please select a specific client first');
       return;
     }
 
     setUploadingFile(true);
     try {
-      // Upload file to Supabase Storage
-      const fileExt = file.name.split('.').pop();
-      const fileName = `${Date.now()}-${Math.random().toString(36).substring(2)}.${fileExt}`;
-      const filePath = `documents/${selectedClientId}/${fileName}`;
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('client_id', selectedClientId);
+      formData.append('document_type', activeTab);
+      formData.append('category', 'general');
 
-      const { error: uploadError } = await supabase.storage
-        .from('documents')
-        .upload(filePath, file);
+      const response = await authFetch('/api/documents/upload', {
+        method: 'POST',
+        body: formData
+      });
 
-      if (uploadError) throw uploadError;
-
-      // Determine document type based on active tab
-      const documentType = activeTab === 'accounting' ? 'accounting' : 'official';
-      
-      // For accounting documents, try to extract amount from filename or set default
-      let documentData: any = {
-        client_id: selectedClientId,
-        consultant_id: user?.id,
-        document_type: documentType,
-        category: 'general',
-        name: file.name,
-        file_path: filePath,
-        file_size: file.size,
-        mime_type: file.type,
-        status: 'pending',
-        uploaded_by: user?.id
-      };
-
-      // If it's an accounting document, add financial fields
-      if (documentType === 'accounting') {
-        documentData = {
-          ...documentData,
-          amount: 0, // Default amount, can be updated later
-          currency: 'EUR',
-          transaction_date: new Date().toISOString().split('T')[0],
-          category: 'other' // Default category
-        };
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Failed to upload document');
       }
 
-      // Save document metadata to database
-      const { error: dbError } = await supabase
-        .from('documents')
-        .insert(documentData);
-
-      if (dbError) throw dbError;
-
-      // Refresh documents list
       fetchDocuments();
-      
-      // Reset file input
       event.target.value = '';
-      
       alert('Document uploaded successfully!');
     } catch (error) {
       console.error('Error uploading document:', error);
-      alert('Error uploading document. Please try again.');
+      alert(error instanceof Error ? error.message : 'Error uploading document. Please try again.');
     } finally {
       setUploadingFile(false);
     }
   };
 
-  const selectedClient = clients.find(client => client.id === selectedClientId);
+  const handleStatusUpdate = async (documentId: string, newStatus: string, notes?: string) => {
+    try {
+      const response = await authFetch(`/api/documents/${documentId}/status`, {
+        method: 'PATCH',
+        body: JSON.stringify({ status: newStatus, notes })
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to update document status');
+      }
+
+      fetchDocuments();
+      alert('Document status updated successfully!');
+    } catch (error) {
+      console.error('Error updating document status:', error);
+      alert('Error updating document status. Please try again.');
+    }
+  };
+
+  const handleDeleteDocument = async (documentId: string) => {
+    if (!confirm('Are you sure you want to delete this document?')) {
+      return;
+    }
+
+    try {
+      const response = await authFetch(`/api/documents/${documentId}`, {
+        method: 'DELETE'
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to delete document');
+      }
+
+      fetchDocuments();
+      alert('Document deleted successfully!');
+    } catch (error) {
+      console.error('Error deleting document:', error);
+      alert('Error deleting document. Please try again.');
+    }
+  };
 
   if (loading) {
     return (
@@ -455,10 +243,8 @@ const ConsultantDocuments = () => {
         {/* Header */}
         <div className="mb-8">
           <div className="mb-4">
-            <div>
-              <h1 className="text-3xl font-bold text-gray-900">Document Management</h1>
-              <p className="text-gray-600">Review and manage client documents</p>
-            </div>
+            <h1 className="text-3xl font-bold text-gray-900">Document Management</h1>
+            <p className="text-gray-600">Review and manage client documents</p>
           </div>
 
           {/* Client Selection */}
@@ -477,7 +263,7 @@ const ConsultantDocuments = () => {
                   <option value="">Choose a specific client to manage their documents</option>
                   {clients.map((client) => (
                     <option key={client.id} value={client.id}>
-                      {client.user_profiles?.full_name} - {client.company_name}
+                      {client.company_name}
                     </option>
                   ))}
                 </select>
@@ -504,203 +290,8 @@ const ConsultantDocuments = () => {
               Choose a client from the dropdown above to manage their documents
             </p>
           </div>
-        ) : selectedClientId === 'all' ? (
-          <>
-            {/* All Clients Info */}
-             <div className="bg-white rounded-lg shadow-md p-6 mb-6">
-               <div className="flex items-center space-x-4">
-                 <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
-                   <User className="w-6 h-6 text-blue-600" />
-                 </div>
-                 <div>
-                   <h2 className="text-xl font-semibold text-gray-900">
-                     All Assigned Clients
-                   </h2>
-                   <p className="text-gray-600">Viewing documents from all your assigned clients ({clients.length} clients)</p>
-                 </div>
-               </div>
-             </div>
-
-            {/* Tabs */}
-            <div className="bg-white rounded-lg shadow-md mb-6">
-              <div className="border-b border-gray-200">
-                <nav className="-mb-px flex">
-                  <button
-                    onClick={() => setActiveTab('accounting')}
-                    className={`py-4 px-6 text-sm font-medium border-b-2 ${
-                      activeTab === 'accounting'
-                        ? 'border-blue-500 text-blue-600'
-                        : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                    }`}
-                  >
-                    Accounting Documents
-                  </button>
-                  <button
-                    onClick={() => setActiveTab('official')}
-                    className={`py-4 px-6 text-sm font-medium border-b-2 ${
-                      activeTab === 'official'
-                        ? 'border-blue-500 text-blue-600'
-                        : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                    }`}
-                  >
-                    Official Company Documents
-                  </button>
-                </nav>
-              </div>
-
-              {/* Search Bar and Upload */}
-              <div className="p-6 border-b border-gray-200">
-                <div className="flex flex-col space-y-4">
-                  <div className="flex items-center space-x-4">
-                    <div className="relative flex-1">
-                      <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
-                      <input
-                        type="text"
-                        placeholder="Search documents..."
-                        value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
-                        className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                      />
-                    </div>
-                    
-                    <div className="text-sm text-gray-500 px-4 py-2 bg-gray-100 rounded-lg">
-                      Upload disabled for all clients view
-                    </div>
-                  </div>
-                  
-                  <div className="relative">
-                    <User className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
-                    <input
-                      type="text"
-                      placeholder="Filter by client name or company..."
-                      value={clientSearchTerm}
-                      onChange={(e) => setClientSearchTerm(e.target.value)}
-                      className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    />
-                  </div>
-                </div>
-              </div>
-
-              {/* Documents List */}
-              <div className="p-6">
-                {loadingDocuments ? (
-                  <div className="space-y-4">
-                    {[...Array(3)].map((_, i) => (
-                      <div key={i} className="animate-pulse">
-                        <div className="h-20 bg-gray-200 rounded-lg"></div>
-                      </div>
-                    ))}
-                  </div>
-                ) : filteredDocuments.length > 0 ? (
-                  <div className="space-y-4">
-                    {filteredDocuments.map((doc) => (
-                      <div key={doc.id} className="border border-gray-200 rounded-lg p-4 hover:bg-gray-50 transition-colors">
-                        <div className="flex items-center justify-between">
-                          <div className="flex-1">
-                            <div className="flex items-center space-x-3 mb-2">
-                              <FileText className="w-5 h-5 text-blue-600" />
-                              <h3 className="text-lg font-semibold text-gray-900">{doc.name}</h3>
-                              <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(doc.status)}`}>
-                                {doc.status}
-                              </span>
-                              <div className="flex items-center space-x-2 ml-auto">
-                                <User className="w-4 h-4 text-gray-500" />
-                                <span className="text-sm text-gray-600 font-medium">
-                                  {doc.client.full_name} - {doc.client.company_name}
-                                </span>
-                              </div>
-                            </div>
-                            
-                            <div className="flex items-center space-x-4 text-sm text-gray-500 mb-2">
-                              {doc.category && (
-                                <span className="bg-gray-100 px-2 py-1 rounded text-xs">
-                                  {doc.category}
-                                </span>
-                              )}
-                              {doc.file_size && (
-                                <span>{formatFileSize(doc.file_size)}</span>
-                              )}
-                              <div className="flex items-center">
-                                <Calendar className="w-4 h-4 mr-1" />
-                                <span>
-                                  {activeTab === 'accounting' && doc.transaction_date 
-                                    ? `Transaction: ${new Date(doc.transaction_date).toLocaleDateString()}`
-                                    : `Uploaded: ${new Date(doc.uploaded_at).toLocaleDateString()}`
-                                  }
-                                </span>
-                              </div>
-                              {activeTab === 'accounting' && doc.amount && (
-                                <span className="font-medium text-green-600">
-                                  {formatCurrency(doc.amount, doc.currency || 'EUR')}
-                                </span>
-                              )}
-                            </div>
-
-                            {doc.notes && (
-                              <p className="text-sm text-gray-600">{doc.notes}</p>
-                            )}
-                          </div>
-
-                          <div className="flex items-center space-x-2">
-                            <button className="inline-flex items-center px-3 py-2 text-sm border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
-                              <Eye className="w-4 h-4 mr-1" />
-                              Preview
-                            </button>
-                            <button className="inline-flex items-center px-3 py-2 text-sm border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
-                              <Download className="w-4 h-4 mr-1" />
-                              Download
-                            </button>
-                            {doc.status === 'uploaded' && (
-                              <>
-                                <button className="inline-flex items-center px-3 py-2 text-sm bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors">
-                                  <Check className="w-4 h-4 mr-1" />
-                                  Approve
-                                </button>
-                                <button className="inline-flex items-center px-3 py-2 text-sm bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors">
-                                  <X className="w-4 h-4 mr-1" />
-                                  Reject
-                                </button>
-                              </>
-                            )}
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <div className="text-center py-12">
-                    <FileText className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-                    <h3 className="text-xl font-semibold text-gray-900 mb-2">
-                      No {activeTab} documents found
-                    </h3>
-                    <p className="text-gray-600 mb-6">
-                      {activeTab === 'accounting' 
-                        ? 'No accounting documents have been uploaded by your assigned clients yet.'
-                        : 'No official documents have been uploaded by your assigned clients yet.'
-                      }
-                    </p>
-                  </div>
-                )}
-              </div>
-            </div>
-           </>
         ) : (
           <>
-            {/* Selected Client Info */}
-            <div className="bg-white rounded-lg shadow-md p-6 mb-6">
-              <div className="flex items-center space-x-4">
-                <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
-                  <Building className="w-6 h-6 text-blue-600" />
-                </div>
-                <div>
-                  <h2 className="text-xl font-semibold text-gray-900">
-                    {selectedClient?.user_profiles?.full_name}
-                  </h2>
-                  <p className="text-gray-600">{selectedClient?.company_name}</p>
-                </div>
-              </div>
-            </div>
-
             {/* Tabs */}
             <div className="bg-white rounded-lg shadow-md mb-6">
               <div className="border-b border-gray-200">
@@ -743,7 +334,42 @@ const ConsultantDocuments = () => {
                       />
                     </div>
                     
-                    <UploadButton id="document-upload-header" />
+                    {selectedClientId !== 'all' ? (
+                      <div className="relative">
+                        <input
+                          type="file"
+                          accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
+                          className="hidden"
+                          id="file-upload"
+                          onChange={handleFileUpload}
+                          disabled={uploadingFile}
+                        />
+                        <label
+                          htmlFor="file-upload"
+                          className={`inline-flex items-center px-4 py-2 rounded-lg transition-colors cursor-pointer ${
+                            uploadingFile
+                              ? 'bg-gray-400 text-white cursor-not-allowed'
+                              : 'bg-blue-600 text-white hover:bg-blue-700'
+                          }`}
+                        >
+                          {uploadingFile ? (
+                            <>
+                              <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
+                              Uploading...
+                            </>
+                          ) : (
+                            <>
+                              <Upload className="w-4 h-4 mr-2" />
+                              Upload Document
+                            </>
+                          )}
+                        </label>
+                      </div>
+                    ) : (
+                      <div className="text-sm text-gray-500 px-4 py-2 bg-gray-100 rounded-lg">
+                        Select a client to upload
+                      </div>
+                    )}
                   </div>
                   
                   {selectedClientId === 'all' && (
@@ -785,9 +411,9 @@ const ConsultantDocuments = () => {
                               </span>
                               {selectedClientId === 'all' && (
                                 <div className="flex items-center space-x-2 ml-auto">
-                                  <User className="w-4 h-4 text-gray-500" />
+                                  <Building className="w-4 h-4 text-gray-500" />
                                   <span className="text-sm text-gray-600 font-medium">
-                                    {doc.client.full_name} - {doc.client.company_name}
+                                    {doc.company_name || doc.client_name}
                                   </span>
                                 </div>
                               )}
@@ -819,31 +445,39 @@ const ConsultantDocuments = () => {
                             </div>
 
                             {doc.notes && (
-                              <p className="text-sm text-gray-600">{doc.notes}</p>
+                              <p className="text-sm text-gray-600 mt-2">{doc.notes}</p>
                             )}
                           </div>
 
-                          <div className="flex items-center space-x-2">
-                            <button className="inline-flex items-center px-3 py-2 text-sm border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
-                              <Eye className="w-4 h-4 mr-1" />
-                              Preview
-                            </button>
-                            <button className="inline-flex items-center px-3 py-2 text-sm border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
-                              <Download className="w-4 h-4 mr-1" />
-                              Download
-                            </button>
-                            {doc.status === 'uploaded' && (
+                          <div className="flex items-center space-x-2 ml-4">
+                            {doc.status === 'pending' && (
                               <>
-                                <button className="inline-flex items-center px-3 py-2 text-sm bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors">
-                                  <Check className="w-4 h-4 mr-1" />
-                                  Approve
+                                <button
+                                  onClick={() => handleStatusUpdate(doc.id, 'approved')}
+                                  className="p-2 text-green-600 hover:bg-green-50 rounded-lg transition-colors"
+                                  title="Approve"
+                                >
+                                  <Check className="w-5 h-5" />
                                 </button>
-                                <button className="inline-flex items-center px-3 py-2 text-sm bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors">
-                                  <X className="w-4 h-4 mr-1" />
-                                  Reject
+                                <button
+                                  onClick={() => {
+                                    const notes = prompt('Rejection reason:');
+                                    if (notes) handleStatusUpdate(doc.id, 'rejected', notes);
+                                  }}
+                                  className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                                  title="Reject"
+                                >
+                                  <X className="w-5 h-5" />
                                 </button>
                               </>
                             )}
+                            <button
+                              onClick={() => handleDeleteDocument(doc.id)}
+                              className="p-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
+                              title="Delete"
+                            >
+                              <X className="w-5 h-5" />
+                            </button>
                           </div>
                         </div>
                       </div>
@@ -852,16 +486,15 @@ const ConsultantDocuments = () => {
                 ) : (
                   <div className="text-center py-12">
                     <FileText className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-                    <h3 className="text-xl font-semibold text-gray-900 mb-2">
-                      No {activeTab} documents found
+                    <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                      No Documents Found
                     </h3>
-                    <p className="text-gray-600 mb-6">
-                      {activeTab === 'accounting' 
-                        ? 'No accounting documents have been uploaded by this client yet.'
-                        : 'No official documents have been uploaded for this client yet.'
+                    <p className="text-gray-600">
+                      {searchTerm || clientSearchTerm 
+                        ? 'No documents match your search criteria'
+                        : `No ${activeTab} documents available for this client`
                       }
                     </p>
-                    <UploadButton id="document-upload" />
                   </div>
                 )}
               </div>

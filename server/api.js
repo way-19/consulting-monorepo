@@ -4,6 +4,8 @@ import dotenv from 'dotenv';
 import { apiLimiter } from './middleware/rateLimiter.js';
 import documentsRouter from './routes/documents.js';
 import messagesRouter from './routes/messages.js';
+import clientsRouter from './routes/clients.js';
+import usersRouter from './routes/users.js';
 
 dotenv.config();
 
@@ -62,6 +64,8 @@ app.get('/health', (req, res) => {
 // API Routes
 app.use('/api/documents', documentsRouter);
 app.use('/api/messages', messagesRouter);
+app.use('/api/clients', clientsRouter);
+app.use('/api/users', usersRouter);
 
 // 404 handler
 app.use((req, res) => {
