@@ -87,16 +87,56 @@ consulting19/
 - **Development**: Running on Replit with marketing app on port 5000
 - **Production**: Configured for deployment via Replit
 
-## Recent Changes (Setup on Replit)
+## Recent Changes
+- 2025-10-01: **Production-Ready Migration Complete**
+  - ✅ Migrated from Supabase to Replit PostgreSQL with custom JWT authentication
+  - ✅ Built secure backend API infrastructure (Auth: 3001, API: 3002)
+  - ✅ Implemented production-grade security:
+    * JWT-based authentication with token validation
+    * Rate limiting (15 req/15min for sensitive endpoints)
+    * Input validation with express-validator
+    * CORS restricted to allowed origins
+    * Role-based access control (RBAC)
+    * SQL injection prevention
+  - ✅ Migrated frontend pages to secure APIs:
+    * ConsultantDocuments.tsx → /api/documents, /api/clients
+    * ClientMessages.tsx → /api/messages, /api/users (polling instead of real-time)
+  - ✅ Created authenticated API endpoints:
+    * /api/documents (list, upload, status update, delete)
+    * /api/messages (send, receive, mark read, conversations)
+    * /api/clients (list with RBAC, get by ID)
+    * /api/users (get profile with relationship checks)
+  - ✅ Updated all Vite proxies to route /api/* to backend servers
+  - ✅ Exported createAuthenticatedFetch helper from shared package
+
 - 2025-09-30: Initial Replit setup
   - Configured Vite to run on port 5000 with host 0.0.0.0
   - Added allowed hosts for Replit proxy (.replit.dev, .repl.co)
   - Set up workflow for marketing site
   - Created .env.example for Supabase configuration
-  - Application running successfully with fallback/mock data
+
+## Backend Architecture
+### Auth Server (Port 3001)
+- Handles authentication: login, logout, register, refresh tokens
+- JWT token generation and validation
+- Rate limiting: 5 attempts/15min for auth endpoints
+
+### API Server (Port 3002)
+- RESTful API for all business logic
+- JWT middleware protection on all routes
+- Rate limiting: 15 requests/15min for sensitive operations
+- Input validation with express-validator
+- Endpoints:
+  * `/api/documents` - Document management
+  * `/api/messages` - Messaging system
+  * `/api/clients` - Client management
+  * `/api/users` - User profiles
 
 ## Notes
-- The marketing app is the primary frontend and is configured to run on port 5000
+- **Security**: All API endpoints protected with JWT authentication and RBAC
+- **Frontend**: Uses `createAuthenticatedFetch()` for API calls with automatic token handling
+- **Database**: Replit PostgreSQL with parameterized queries (SQL injection prevention)
+- **Migration Status**: ConsultantDocuments and ClientMessages fully migrated from Supabase
+- **Real-time**: Messages use polling (5-second interval) instead of WebSocket subscriptions
 - Vite HMR (Hot Module Replacement) is working correctly
-- Application loads successfully but shows Supabase warnings (expected without env vars)
-- All other apps (client, consultant, admin) are on different ports if needed
+- All apps (marketing: 5000, consultant: 3000, client: 5173) are running with proper proxy configuration
