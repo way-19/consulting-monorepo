@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Search, Download, Check, X, Upload, Eye, FileText, Calendar, User, RefreshCw, Building } from 'lucide-react';
+import { Search, Check, X, Upload, FileText, Calendar, User, RefreshCw, Building } from 'lucide-react';
 import { useAuth, createAuthenticatedFetch } from '@consulting19/shared';
 
 interface Client {
