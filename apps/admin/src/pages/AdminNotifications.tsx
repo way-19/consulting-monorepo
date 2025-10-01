@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { Bell, DollarSign, MessageSquare, TrendingUp, LogOut, Users, Percent, Settings } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { Bell, DollarSign, MessageSquare, TrendingUp, LogOut, Users, Percent } from 'lucide-react';
 import { useAuth, createAuthenticatedFetch } from '@consulting19/shared';
 
 interface SalesNotification {
@@ -184,7 +184,7 @@ const AdminNotifications = () => {
     }
   };
 
-  const getNotificationTitle = (type: string, payload: any) => {
+  const getNotificationTitle = (type: string) => {
     switch (type) {
       case 'service_purchase':
         return 'New Service Purchase';
@@ -444,7 +444,7 @@ const AdminNotifications = () => {
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-medium text-gray-900">
-                      {getNotificationTitle(notification.type, notification.payload)}
+                      {getNotificationTitle(notification.type)}
                     </p>
                     <p className="text-sm text-gray-600 mt-1">
                       {formatDate(notification.created_at)}

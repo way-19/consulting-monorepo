@@ -20,7 +20,9 @@ router.get('/', authenticateToken, validatePagination, async (req, res) => {
     
     let query = `
       SELECT 
-        o.*,
+        o.id, o.title, o.description, o.budget, o.status, o.country_code,
+        o.selected_package_id, o.additional_service_ids, o.customer_details,
+        o.total_amount, o.currency, o.created_at, o.updated_at, o.client_id,
         c.company_name as client_company,
         client_profile.first_name as client_first_name,
         client_profile.last_name as client_last_name,
@@ -99,7 +101,9 @@ router.get('/:id', authenticateToken, async (req, res) => {
     
     const query = `
       SELECT 
-        o.*,
+        o.id, o.title, o.description, o.budget, o.status, o.country_code,
+        o.selected_package_id, o.additional_service_ids, o.customer_details,
+        o.total_amount, o.currency, o.created_at, o.updated_at, o.client_id,
         c.company_name as client_company,
         client_profile.first_name as client_first_name,
         client_profile.last_name as client_last_name,
@@ -255,11 +259,11 @@ router.patch('/:id/status', authenticateToken, async (req, res) => {
   }
 });
 
-// GET /api/orders/packages - Get available packages
-router.get('/packages/list', authenticateToken, async (req, res) => {
+// GET /api/orders/packages - Get available packages (PUBLIC)
+router.get('/packages/list', async (req, res) => {
   try {
     const result = await pool.query(
-      'SELECT * FROM packages WHERE is_active = true ORDER BY price ASC'
+      'SELECT id, name, price, description FROM packages WHERE is_active = true ORDER BY price ASC'
     );
     
     res.json({ packages: result.rows });
@@ -269,11 +273,11 @@ router.get('/packages/list', authenticateToken, async (req, res) => {
   }
 });
 
-// GET /api/orders/additional-services - Get additional services
-router.get('/additional-services/list', authenticateToken, async (req, res) => {
+// GET /api/orders/additional-services - Get additional services (PUBLIC)
+router.get('/additional-services/list', async (req, res) => {
   try {
     const result = await pool.query(
-      'SELECT * FROM additional_services WHERE is_active = true ORDER BY base_price ASC'
+      'SELECT id, name, description, base_price FROM additional_services WHERE is_active = true ORDER BY base_price ASC'
     );
     
     res.json({ additional_services: result.rows });
@@ -283,11 +287,11 @@ router.get('/additional-services/list', authenticateToken, async (req, res) => {
   }
 });
 
-// GET /api/orders/banks - Get available banks
-router.get('/banks/list', authenticateToken, async (req, res) => {
+// GET /api/orders/banks - Get available banks (PUBLIC)
+router.get('/banks/list', async (req, res) => {
   try {
     const result = await pool.query(
-      'SELECT * FROM banks WHERE is_active = true ORDER BY name ASC'
+      'SELECT id, name, price, flag_url FROM banks WHERE is_active = true ORDER BY name ASC'
     );
     
     res.json({ banks: result.rows });

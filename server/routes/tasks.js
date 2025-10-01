@@ -20,7 +20,9 @@ router.get('/', authenticateToken, validatePagination, async (req, res) => {
     
     let query = `
       SELECT 
-        t.*,
+        t.id, t.title, t.description, t.status, t.priority, t.due_date,
+        t.estimated_hours, t.actual_hours, t.billable, t.is_client_visible,
+        t.created_at, t.updated_at, t.consultant_id, t.client_id, t.project_id,
         up.first_name || ' ' || up.last_name as consultant_name,
         p.title as project_title,
         c.company_name as client_company,
@@ -128,7 +130,9 @@ router.get('/:id', authenticateToken, async (req, res) => {
     
     const query = `
       SELECT 
-        t.*,
+        t.id, t.title, t.description, t.status, t.priority, t.due_date,
+        t.estimated_hours, t.actual_hours, t.billable, t.is_client_visible,
+        t.created_at, t.updated_at, t.consultant_id, t.client_id, t.project_id,
         up.first_name || ' ' || up.last_name as consultant_name,
         p.title as project_title,
         c.company_name as client_company,

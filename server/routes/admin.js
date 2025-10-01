@@ -16,7 +16,7 @@ router.get('/notifications', authenticateToken, requireRole('admin'), async (req
     const { limit = 20 } = req.query;
     
     const result = await pool.query(`
-      SELECT *
+      SELECT id, action_type as type, payload, created_at
       FROM audit_logs
       WHERE action_type IN ('service_purchase', 'payment_received', 'message_sent', 'invoice_created')
       ORDER BY created_at DESC
