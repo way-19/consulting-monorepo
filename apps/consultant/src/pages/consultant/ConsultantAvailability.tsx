@@ -180,6 +180,64 @@ const ConsultantAvailability = () => {
     }
   };
 
+  const enableAllDays = async () => {
+    setSaving(true);
+    try {
+      const promises = DAYS.map((_, index) => {
+        const schedule = localSchedule[index] || { start: '09:00', end: '17:00' };
+        const existing = availability.find(a => a.day_of_week === index);
+        
+        if (existing) {
+          return authenticatedFetch(`/api/availability/${existing.id}`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ start_time: schedule.start, end_time: schedule.end })
+          });
+        } else {
+          return authenticatedFetch('/api/availability', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ 
+              day_of_week: index, 
+              start_time: schedule.start, 
+              end_time: schedule.end, 
+              status: 'available' 
+            })
+          });
+        }
+      });
+
+      await Promise.all(promises);
+      setSuccess('All days enabled successfully');
+      setTimeout(() => setSuccess(null), 3000);
+      await loadData();
+    } catch (error) {
+      console.error('Error enabling all days:', error);
+      setError('Failed to enable all days');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const disableAllDays = async () => {
+    setSaving(true);
+    try {
+      const promises = availability.map(slot => 
+        authenticatedFetch(`/api/availability/${slot.id}`, { method: 'DELETE' })
+      );
+
+      await Promise.all(promises);
+      setSuccess('All days disabled successfully');
+      setTimeout(() => setSuccess(null), 3000);
+      await loadData();
+    } catch (error) {
+      console.error('Error disabling all days:', error);
+      setError('Failed to disable all days');
+    } finally {
+      setSaving(false);
+    }
+  };
+
   const addBlockedTime = async () => {
     try {
       const response = await authenticatedFetch('/api/availability/blocked', {
@@ -355,7 +413,25 @@ const ConsultantAvailability = () => {
 
         {/* Weekly Schedule */}
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-          <h2 className="text-xl font-semibold text-gray-900 mb-4">Weekly Schedule</h2>
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-xl font-semibold text-gray-900">Weekly Schedule</h2>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={enableAllDays}
+                disabled={saving}
+                className="px-4 py-2 bg-green-600 text-white text-sm rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              >
+                Enable All Days
+              </button>
+              <button
+                onClick={disableAllDays}
+                disabled={saving || availability.length === 0}
+                className="px-4 py-2 bg-red-600 text-white text-sm rounded-lg hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              >
+                Disable All Days
+              </button>
+            </div>
+          </div>
           <div className="space-y-3">
             {DAYS.map((day, index) => {
               const slot = getAvailabilityForDay(index);
