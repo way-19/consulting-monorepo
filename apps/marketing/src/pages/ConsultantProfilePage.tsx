@@ -1,9 +1,8 @@
-import React from 'react';
 import { useParams } from 'react-router-dom';
 import { User, MapPin, Star, Calendar, MessageSquare, CheckCircle } from 'lucide-react';
 import { Helmet } from 'react-helmet-async';
 import { useLanguage } from '../lib/language';
-import { useAuth } from '../lib/auth';
+import { useAuth } from '@consulting19/shared';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 
@@ -125,25 +124,25 @@ const ConsultantProfilePage = () => {
                 </div>
 
                 <div className="space-y-3">
-                  <Button className="w-full" icon={MessageSquare}>
+                  <button className="w-full" icon={MessageSquare}>
                     {t('contact')} {consultant.name}
-                  </Button>
-                  <Button variant="outline" className="w-full" icon={Calendar}>
+                  </button>
+                  <button variant="outline" className="w-full" icon={Calendar}>
                     {t('scheduleConsultation')}
-                  </Button>
+                  </button>
                 </div>
-              </Card.Body>
-            </Card>
+              </div>
+            </div>
           </div>
 
           {/* Main Content */}
           <div className="lg:col-span-2 space-y-8">
             {/* About */}
-            <Card>
-              <Card.Header>
+            <div className="bg-white rounded-lg shadow-sm overflow-hidden">
+              <div className="px-6 py-4 border-b border-gray-200">
                 <h2 className="text-xl font-semibold text-gray-900">About {consultant.name}</h2>
-              </Card.Header>
-              <Card.Body>
+              </div>
+              <div className="p-6">
                 <p className="text-gray-600 leading-relaxed mb-4">{consultant.bio}</p>
                 <div className="flex items-center space-x-4 text-sm text-gray-500">
                   <div className="flex items-center">
@@ -155,15 +154,15 @@ const ConsultantProfilePage = () => {
                     <span>200+ successful projects</span>
                   </div>
                 </div>
-              </Card.Body>
-            </Card>
+              </div>
+            </div>
 
             {/* Services */}
-            <Card>
-              <Card.Header>
+            <div className="bg-white rounded-lg shadow-sm overflow-hidden">
+              <div className="px-6 py-4 border-b border-gray-200">
                 <h2 className="text-xl font-semibold text-gray-900">Services Offered</h2>
-              </Card.Header>
-              <Card.Body>
+              </div>
+              <div className="p-6">
                 <div className="space-y-6">
                   {consultant.services.map((service, index) => (
                     <div key={index} className="border border-gray-200 rounded-lg p-6">
@@ -181,18 +180,18 @@ const ConsultantProfilePage = () => {
                               <div className="text-2xl font-bold text-gray-900 mb-1">
                                 ${service.price.toLocaleString('en-US')}
                               </div>
-                              <Button size="sm">
+                              <button size="sm">
                                 Satın Al
-                              </Button>
+                              </button>
                             </>
                           ) : (
                             <>
                               <div className="text-lg font-medium text-gray-500 mb-1">
                                 Fiyat bilgisi için
                               </div>
-                              <Button size="sm" variant="outline" onClick={() => window.open('/auth', '_blank')}>
+                              <button size="sm" variant="outline" onClick={() => window.open('/auth', '_blank')}>
                                 Üye Olun
-                              </Button>
+                              </button>
                             </>
                           )}
                         </div>
@@ -200,15 +199,15 @@ const ConsultantProfilePage = () => {
                     </div>
                   ))}
                 </div>
-              </Card.Body>
-            </Card>
+              </div>
+            </div>
 
             {/* Reviews */}
-            <Card>
-              <Card.Header>
+            <div className="bg-white rounded-lg shadow-sm overflow-hidden">
+              <div className="px-6 py-4 border-b border-gray-200">
                 <h2 className="text-xl font-semibold text-gray-900">Client Reviews</h2>
-              </Card.Header>
-              <Card.Body>
+              </div>
+              <div className="p-6">
                 <div className="space-y-6">
                   {[
                     {
@@ -253,8 +252,8 @@ const ConsultantProfilePage = () => {
                     </div>
                   ))}
                 </div>
-              </Card.Body>
-            </Card>
+              </div>
+            </div>
           </div>
         </div>
       </div>

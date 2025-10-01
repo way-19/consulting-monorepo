@@ -6,7 +6,7 @@ import { AuthProvider } from '@consulting19/shared';
 import HomePage from './pages/HomePage';
 import CountriesPage from './pages/CountriesPage';
 import ServicesPage from './pages/ServicesPage';
-import ConsultantProfilePage from './pages/ConsultantProfilePage';
+// import ConsultantProfilePage from './pages/ConsultantProfilePage'; // Temporarily disabled - needs fixing
 import AuthPage from './pages/AuthPage';
 import BlogPage from './pages/BlogPage';
 import BlogPostPage from './pages/BlogPostPage';
@@ -70,7 +70,7 @@ function App() {
               <Route path="/cookies" element={<CookiePolicyPage />} />
               <Route path="/about" element={<AboutPage />} />
               <Route path="/sitemap" element={<SitemapPage />} />
-              <Route path="/consultant/:consultantId" element={<ConsultantProfilePage />} />
+              {/* <Route path="/consultant/:consultantId" element={<ConsultantProfilePage />} /> */}
               <Route path="/auth" element={<AuthPage />} />
               <Route path="/order-form" element={<CompanyFormationWizard />} />
               <Route path="/payment-success" element={<PaymentSuccess />} />
