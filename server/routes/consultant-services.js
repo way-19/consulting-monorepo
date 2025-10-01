@@ -391,4 +391,118 @@ router.patch('/orders/:id/status',
   }
 );
 
+// GET /api/consultant-services/client-orders - Get client's own service orders
+router.get('/client-orders', authenticateToken, async (req, res) => {
+  try {
+    if (req.user.role !== 'client') {
+      return res.status(403).json({ 
+        success: false, 
+        error: 'Unauthorized: Only clients can view their orders' 
+      });
+    }
+
+    const result = await pool.query(
+      `SELECT 
+        so.id,
+        so.order_number,
+        so.status,
+        so.total_amount,
+        so.created_at,
+        so.completed_at,
+        ccs.name as service_name,
+        ccs.category as service_category
+       FROM service_orders so
+       INNER JOIN consultant_custom_services ccs ON so.consultant_custom_service_id = ccs.id
+       WHERE so.client_id = $1
+       ORDER BY so.created_at DESC`,
+      [req.user.id]
+    );
+
+    res.json({
+      success: true,
+      orders: result.rows
+    });
+  } catch (error) {
+    console.error('Error fetching client orders:', error);
+    res.status(500).json({ 
+      success: false, 
+      error: 'Failed to fetch orders' 
+    });
+  }
+});
+
+// POST /api/consultant-services/purchase - Purchase a custom service
+router.post('/purchase',
+  authenticateToken,
+  [
+    body('consultant_custom_service_id').isUUID().withMessage('Valid service ID is required')
+  ],
+  async (req, res) => {
+    try {
+      const errors = validationResult(req);
+      if (!errors.isEmpty()) {
+        return res.status(400).json({ 
+          success: false, 
+          errors: errors.array() 
+        });
+      }
+
+      if (req.user.role !== 'client') {
+        return res.status(403).json({ 
+          success: false, 
+          error: 'Unauthorized: Only clients can purchase services' 
+        });
+      }
+
+      const { consultant_custom_service_id } = req.body;
+
+      // Get service details
+      const serviceResult = await pool.query(
+        'SELECT * FROM consultant_custom_services WHERE id = $1 AND is_active = true',
+        [consultant_custom_service_id]
+      );
+
+      if (serviceResult.rows.length === 0) {
+        return res.status(404).json({ 
+          success: false, 
+          error: 'Service not found or not available' 
+        });
+      }
+
+      const service = serviceResult.rows[0];
+
+      // Generate order number
+      const orderNumber = 'SRV-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9).toUpperCase();
+
+      // Create service order
+      const orderResult = await pool.query(
+        `INSERT INTO service_orders 
+          (order_number, client_id, consultant_id, consultant_custom_service_id, 
+           country_code, status, total_amount, payment_status)
+         VALUES ($1, $2, $3, $4, $5, 'pending', $6, 'paid')
+         RETURNING *`,
+        [
+          orderNumber,
+          req.user.id,
+          service.consultant_id,
+          consultant_custom_service_id,
+          service.country_code,
+          service.price
+        ]
+      );
+
+      res.status(201).json({
+        success: true,
+        order: orderResult.rows[0]
+      });
+    } catch (error) {
+      console.error('Error purchasing service:', error);
+      res.status(500).json({ 
+        success: false, 
+        error: 'Failed to purchase service' 
+      });
+    }
+  }
+);
+
 export default router;
