@@ -12,7 +12,7 @@ import {
   Clock,
   ExternalLink
 } from 'lucide-react';
-import { useAuth, createAuthenticatedFetch } from '@consulting19/shared';
+import { createAuthenticatedFetch } from '@consulting19/shared';
 
 interface MailItem {
   id: string;
