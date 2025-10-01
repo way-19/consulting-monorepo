@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { DragDropContext, Droppable, Draggable, DropResult } from '@hello-pangea/dnd';
-import { Plus, Search, Clock, Play, Square, Calendar, User, MoreVertical } from 'lucide-react';
+import { Search, Clock, Play, Square, Calendar, User, MoreVertical } from 'lucide-react';
 import { useAuth, createAuthenticatedFetch } from '@consulting19/shared';
 
 interface Task {
@@ -246,15 +246,9 @@ const ConsultantTaskBoard = () => {
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <div className="mb-8">
-          <div className="flex justify-between items-center mb-4">
-            <div>
-              <h1 className="text-3xl font-bold text-gray-900">Task Board</h1>
-              <p className="text-gray-600">Drag and drop tasks to update their status</p>
-            </div>
-            <button className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
-              <Plus className="w-4 h-4 mr-2" />
-              Add Task
-            </button>
+          <div className="mb-4">
+            <h1 className="text-3xl font-bold text-gray-900">Task Board</h1>
+            <p className="text-gray-600">Tasks are automatically created from orders. Drag and drop to update status.</p>
           </div>
 
           {/* Filters */}
