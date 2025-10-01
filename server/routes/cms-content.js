@@ -1,6 +1,7 @@
 import express from 'express';
 import { authenticateToken } from '../middleware/auth.js';
 import { body, validationResult } from 'express-validator';
+import multer from 'multer';
 import pkg from 'pg';
 const { Pool } = pkg;
 
@@ -9,6 +10,21 @@ const router = express.Router();
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
   ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false
+});
+
+// Multer configuration for image uploads (memory storage)
+const upload = multer({
+  storage: multer.memoryStorage(),
+  limits: {
+    fileSize: 5 * 1024 * 1024 // 5MB limit
+  },
+  fileFilter: (req, file, cb) => {
+    // Accept images only
+    if (!file.mimetype.startsWith('image/')) {
+      return cb(new Error('Only image files are allowed'), false);
+    }
+    cb(null, true);
+  }
 });
 
 // GET /api/cms-content/pages - Get consultant's pages
@@ -533,6 +549,185 @@ router.delete('/blocks/:id', authenticateToken, async (req, res) => {
       success: false, 
       error: 'Failed to delete block' 
       });
+  }
+});
+
+// POST /api/cms-content/media - Upload image to database
+router.post('/media', authenticateToken, upload.single('image'), async (req, res) => {
+  try {
+    if (req.user.role !== 'consultant') {
+      return res.status(403).json({ 
+        success: false, 
+        error: 'Unauthorized: Only consultants can upload images' 
+      });
+    }
+
+    if (!req.file) {
+      return res.status(400).json({ 
+        success: false, 
+        error: 'No image file provided' 
+      });
+    }
+
+    const { originalname, mimetype, size, buffer } = req.file;
+    const { alt_text_en } = req.body;
+
+    // Insert image into database
+    const result = await pool.query(
+      `INSERT INTO cms_images 
+        (filename, mime_type, file_size, image_data, alt_text_en, uploaded_by)
+       VALUES ($1, $2, $3, $4, $5, $6)
+       RETURNING id, filename, mime_type, file_size, created_at`,
+      [originalname, mimetype, size, buffer, alt_text_en || '', req.user.id]
+    );
+
+    res.json({
+      success: true,
+      image: result.rows[0]
+    });
+  } catch (error) {
+    console.error('Error uploading image:', error);
+    res.status(500).json({ 
+      success: false, 
+      error: 'Failed to upload image' 
+    });
+  }
+});
+
+// GET /api/cms-content/media - Get uploaded images
+router.get('/media', authenticateToken, async (req, res) => {
+  try {
+    if (req.user.role !== 'consultant') {
+      return res.status(403).json({ 
+        success: false, 
+        error: 'Unauthorized: Only consultants can view images' 
+      });
+    }
+
+    const result = await pool.query(
+      `SELECT id, filename, mime_type, file_size, alt_text_en, alt_text_tr, 
+              alt_text_pt, alt_text_es, created_at
+       FROM cms_images 
+       WHERE uploaded_by = $1 
+       ORDER BY created_at DESC
+       LIMIT 100`,
+      [req.user.id]
+    );
+
+    res.json({
+      success: true,
+      images: result.rows
+    });
+  } catch (error) {
+    console.error('Error fetching images:', error);
+    res.status(500).json({ 
+      success: false, 
+      error: 'Failed to fetch images' 
+    });
+  }
+});
+
+// GET /api/cms-content/media/:id - Get image data
+router.get('/media/:id/data', authenticateToken, async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const result = await pool.query(
+      'SELECT image_data, mime_type FROM cms_images WHERE id = $1',
+      [id]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ 
+        success: false, 
+        error: 'Image not found' 
+      });
+    }
+
+    const { image_data, mime_type } = result.rows[0];
+    
+    res.setHeader('Content-Type', mime_type);
+    res.setHeader('Cache-Control', 'public, max-age=31536000');
+    res.send(image_data);
+  } catch (error) {
+    console.error('Error fetching image data:', error);
+    res.status(500).json({ 
+      success: false, 
+      error: 'Failed to fetch image' 
+    });
+  }
+});
+
+// POST /api/cms-content/translate - Translate content using DeepL API
+router.post('/translate', authenticateToken, async (req, res) => {
+  try {
+    if (req.user.role !== 'consultant') {
+      return res.status(403).json({ 
+        success: false, 
+        error: 'Unauthorized: Only consultants can use translation' 
+      });
+    }
+
+    const { text, target_langs = ['TR', 'PT', 'ES'] } = req.body;
+
+    if (!text || typeof text !== 'string') {
+      return res.status(400).json({ 
+        success: false, 
+        error: 'Text field is required and must be a string' 
+      });
+    }
+
+    const deepl_api_key = process.env.DEEPL_API_KEY;
+
+    if (!deepl_api_key) {
+      return res.status(503).json({ 
+        success: false, 
+        error: 'DeepL API key not configured. Please contact administrator.' 
+      });
+    }
+
+    // Call DeepL API for each target language
+    const translations = {};
+    
+    for (const target_lang of target_langs) {
+      try {
+        const response = await fetch('https://api-free.deepl.com/v2/translate', {
+          method: 'POST',
+          headers: {
+            'Authorization': `DeepL-Auth-Key ${deepl_api_key}`,
+            'Content-Type': 'application/x-www-form-urlencoded'
+          },
+          body: new URLSearchParams({
+            text,
+            target_lang,
+            source_lang: 'EN'
+          })
+        });
+
+        if (!response.ok) {
+          console.error(`DeepL API error for ${target_lang}:`, await response.text());
+          translations[target_lang.toLowerCase()] = '';
+          continue;
+        }
+
+        const data = await response.json();
+        translations[target_lang.toLowerCase()] = data.translations[0].text;
+      } catch (error) {
+        console.error(`Error translating to ${target_lang}:`, error);
+        translations[target_lang.toLowerCase()] = '';
+      }
+    }
+
+    res.json({
+      success: true,
+      translations
+    });
+  } catch (error) {
+    console.error('Error in translation endpoint:', error);
+    res.status(500).json({ 
+      success: false, 
+      error: 'Translation failed' 
+    });
   }
 });
 
