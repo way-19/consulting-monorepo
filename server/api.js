@@ -6,6 +6,8 @@ import documentsRouter from './routes/documents.js';
 import messagesRouter from './routes/messages.js';
 import clientsRouter from './routes/clients.js';
 import usersRouter from './routes/users.js';
+import tasksRouter from './routes/tasks.js';
+import ordersRouter from './routes/orders.js';
 
 dotenv.config();
 
@@ -74,6 +76,8 @@ app.use('/api/documents', documentsRouter);
 app.use('/api/messages', messagesRouter);
 app.use('/api/clients', clientsRouter);
 app.use('/api/users', usersRouter);
+app.use('/api/tasks', tasksRouter);
+app.use('/api/orders', ordersRouter);
 
 // 404 handler
 app.use((req, res) => {
