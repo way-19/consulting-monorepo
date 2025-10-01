@@ -10,7 +10,7 @@ import ConsultantAvailability from './pages/consultant/ConsultantAvailability';
 import ConsultantServices from './pages/consultant/ConsultantServices';
 import ConsultantFinancial from './pages/consultant/ConsultantFinancial';
 import ConsultantCrossAssignments from './pages/consultant/ConsultantCrossAssignments';
-import ConsultantContent from './pages/consultant/ConsultantContent';
+import ContentManagement from './pages/consultant/ContentManagement';
 import ConsultantSettings from './pages/consultant/ConsultantSettings';
 import ConsultantLayout from './components/layouts/ConsultantLayout';
 
@@ -89,7 +89,7 @@ const ProtectedConsultantRoutes = () => {
         <Route path="/services" element={<ConsultantServices />} />
         <Route path="/financial" element={<ConsultantFinancial />} />
         <Route path="/cross-assignments" element={<ConsultantCrossAssignments />} />
-        <Route path="/content" element={<ConsultantContent />} />
+        <Route path="/content/*" element={<ContentManagement />} />
         <Route path="/settings" element={<ConsultantSettings />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>

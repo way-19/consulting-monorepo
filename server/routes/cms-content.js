@@ -1235,4 +1235,216 @@ router.delete('/blog/:id', authenticateToken, async (req, res) => {
   }
 });
 
+// ==================== FEATURES CRUD ====================
+
+// GET /api/cms-content/features - List consultant's features
+router.get('/features', authenticateToken, async (req, res) => {
+  try {
+    if (req.user.role !== 'consultant') {
+      return res.status(403).json({ success: false, error: 'Unauthorized' });
+    }
+
+    const result = await pool.query(
+      `SELECT * FROM cms_features 
+       WHERE consultant_id = $1 
+       ORDER BY order_index ASC`,
+      [req.user.id]
+    );
+
+    res.json({ success: true, features: result.rows });
+  } catch (error) {
+    console.error('Error fetching features:', error);
+    res.status(500).json({ success: false, error: 'Failed to fetch features' });
+  }
+});
+
+// POST /api/cms-content/features - Create feature
+router.post('/features', authenticateToken, async (req, res) => {
+  try {
+    if (req.user.role !== 'consultant') {
+      return res.status(403).json({ success: false, error: 'Unauthorized' });
+    }
+
+    const { 
+      country_code, icon, 
+      title_en, title_tr, title_pt, title_es,
+      description_en, description_tr, description_pt, description_es,
+      order_index 
+    } = req.body;
+
+    const result = await pool.query(
+      `INSERT INTO cms_features 
+        (consultant_id, country_code, icon, 
+         title_en, title_tr, title_pt, title_es,
+         description_en, description_tr, description_pt, description_es, 
+         order_index)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
+       RETURNING *`,
+      [
+        req.user.id, country_code, icon,
+        title_en, title_tr, title_pt, title_es,
+        description_en, description_tr, description_pt, description_es,
+        order_index || 0
+      ]
+    );
+
+    res.json({ success: true, feature: result.rows[0] });
+  } catch (error) {
+    console.error('Error creating feature:', error);
+    res.status(500).json({ success: false, error: 'Failed to create feature' });
+  }
+});
+
+// PATCH /api/cms-content/features/:id - Update feature
+router.patch('/features/:id', authenticateToken, async (req, res) => {
+  try {
+    if (req.user.role !== 'consultant') {
+      return res.status(403).json({ success: false, error: 'Unauthorized' });
+    }
+
+    const { id } = req.params;
+    const updates = req.body;
+    
+    const fields = [];
+    const values = [];
+    let paramCount = 1;
+
+    Object.keys(updates).forEach(key => {
+      if (key !== 'id' && key !== 'consultant_id' && key !== 'created_at') {
+        fields.push(`${key} = $${paramCount}`);
+        values.push(updates[key]);
+        paramCount++;
+      }
+    });
+
+    if (fields.length === 0) {
+      return res.status(400).json({ success: false, error: 'No fields to update' });
+    }
+
+    fields.push(`updated_at = NOW()`);
+    values.push(id);
+    values.push(req.user.id);
+
+    const result = await pool.query(
+      `UPDATE cms_features 
+       SET ${fields.join(', ')}
+       WHERE id = $${paramCount} AND consultant_id = $${paramCount + 1}
+       RETURNING *`,
+      values
+    );
+
+    if (result.rowCount === 0) {
+      return res.status(404).json({ success: false, error: 'Feature not found' });
+    }
+
+    res.json({ success: true, feature: result.rows[0] });
+  } catch (error) {
+    console.error('Error updating feature:', error);
+    res.status(500).json({ success: false, error: 'Failed to update feature' });
+  }
+});
+
+// DELETE /api/cms-content/features/:id - Delete feature
+router.delete('/features/:id', authenticateToken, async (req, res) => {
+  try {
+    if (req.user.role !== 'consultant') {
+      return res.status(403).json({ success: false, error: 'Unauthorized' });
+    }
+
+    const { id } = req.params;
+
+    const result = await pool.query(
+      'DELETE FROM cms_features WHERE id = $1 AND consultant_id = $2 RETURNING id',
+      [id, req.user.id]
+    );
+
+    if (result.rowCount === 0) {
+      return res.status(404).json({ success: false, error: 'Feature not found' });
+    }
+
+    res.json({ success: true, message: 'Feature deleted' });
+  } catch (error) {
+    console.error('Error deleting feature:', error);
+    res.status(500).json({ success: false, error: 'Failed to delete feature' });
+  }
+});
+
+// ==================== CONSULTANT PROFILE ====================
+
+// PATCH /api/cms-content/profile - Update consultant profile
+router.patch('/profile', authenticateToken, async (req, res) => {
+  try {
+    if (req.user.role !== 'consultant') {
+      return res.status(403).json({ success: false, error: 'Unauthorized' });
+    }
+
+    const { full_name, company, experience, specializations, languages, bio_en, bio_tr, bio_pt, bio_es } = req.body;
+    
+    const fields = [];
+    const values = [];
+    let paramCount = 1;
+
+    if (full_name !== undefined) {
+      fields.push(`full_name = $${paramCount++}`);
+      values.push(full_name);
+    }
+    if (company !== undefined) {
+      fields.push(`company = $${paramCount++}`);
+      values.push(company);
+    }
+    if (experience !== undefined) {
+      fields.push(`experience = $${paramCount++}`);
+      values.push(experience);
+    }
+    if (specializations !== undefined) {
+      fields.push(`specializations = $${paramCount++}`);
+      values.push(specializations);
+    }
+    if (languages !== undefined) {
+      fields.push(`languages = $${paramCount++}`);
+      values.push(languages);
+    }
+    if (bio_en !== undefined) {
+      fields.push(`bio_en = $${paramCount++}`);
+      values.push(bio_en);
+    }
+    if (bio_tr !== undefined) {
+      fields.push(`bio_tr = $${paramCount++}`);
+      values.push(bio_tr);
+    }
+    if (bio_pt !== undefined) {
+      fields.push(`bio_pt = $${paramCount++}`);
+      values.push(bio_pt);
+    }
+    if (bio_es !== undefined) {
+      fields.push(`bio_es = $${paramCount++}`);
+      values.push(bio_es);
+    }
+
+    if (fields.length === 0) {
+      return res.status(400).json({ success: false, error: 'No fields to update' });
+    }
+
+    fields.push(`updated_at = NOW()`);
+    values.push(req.user.id);
+
+    const result = await pool.query(
+      `UPDATE user_profiles 
+       SET ${fields.join(', ')}
+       WHERE id = $${paramCount}
+       RETURNING *`,
+      values
+    );
+
+    if (result.rowCount === 0) {
+      return res.status(404).json({ success: false, error: 'Profile not found' });
+    }
+
+    res.json({ success: true, profile: result.rows[0] });
+  } catch (error) {
+    console.error('Error updating consultant profile:', error);
+    res.status(500).json({ success: false, error: 'Failed to update profile' });
+  }
+});
+
 export default router;
