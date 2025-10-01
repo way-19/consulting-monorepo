@@ -3,7 +3,6 @@ import { AuthProvider, LanguageProvider, useAuth } from '@consulting19/shared';
 import LoginPage from './pages/auth/LoginPage';
 import ConsultantDashboard from './pages/consultant/ConsultantDashboard';
 import ConsultantClients from './pages/consultant/ConsultantClients';
-import ConsultantTasks from './pages/consultant/ConsultantTasks';
 import ConsultantTaskBoard from './pages/consultant/ConsultantTaskBoard';
 import ConsultantDocuments from './pages/consultant/ConsultantDocuments';
 import ConsultantMessages from './pages/consultant/ConsultantMessages';
@@ -83,7 +82,6 @@ const ProtectedConsultantRoutes = () => {
       <Routes>
         <Route path="/" element={<ConsultantDashboard />} />
         <Route path="/clients" element={<ConsultantClients />} />
-        <Route path="/tasks" element={<ConsultantTasks />} />
         <Route path="/tasks/board" element={<ConsultantTaskBoard />} />
         <Route path="/documents" element={<ConsultantDocuments />} />
         <Route path="/messages" element={<ConsultantMessages />} />

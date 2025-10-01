@@ -3,7 +3,6 @@ import { Link, useLocation } from 'react-router-dom';
 import { 
   Home, 
   Users, 
-  CheckSquare, 
   FileText, 
   MessageCircle, 
   DollarSign, 
@@ -32,7 +31,6 @@ const ConsultantLayout: React.FC<ConsultantLayoutProps> = ({ children }) => {
   const navigation = [
     { name: 'Dashboard', href: '/', icon: Home },
     { name: 'Clients', href: '/clients', icon: Users },
-    { name: 'Tasks', href: '/tasks', icon: CheckSquare },
     { name: 'Task Board', href: '/tasks/board', icon: Kanban },
     { name: 'Documents', href: '/documents', icon: FileText },
     { name: 'Messages', href: '/messages', icon: MessageCircle },
@@ -89,11 +87,6 @@ const ConsultantLayout: React.FC<ConsultantLayoutProps> = ({ children }) => {
                       isActive ? 'text-blue-600' : 'text-gray-500 group-hover:text-gray-700'
                     }`} />
                     <span className="font-medium">{item.name}</span>
-                    {item.name === 'Tasks' && (
-                      <span className="ml-auto bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
-                        1
-                      </span>
-                    )}
                   </Link>
                 </li>
               );
