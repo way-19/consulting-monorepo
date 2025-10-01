@@ -49,6 +49,17 @@ const ConsultantContent = () => {
   const [editingBlock, setEditingBlock] = useState<CMSBlock | null>(null);
   const [showCreatePage, setShowCreatePage] = useState(false);
   const [showCreateBlock, setShowCreateBlock] = useState(false);
+  const [createPageForm, setCreatePageForm] = useState({
+    title: '',
+    slug: '',
+    country_code: '',
+    meta_description: ''
+  });
+  const [createBlockForm, setCreateBlockForm] = useState({
+    block_type: 'hero',
+    content: '{}'
+  });
+  const [formError, setFormError] = useState('');
   const authFetch = createAuthenticatedFetch();
 
   useEffect(() => {
@@ -87,7 +98,7 @@ const ConsultantContent = () => {
 
   const handlePublishToggle = async (pageId: string, currentStatus: boolean) => {
     try {
-      const response = await authFetch(`/api/cms-content/${pageId}`, {
+      const response = await authFetch(`/api/cms-content/pages/${pageId}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ is_published: !currentStatus })
@@ -157,6 +168,70 @@ const ConsultantContent = () => {
       }
     } catch (error) {
       console.error('Error deleting block:', error);
+    }
+  };
+
+  const handleCreatePage = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setFormError('');
+
+    try {
+      const response = await authFetch('/api/cms-content/pages', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(createPageForm)
+      });
+
+      if (response.ok) {
+        await fetchPages();
+        setShowCreatePage(false);
+        setCreatePageForm({ title: '', slug: '', country_code: '', meta_description: '' });
+      } else {
+        const data = await response.json();
+        setFormError(data.error || 'Failed to create page');
+      }
+    } catch (error) {
+      console.error('Error creating page:', error);
+      setFormError('Failed to create page');
+    }
+  };
+
+  const handleCreateBlock = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setFormError('');
+
+    if (!selectedPage) return;
+
+    let parsedContent;
+    try {
+      parsedContent = JSON.parse(createBlockForm.content);
+    } catch {
+      setFormError('Invalid JSON content');
+      return;
+    }
+
+    try {
+      const response = await authFetch('/api/cms-content/blocks', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          page_id: selectedPage.id,
+          block_type: createBlockForm.block_type,
+          content: parsedContent
+        })
+      });
+
+      if (response.ok) {
+        await fetchPageWithBlocks(selectedPage.id);
+        setShowCreateBlock(false);
+        setCreateBlockForm({ block_type: 'hero', content: '{}' });
+      } else {
+        const data = await response.json();
+        setFormError(data.error || 'Failed to create block');
+      }
+    } catch (error) {
+      console.error('Error creating block:', error);
+      setFormError('Failed to create block');
     }
   };
 
@@ -376,8 +451,190 @@ const ConsultantContent = () => {
             </div>
           )}
 
-          {/* Note: Create Page & Create Block modals would go here in full implementation */}
-          {/* Omitted for brevity - forms would POST to /api/cms-content/pages and /blocks */}
+          {/* Create Page Modal */}
+          {showCreatePage && (
+            <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+              <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
+                <div className="p-6">
+                  <div className="flex items-center justify-between mb-6">
+                    <h2 className="text-2xl font-bold text-gray-900">Create New Page</h2>
+                    <button
+                      onClick={() => {
+                        setShowCreatePage(false);
+                        setFormError('');
+                      }}
+                      className="p-2 text-gray-400 hover:text-gray-600"
+                    >
+                      <X className="w-6 h-6" />
+                    </button>
+                  </div>
+
+                  {formError && (
+                    <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg text-red-800">
+                      {formError}
+                    </div>
+                  )}
+
+                  <form onSubmit={handleCreatePage} className="space-y-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Page Title *
+                      </label>
+                      <input
+                        type="text"
+                        value={createPageForm.title}
+                        onChange={(e) => setCreatePageForm(prev => ({ ...prev, title: e.target.value }))}
+                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        required
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        URL Slug * (lowercase, hyphens only)
+                      </label>
+                      <input
+                        type="text"
+                        value={createPageForm.slug}
+                        onChange={(e) => setCreatePageForm(prev => ({ ...prev, slug: e.target.value }))}
+                        pattern="[a-z0-9-]+"
+                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        required
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Country Code * (2 letters, e.g., GE, CR)
+                      </label>
+                      <input
+                        type="text"
+                        value={createPageForm.country_code}
+                        onChange={(e) => setCreatePageForm(prev => ({ ...prev, country_code: e.target.value.toUpperCase() }))}
+                        maxLength={2}
+                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent uppercase"
+                        required
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Meta Description
+                      </label>
+                      <textarea
+                        value={createPageForm.meta_description}
+                        onChange={(e) => setCreatePageForm(prev => ({ ...prev, meta_description: e.target.value }))}
+                        rows={3}
+                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      />
+                    </div>
+
+                    <div className="flex justify-end space-x-3 pt-4">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setShowCreatePage(false);
+                          setFormError('');
+                        }}
+                        className="px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        type="submit"
+                        className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                      >
+                        Create Page
+                      </button>
+                    </div>
+                  </form>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Add Block Modal */}
+          {showCreateBlock && selectedPage && (
+            <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+              <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
+                <div className="p-6">
+                  <div className="flex items-center justify-between mb-6">
+                    <h2 className="text-2xl font-bold text-gray-900">Add Content Block</h2>
+                    <button
+                      onClick={() => {
+                        setShowCreateBlock(false);
+                        setFormError('');
+                      }}
+                      className="p-2 text-gray-400 hover:text-gray-600"
+                    >
+                      <X className="w-6 h-6" />
+                    </button>
+                  </div>
+
+                  {formError && (
+                    <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg text-red-800">
+                      {formError}
+                    </div>
+                  )}
+
+                  <form onSubmit={handleCreateBlock} className="space-y-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Block Type *
+                      </label>
+                      <select
+                        value={createBlockForm.block_type}
+                        onChange={(e) => setCreateBlockForm(prev => ({ ...prev, block_type: e.target.value }))}
+                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      >
+                        {BLOCK_TYPES.map(type => (
+                          <option key={type.value} value={type.value}>
+                            {type.label}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Content (JSON) *
+                      </label>
+                      <textarea
+                        value={createBlockForm.content}
+                        onChange={(e) => setCreateBlockForm(prev => ({ ...prev, content: e.target.value }))}
+                        rows={10}
+                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent font-mono text-sm"
+                        placeholder='{"title": "Welcome", "description": "..."}'
+                        required
+                      />
+                      <p className="text-xs text-gray-500 mt-1">
+                        Enter JSON object with block-specific fields
+                      </p>
+                    </div>
+
+                    <div className="flex justify-end space-x-3 pt-4">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setShowCreateBlock(false);
+                          setFormError('');
+                        }}
+                        className="px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        type="submit"
+                        className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+                      >
+                        Add Block
+                      </button>
+                    </div>
+                  </form>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </>

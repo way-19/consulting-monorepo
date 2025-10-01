@@ -198,7 +198,7 @@ router.post('/pages',
 );
 
 // PATCH /api/cms-content/pages/:id - Update page
-router.patch('/:id',
+router.patch('/pages/:id',
   authenticateToken,
   [
     body('title').optional().trim().notEmpty(),
