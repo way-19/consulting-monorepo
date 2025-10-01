@@ -412,7 +412,26 @@ router.delete('/blocked/:id', authenticateToken, async (req, res) => {
   }
 });
 
-// GET /api/availability/pricing - Get consultant's meeting pricing
+// GET /api/availability/pricing/:consultantId - Get consultant's meeting pricing (public)
+router.get('/pricing/:consultantId', authenticateToken, async (req, res) => {
+  try {
+    const { consultantId } = req.params;
+
+    const result = await pool.query(
+      `SELECT * FROM meeting_pricing 
+       WHERE consultant_id = $1 AND is_active = true
+       ORDER BY duration_minutes`,
+      [consultantId]
+    );
+
+    res.json({ success: true, pricing: result.rows });
+  } catch (error) {
+    console.error('Error fetching pricing:', error);
+    res.status(500).json({ success: false, error: 'Failed to fetch pricing' });
+  }
+});
+
+// GET /api/availability/pricing/list - Get own meeting pricing
 router.get('/pricing/list', authenticateToken, async (req, res) => {
   try {
     if (req.user.role !== 'consultant') {

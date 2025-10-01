@@ -15,6 +15,7 @@ import ClientProgressTracking from './pages/client/ClientProgressTracking';
 import ClientSupport from './pages/client/ClientSupport';
 import ClientSettings from './pages/client/ClientSettings';
 import ClientAvailability from './pages/client/ClientAvailability';
+import ClientBookMeeting from './pages/client/ClientBookMeeting';
 import ClientLayout from './components/layouts/ClientLayout';
 
 function App() {
@@ -75,6 +76,7 @@ const ProtectedClientRoutes = () => {
         <Route path="/mailbox" element={<ClientMailbox />} />
         <Route path="/progress" element={<ClientProgressTracking />} />
         <Route path="/availability" element={<ClientAvailability />} />
+        <Route path="/book-meeting" element={<ClientBookMeeting />} />
         <Route path="/support" element={<ClientSupport />} />
         <Route path="/settings" element={<ClientSettings />} />
         <Route path="*" element={<Navigate to="/" replace />} />
