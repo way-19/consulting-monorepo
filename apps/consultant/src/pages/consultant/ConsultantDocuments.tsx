@@ -6,6 +6,9 @@ interface Client {
   id: string;
   profile_id: string;
   company_name: string;
+  email: string;
+  first_name: string;
+  last_name: string;
   status: string;
 }
 
@@ -29,7 +32,8 @@ interface Document {
 const ConsultantDocuments = () => {
   const { user } = useAuth();
   const [clients, setClients] = useState<Client[]>([]);
-  const [selectedClientId, setSelectedClientId] = useState<string>('all');
+  const [selectedClientId, setSelectedClientId] = useState<string>('');
+  const [selectedClient, setSelectedClient] = useState<Client | null>(null);
   const [documents, setDocuments] = useState<Document[]>([]);
   const [loading, setLoading] = useState(true);
   const [loadingDocuments, setLoadingDocuments] = useState(false);
@@ -45,7 +49,11 @@ const ConsultantDocuments = () => {
   }, [user]);
 
   useEffect(() => {
-    fetchDocuments();
+    if (selectedClientId) {
+      fetchDocuments();
+    } else {
+      setDocuments([]);
+    }
   }, [selectedClientId, activeTab]);
 
   const fetchClients = async () => {
@@ -72,20 +80,17 @@ const ConsultantDocuments = () => {
   };
 
   const fetchDocuments = async () => {
-    if (!user?.id) return;
+    if (!user?.id || !selectedClientId) return;
     
     try {
       setLoadingDocuments(true);
       
       const queryParams = new URLSearchParams({
         document_type: activeTab,
+        client_id: selectedClientId,
         page: '1',
         limit: '100'
       });
-
-      if (selectedClientId && selectedClientId !== 'all') {
-        queryParams.append('client_id', selectedClientId);
-      }
 
       const response = await authFetch(`/api/documents?${queryParams}`, {
         method: 'GET'
@@ -104,18 +109,23 @@ const ConsultantDocuments = () => {
     }
   };
 
+  const filteredClients = clients.filter(client => {
+    const searchLower = clientSearchTerm.toLowerCase();
+    return (
+      client.company_name?.toLowerCase().includes(searchLower) ||
+      client.email?.toLowerCase().includes(searchLower) ||
+      client.first_name?.toLowerCase().includes(searchLower) ||
+      client.last_name?.toLowerCase().includes(searchLower) ||
+      `${client.first_name} ${client.last_name}`.toLowerCase().includes(searchLower)
+    );
+  });
+
   const filteredDocuments = documents.filter(doc => {
-    const matchesSearch = 
+    return (
       doc.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       doc.category?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      doc.notes?.toLowerCase().includes(searchTerm.toLowerCase());
-    
-    const matchesClientSearch = selectedClientId === 'all' 
-      ? (doc.client_name?.toLowerCase().includes(clientSearchTerm.toLowerCase()) ||
-         doc.company_name?.toLowerCase().includes(clientSearchTerm.toLowerCase()))
-      : true;
-    
-    return matchesSearch && matchesClientSearch;
+      doc.notes?.toLowerCase().includes(searchTerm.toLowerCase())
+    );
   });
 
   const getStatusColor = (status: string) => {
@@ -144,9 +154,15 @@ const ConsultantDocuments = () => {
     }).format(amount);
   };
 
+  const handleClientSelect = (client: Client) => {
+    setSelectedClientId(client.id);
+    setSelectedClient(client);
+    setClientSearchTerm('');
+  };
+
   const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
-    if (!file || !selectedClientId || selectedClientId === 'all') {
+    if (!file || !selectedClientId) {
       alert('Please select a specific client first');
       return;
     }
@@ -247,35 +263,78 @@ const ConsultantDocuments = () => {
             <p className="text-gray-600">Review and manage client documents</p>
           </div>
 
-          {/* Client Selection */}
+          {/* Client Search and Selection */}
           <div className="bg-white rounded-lg shadow-md p-6 mb-6">
-            <div className="flex flex-col md:flex-row gap-4 items-center">
-              <div className="flex-1">
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Select Client
-                </label>
-                <select
-                  value={selectedClientId}
-                  onChange={(e) => setSelectedClientId(e.target.value)}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                >
-                  <option value="all">All Clients - View documents from all assigned clients</option>
-                  <option value="">Choose a specific client to manage their documents</option>
-                  {clients.map((client) => (
-                    <option key={client.id} value={client.id}>
-                      {client.company_name}
-                    </option>
-                  ))}
-                </select>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Select Client
+            </label>
+            
+            {!selectedClientId ? (
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+                <input
+                  type="text"
+                  placeholder="Search by client name, company, or email..."
+                  value={clientSearchTerm}
+                  onChange={(e) => setClientSearchTerm(e.target.value)}
+                  className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                />
+                
+                {clientSearchTerm && filteredClients.length > 0 && (
+                  <div className="absolute z-10 w-full mt-2 bg-white border border-gray-200 rounded-lg shadow-lg max-h-64 overflow-y-auto">
+                    {filteredClients.map((client) => (
+                      <button
+                        key={client.id}
+                        onClick={() => handleClientSelect(client)}
+                        className="w-full px-4 py-3 text-left hover:bg-gray-50 transition-colors border-b border-gray-100 last:border-b-0"
+                      >
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <div className="font-medium text-gray-900">
+                              {client.company_name}
+                            </div>
+                            <div className="text-sm text-gray-600">
+                              {client.first_name} {client.last_name} • {client.email}
+                            </div>
+                          </div>
+                          <User className="w-5 h-5 text-gray-400" />
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                )}
+                
+                {clientSearchTerm && filteredClients.length === 0 && (
+                  <div className="absolute z-10 w-full mt-2 bg-white border border-gray-200 rounded-lg shadow-lg p-4 text-center text-gray-500">
+                    No clients found matching "{clientSearchTerm}"
+                  </div>
+                )}
               </div>
-              <button 
-                onClick={fetchClients}
-                className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-              >
-                <RefreshCw className="w-4 h-4 mr-2" />
-                Refresh
-              </button>
-            </div>
+            ) : (
+              <div className="flex items-center justify-between bg-blue-50 border border-blue-200 rounded-lg p-4">
+                <div className="flex items-center space-x-3">
+                  <Building className="w-5 h-5 text-blue-600" />
+                  <div>
+                    <div className="font-medium text-gray-900">
+                      {selectedClient?.company_name}
+                    </div>
+                    <div className="text-sm text-gray-600">
+                      {selectedClient?.first_name} {selectedClient?.last_name} • {selectedClient?.email}
+                    </div>
+                  </div>
+                </div>
+                <button
+                  onClick={() => {
+                    setSelectedClientId('');
+                    setSelectedClient(null);
+                    setDocuments([]);
+                  }}
+                  className="px-4 py-2 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors text-sm font-medium text-gray-700"
+                >
+                  Change Client
+                </button>
+              </div>
+            )}
           </div>
         </div>
 
@@ -287,7 +346,7 @@ const ConsultantDocuments = () => {
               Select a Client
             </h3>
             <p className="text-gray-600">
-              Choose a client from the dropdown above to manage their documents
+              Search and select a client to view and manage their documents
             </p>
           </div>
         ) : (
@@ -319,72 +378,62 @@ const ConsultantDocuments = () => {
                 </nav>
               </div>
 
-              {/* Search Bar and Upload */}
+              {/* Search Bar and Upload (Only for Official Documents) */}
               <div className="p-6 border-b border-gray-200">
-                <div className="flex flex-col space-y-4">
-                  <div className="flex items-center space-x-4">
-                    <div className="relative flex-1">
-                      <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
-                      <input
-                        type="text"
-                        placeholder="Search documents..."
-                        value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
-                        className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                      />
-                    </div>
-                    
-                    {selectedClientId !== 'all' ? (
-                      <div className="relative">
-                        <input
-                          type="file"
-                          accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
-                          className="hidden"
-                          id="file-upload"
-                          onChange={handleFileUpload}
-                          disabled={uploadingFile}
-                        />
-                        <label
-                          htmlFor="file-upload"
-                          className={`inline-flex items-center px-4 py-2 rounded-lg transition-colors cursor-pointer ${
-                            uploadingFile
-                              ? 'bg-gray-400 text-white cursor-not-allowed'
-                              : 'bg-blue-600 text-white hover:bg-blue-700'
-                          }`}
-                        >
-                          {uploadingFile ? (
-                            <>
-                              <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
-                              Uploading...
-                            </>
-                          ) : (
-                            <>
-                              <Upload className="w-4 h-4 mr-2" />
-                              Upload Document
-                            </>
-                          )}
-                        </label>
-                      </div>
-                    ) : (
-                      <div className="text-sm text-gray-500 px-4 py-2 bg-gray-100 rounded-lg">
-                        Select a client to upload
-                      </div>
-                    )}
+                <div className="flex items-center space-x-4">
+                  <div className="relative flex-1">
+                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+                    <input
+                      type="text"
+                      placeholder="Search documents..."
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                      className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    />
                   </div>
                   
-                  {selectedClientId === 'all' && (
+                  {/* Upload button ONLY for Official Documents */}
+                  {activeTab === 'official' && (
                     <div className="relative">
-                      <User className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
                       <input
-                        type="text"
-                        placeholder="Filter by client name or company..."
-                        value={clientSearchTerm}
-                        onChange={(e) => setClientSearchTerm(e.target.value)}
-                        className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        type="file"
+                        accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
+                        className="hidden"
+                        id="file-upload"
+                        onChange={handleFileUpload}
+                        disabled={uploadingFile}
                       />
+                      <label
+                        htmlFor="file-upload"
+                        className={`inline-flex items-center px-4 py-2 rounded-lg transition-colors cursor-pointer ${
+                          uploadingFile
+                            ? 'bg-gray-400 text-white cursor-not-allowed'
+                            : 'bg-blue-600 text-white hover:bg-blue-700'
+                        }`}
+                      >
+                        {uploadingFile ? (
+                          <>
+                            <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
+                            Uploading...
+                          </>
+                        ) : (
+                          <>
+                            <Upload className="w-4 h-4 mr-2" />
+                            Upload Document
+                          </>
+                        )}
+                      </label>
                     </div>
                   )}
                 </div>
+                
+                {activeTab === 'accounting' && (
+                  <div className="mt-3 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                    <p className="text-sm text-blue-800">
+                      <strong>Note:</strong> Accounting documents are uploaded by the client. Review and process them here.
+                    </p>
+                  </div>
+                )}
               </div>
 
               {/* Documents List */}
@@ -409,14 +458,6 @@ const ConsultantDocuments = () => {
                               <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(doc.status)}`}>
                                 {doc.status}
                               </span>
-                              {selectedClientId === 'all' && (
-                                <div className="flex items-center space-x-2 ml-auto">
-                                  <Building className="w-4 h-4 text-gray-500" />
-                                  <span className="text-sm text-gray-600 font-medium">
-                                    {doc.company_name || doc.client_name}
-                                  </span>
-                                </div>
-                              )}
                             </div>
                             
                             <div className="flex items-center space-x-4 text-sm text-gray-500 mb-2">
@@ -490,7 +531,7 @@ const ConsultantDocuments = () => {
                       No Documents Found
                     </h3>
                     <p className="text-gray-600">
-                      {searchTerm || clientSearchTerm 
+                      {searchTerm 
                         ? 'No documents match your search criteria'
                         : `No ${activeTab} documents available for this client`
                       }
