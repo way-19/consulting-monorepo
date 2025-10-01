@@ -29,6 +29,10 @@ args = "Consultant Dashboard"
 task = "workflow.run"
 args = "Auth Server"
 
+[[workflows.workflow.tasks]]
+task = "workflow.run"
+args = "API Server"
+
 [[workflows.workflow]]
 name = "Marketing Site"
 author = "agent"
@@ -77,6 +81,18 @@ waitForPort = 3001
 [workflows.workflow.metadata]
 outputType = "console"
 
+[[workflows.workflow]]
+name = "API Server"
+author = "agent"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "node server/api.js"
+waitForPort = 3002
+
+[workflows.workflow.metadata]
+outputType = "console"
+
 [[ports]]
 localPort = 3000
 externalPort = 3000
@@ -92,6 +108,10 @@ externalPort = 80
 [[ports]]
 localPort = 5173
 externalPort = 5173
+
+[[ports]]
+localPort = 3002
+externalPort = 3002
 
 [deployment]
 deploymentTarget = "autoscale"

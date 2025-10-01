@@ -26,7 +26,38 @@ const pool = new pg.Pool({
   connectionString: process.env.DATABASE_URL
 });
 
-app.use(cors());
+// CORS configuration - RESTRICTED for production
+const corsOptions = {
+  origin: function (origin, callback) {
+    if (!origin) return callback(null, true);
+    
+    const allowedOrigins = [
+      'http://localhost:5000',
+      'http://localhost:5173',
+      'http://localhost:5174',
+      'http://localhost:5176',
+      'http://localhost:5177',
+      'http://localhost:3000',
+      process.env.REPLIT_DEV_DOMAIN ? `https://${process.env.REPLIT_DEV_DOMAIN}` : null,
+    ].filter(Boolean);
+    
+    const isAllowed = allowedOrigins.some(allowed => {
+      return origin === allowed || origin.endsWith('.replit.dev') || origin.endsWith('.repl.co');
+    });
+    
+    if (isAllowed) {
+      callback(null, true);
+    } else {
+      console.warn('CORS blocked origin:', origin);
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
+};
+
+app.use(cors(corsOptions));
 app.use(express.json());
 
 // Login endpoint
