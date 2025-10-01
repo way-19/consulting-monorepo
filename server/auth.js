@@ -11,6 +11,9 @@ dotenv.config();
 const app = express();
 const PORT = 3001;
 
+// Trust proxy for rate limiting behind Replit proxy
+app.set('trust proxy', 1);
+
 // JWT Secret (MANDATORY - must be set in environment)
 const JWT_SECRET = process.env.JWT_SECRET;
 

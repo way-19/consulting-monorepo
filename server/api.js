@@ -12,6 +12,9 @@ dotenv.config();
 const app = express();
 const PORT = process.env.API_PORT || 3002;
 
+// Trust proxy for rate limiting behind Replit proxy
+app.set('trust proxy', 1);
+
 // CORS configuration - RESTRICTED for production
 const corsOptions = {
   origin: function (origin, callback) {
