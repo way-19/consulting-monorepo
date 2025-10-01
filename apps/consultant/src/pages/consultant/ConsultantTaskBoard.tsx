@@ -28,9 +28,22 @@ interface TaskTimer {
   elapsedTime: number;
 }
 
+interface ServiceOrder {
+  id: string;
+  order_number: string;
+  service_name: string;
+  service_category: string;
+  client_name: string;
+  client_email: string;
+  total_amount: number;
+  status: string;
+  created_at: string;
+}
+
 const ConsultantTaskBoard = () => {
   const { user } = useAuth();
   const [tasks, setTasks] = useState<Task[]>([]);
+  const [serviceOrders, setServiceOrders] = useState<ServiceOrder[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
@@ -49,6 +62,7 @@ const ConsultantTaskBoard = () => {
   useEffect(() => {
     if (user) {
       fetchTasks();
+      fetchServiceOrders();
     }
   }, [user]);
 
@@ -87,6 +101,43 @@ const ConsultantTaskBoard = () => {
       console.error('Error fetching tasks:', error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchServiceOrders = async () => {
+    try {
+      const response = await authFetch('/api/consultant-services/orders');
+      
+      if (!response.ok) {
+        console.error('Failed to fetch service orders');
+        return;
+      }
+
+      const data = await response.json();
+      setServiceOrders(data.orders || []);
+    } catch (error) {
+      console.error('Error fetching service orders:', error);
+    }
+  };
+
+  const updateServiceOrderStatus = async (orderId: string, newStatus: string) => {
+    try {
+      const response = await authFetch(`/api/consultant-services/orders/${orderId}/status`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ status: newStatus })
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to update order status');
+      }
+
+      await fetchServiceOrders();
+    } catch (error) {
+      console.error('Error updating service order status:', error);
+      alert('Failed to update order status');
     }
   };
 
@@ -291,6 +342,70 @@ const ConsultantTaskBoard = () => {
             </div>
           </div>
         </div>
+
+        {/* Service Orders Section */}
+        {serviceOrders.length > 0 && (
+          <div className="mb-8">
+            <div className="mb-4">
+              <h2 className="text-2xl font-bold text-gray-900">Service Orders</h2>
+              <p className="text-gray-600">Custom services purchased by clients</p>
+            </div>
+
+            <div className="bg-white rounded-lg shadow-md divide-y divide-gray-200">
+              {serviceOrders.map((order) => (
+                <div key={order.id} className="p-6 hover:bg-gray-50 transition-colors">
+                  <div className="flex items-start justify-between">
+                    <div className="flex-1">
+                      <div className="flex items-center space-x-3 mb-2">
+                        <h3 className="text-lg font-semibold text-gray-900">
+                          {order.service_name}
+                        </h3>
+                        {order.service_category && (
+                          <span className="px-2 py-1 bg-blue-100 text-blue-800 text-xs font-medium rounded-full">
+                            {order.service_category}
+                          </span>
+                        )}
+                      </div>
+                      <div className="flex items-center space-x-4 text-sm text-gray-600 mb-3">
+                        <span className="flex items-center">
+                          <User className="w-4 h-4 mr-1" />
+                          {order.client_name}
+                        </span>
+                        <span>•</span>
+                        <span>Order #{order.order_number}</span>
+                        <span>•</span>
+                        <span>{new Date(order.created_at).toLocaleDateString()}</span>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <select
+                          value={order.status}
+                          onChange={(e) => updateServiceOrderStatus(order.id, e.target.value)}
+                          className={`px-3 py-1 text-sm rounded-lg border-2 font-medium ${
+                            order.status === 'completed' 
+                              ? 'bg-green-50 text-green-800 border-green-200'
+                              : order.status === 'in_progress'
+                              ? 'bg-blue-50 text-blue-800 border-blue-200'
+                              : 'bg-yellow-50 text-yellow-800 border-yellow-200'
+                          }`}
+                        >
+                          <option value="pending">Pending</option>
+                          <option value="in_progress">In Progress</option>
+                          <option value="completed">Completed</option>
+                          <option value="cancelled">Cancelled</option>
+                        </select>
+                      </div>
+                    </div>
+                    <div className="text-right ml-4">
+                      <p className="text-2xl font-bold text-gray-900">
+                        ${order.total_amount.toLocaleString()}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
 
         {/* Kanban Board with Drag & Drop */}
         <DragDropContext onDragEnd={handleDragEnd}>

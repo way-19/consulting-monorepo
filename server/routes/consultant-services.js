@@ -77,7 +77,7 @@ router.post('/',
   [
     body('name').trim().notEmpty().withMessage('Service name is required'),
     body('description').optional().trim(),
-    body('price').isFloat({ min: 0 }).withMessage('Price must be a positive number'),
+    body('price').isFloat({ min: 0.01 }).withMessage('Price must be at least $0.01'),
     body('category').optional().trim(),
     body('country_code').trim().notEmpty().withMessage('Country code is required')
   ],
@@ -128,7 +128,7 @@ router.patch('/:id',
   [
     body('name').optional().trim().notEmpty(),
     body('description').optional().trim(),
-    body('price').optional().isFloat({ min: 0 }),
+    body('price').optional().isFloat({ min: 0.01 }).withMessage('Price must be at least $0.01'),
     body('category').optional().trim(),
     body('is_active').optional().isBoolean()
   ],
@@ -304,7 +304,8 @@ router.get('/orders', authenticateToken, async (req, res) => {
         up.email as client_email
        FROM service_orders so
        INNER JOIN consultant_custom_services ccs ON so.consultant_custom_service_id = ccs.id
-       INNER JOIN user_profiles up ON so.client_id = up.id
+       INNER JOIN clients c ON so.client_id = c.id
+       INNER JOIN user_profiles up ON c.profile_id = up.id
        WHERE ccs.consultant_id = $1
        ORDER BY so.created_at DESC`,
       [req.user.id]
@@ -401,6 +402,21 @@ router.get('/client-orders', authenticateToken, async (req, res) => {
       });
     }
 
+    // Get client record (clients.id) from user_profiles.id
+    const clientResult = await pool.query(
+      'SELECT id FROM clients WHERE profile_id = $1',
+      [req.user.id]
+    );
+
+    if (clientResult.rows.length === 0) {
+      return res.json({
+        success: true,
+        orders: []
+      });
+    }
+
+    const clientId = clientResult.rows[0].id;
+
     const result = await pool.query(
       `SELECT 
         so.id,
@@ -415,7 +431,7 @@ router.get('/client-orders', authenticateToken, async (req, res) => {
        INNER JOIN consultant_custom_services ccs ON so.consultant_custom_service_id = ccs.id
        WHERE so.client_id = $1
        ORDER BY so.created_at DESC`,
-      [req.user.id]
+      [clientId]
     );
 
     res.json({
@@ -456,6 +472,21 @@ router.post('/purchase',
 
       const { consultant_custom_service_id } = req.body;
 
+      // Get client record (clients.id) from user_profiles.id
+      const clientResult = await pool.query(
+        'SELECT id FROM clients WHERE profile_id = $1',
+        [req.user.id]
+      );
+
+      if (clientResult.rows.length === 0) {
+        return res.status(404).json({ 
+          success: false, 
+          error: 'Client profile not found' 
+        });
+      }
+
+      const clientId = clientResult.rows[0].id;
+
       // Get service details
       const serviceResult = await pool.query(
         'SELECT * FROM consultant_custom_services WHERE id = $1 AND is_active = true',
@@ -471,10 +502,18 @@ router.post('/purchase',
 
       const service = serviceResult.rows[0];
 
+      // Validate server-side price (prevent client manipulation)
+      if (service.price <= 0) {
+        return res.status(400).json({ 
+          success: false, 
+          error: 'Invalid service price' 
+        });
+      }
+
       // Generate order number
       const orderNumber = 'SRV-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9).toUpperCase();
 
-      // Create service order
+      // Create service order with correct client_id (clients.id, not user_profiles.id)
       const orderResult = await pool.query(
         `INSERT INTO service_orders 
           (order_number, client_id, consultant_id, consultant_custom_service_id, 
@@ -483,7 +522,7 @@ router.post('/purchase',
          RETURNING *`,
         [
           orderNumber,
-          req.user.id,
+          clientId,
           service.consultant_id,
           consultant_custom_service_id,
           service.country_code,
