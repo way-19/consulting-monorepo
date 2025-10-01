@@ -14,7 +14,6 @@ import ClientMailbox from './pages/client/ClientMailbox';
 import ClientProgressTracking from './pages/client/ClientProgressTracking';
 import ClientSupport from './pages/client/ClientSupport';
 import ClientSettings from './pages/client/ClientSettings';
-import ClientAvailability from './pages/client/ClientAvailability';
 import ClientBookMeeting from './pages/client/ClientBookMeeting';
 import ClientLayout from './components/layouts/ClientLayout';
 
@@ -75,7 +74,6 @@ const ProtectedClientRoutes = () => {
         <Route path="/files" element={<ClientFileManager />} />
         <Route path="/mailbox" element={<ClientMailbox />} />
         <Route path="/progress" element={<ClientProgressTracking />} />
-        <Route path="/availability" element={<ClientAvailability />} />
         <Route path="/book-meeting" element={<ClientBookMeeting />} />
         <Route path="/support" element={<ClientSupport />} />
         <Route path="/settings" element={<ClientSettings />} />
