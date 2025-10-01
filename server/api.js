@@ -19,6 +19,7 @@ import departmentsRouter from './routes/departments.js';
 import activityRouter from './routes/activity.js';
 import supportRouter from './routes/support.js';
 import availabilityRouter from './routes/availability.js';
+import mailboxRouter from './routes/mailbox.js';
 
 dotenv.config();
 
@@ -103,6 +104,7 @@ app.use('/api/departments', departmentsRouter);
 app.use('/api/activity', activityRouter);
 app.use('/api/support', supportRouter);
 app.use('/api/availability', availabilityRouter);
+app.use('/api/mailbox', mailboxRouter);
 
 // 404 handler
 app.use((req, res) => {
