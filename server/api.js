@@ -59,7 +59,7 @@ const corsOptions = {
 
 // CRITICAL: Stripe webhook MUST have raw body parser BEFORE json middleware
 // This route must be registered first to avoid body parsing conflicts
-app.post('/webhook/stripe', express.raw({ type: 'application/json' }), stripeWebhookRouter);
+app.use('/webhook/stripe', express.raw({ type: 'application/json' }), stripeWebhookRouter);
 
 // Middleware
 app.use(cors(corsOptions));
