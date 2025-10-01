@@ -434,8 +434,35 @@ async function handleMeetingBooking(client, session) {
       ]
     );
 
+    const meetingId = result.rows[0].id;
+    const meetingTime = new Date(start_time);
+    const reminderTime = new Date(meetingTime.getTime() - 24 * 60 * 60 * 1000);
+    
+    if (reminderTime > new Date()) {
+      console.log(`⏰ Meeting reminder scheduled for ${reminderTime.toISOString()}`);
+    } else {
+      await client.query(
+        `INSERT INTO notifications (user_id, type, title, message, related_meeting_id, action_url)
+         VALUES ($1, $2, $3, $4, $5, $6)`,
+        [
+          consultant_id,
+          'meeting_reminder',
+          'Upcoming Meeting Reminder',
+          `You have a meeting "${meeting_topic || 'Business Consultation'}" scheduled for ${meetingTime.toLocaleString('en-US', { 
+            month: 'short', 
+            day: 'numeric', 
+            hour: '2-digit', 
+            minute: '2-digit' 
+          })}`,
+          meetingId,
+          `/meetings/${meetingId}`
+        ]
+      );
+      console.log(`✅ Immediate meeting reminder notification created for consultant ${consultant_id}`);
+    }
+
     await client.query('COMMIT');
-    console.log('Meeting created successfully:', result.rows[0].id);
+    console.log('Meeting created successfully:', meetingId);
     
     // TODO: Send email notifications to consultant and client
   } catch (error) {
