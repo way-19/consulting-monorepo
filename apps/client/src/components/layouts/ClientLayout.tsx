@@ -3,7 +3,6 @@ import { Link, useLocation } from 'react-router-dom';
 import { 
   Home, 
   FolderOpen, 
-  CheckSquare, 
   Briefcase, 
   MessageCircle, 
   Calendar, 
@@ -37,7 +36,6 @@ const ClientLayout: React.FC<ClientLayoutProps> = ({ children }) => {
   const navigation = [
     { name: 'Dashboard', href: '/', icon: Home },
     { name: 'Projects', href: '/projects', icon: FolderOpen },
-    { name: 'Tasks', href: '/tasks', icon: CheckSquare },
     { name: 'Services', href: '/services', icon: Briefcase },
     { name: 'Messages', href: '/messages', icon: MessageCircle },
     { name: 'Calendar', href: '/calendar', icon: Calendar },

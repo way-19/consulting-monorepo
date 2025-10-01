@@ -102,6 +102,12 @@ async function handleCheckoutCompleted(session) {
       `${orderData.userCredentials?.firstName || ''} ${orderData.userCredentials?.lastName || ''}`.trim();
     const customerPhone = session.customer_details?.phone || orderData.userCredentials?.phone;
     
+    // Email is required - fail fast if missing
+    if (!customerEmail) {
+      await client.query('ROLLBACK');
+      throw new Error('Customer email is required but not provided in session');
+    }
+    
     // Find or create user
     let userId;
     const userResult = await client.query(
@@ -418,9 +424,8 @@ async function handlePhysicalRedirectionPayment(client, session) {
     await client.query('ROLLBACK');
     console.error('Error in handlePhysicalRedirectionPayment:', error);
     throw error;
-  } finally {
-    client.release();
   }
+  // Note: client is released by parent function, not here
 }
 
 export default router;
