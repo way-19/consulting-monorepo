@@ -14,10 +14,12 @@ This is a **monorepo** with multiple applications:
 ## Tech Stack
 - **Frontend**: React 18 + TypeScript + Vite
 - **Styling**: Tailwind CSS + Lucide React icons
-- **Database**: Supabase (PostgreSQL)
-- **Backend**: Supabase Edge Functions
-- **i18n**: react-i18next (EN, TR, PT)
-- **Deployment**: Netlify (original), Replit (current)
+- **Database**: Replit PostgreSQL
+- **Backend**: Express.js (Auth: 3001, API: 3002)
+- **Authentication**: Custom JWT
+- **Payments**: Stripe + Webhooks
+- **i18n**: react-i18next (EN, TR, PT, ES)
+- **Deployment**: Replit
 
 ## Replit Environment Setup
 
@@ -62,10 +64,10 @@ Client:     client@consulting19.com / Client123!
 ```
 
 ## Database
-- **Platform**: Supabase (PostgreSQL)
-- **Migrations**: Located in `supabase/migrations/`
-- **Edge Functions**: Located in `supabase/functions/`
-- **Local Config**: `supabase/config.toml`
+- **Platform**: Replit PostgreSQL
+- **Schema**: Defined in `shared/schema.ts` (Drizzle ORM)
+- **Migrations**: Use `npm run db:push` to sync schema
+- **Storage**: Backend handles queries via `server/storage.ts`
 
 ## Project Structure
 ```
@@ -88,6 +90,24 @@ consulting19/
 - **Production**: Configured for deployment via Replit
 
 ## Recent Changes
+- 2025-10-01: **Order Workflow & Geographic Consultant Assignment**
+  - ✅ **Country-Based Consultant Assignment**: Webhook now assigns consultants based on country_code
+    * Added country_code VARCHAR(2) column to user_profiles
+    * Consultant assignment logic: country-specific → fallback to any active consultant
+    * Example: Georgia (GE) orders → Giorgi Meskhi automatically assigned
+  - ✅ **Auto Project & Task Creation**: Orders automatically create project + initial task
+    * Multi-language project descriptions (en/tr/pt)
+    * Task with is_client_visible=false (consultant-only)
+    * All within single transaction (BEGIN/COMMIT/ROLLBACK)
+  - ✅ **Frontend Cleanup**: Removed ClientTasks component and routes
+    * Tasks managed only by consultant via TaskBoard (Kanban)
+    * Clients track progress via Projects page
+    * Cleaned unused CheckSquare icon import
+  - ✅ **Critical Bug Fixes**:
+    * Email validation guard in webhook (fail fast if missing)
+    * Fixed double client.release() in physical redirection handler
+    * Prevents "Client was already released" errors
+
 - 2025-10-01: **Advanced Features Integration Complete**
   - ✅ **Kanban Task Board**: Full drag & drop task management with @hello-pangea/dnd
     * Real-time timer tracking (start/stop with automatic hour logging)
