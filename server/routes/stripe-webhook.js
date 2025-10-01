@@ -77,6 +77,11 @@ async function handleCheckoutCompleted(session) {
   try {
     const sessionType = session.metadata?.type;
 
+    if (sessionType === 'meeting_booking') {
+      await handleMeetingBooking(client, session);
+      return;
+    }
+
     if (sessionType === 'physical_redirection') {
       await handlePhysicalRedirectionPayment(client, session);
       return;
@@ -368,6 +373,77 @@ async function handleSubscriptionCancellation(subscription) {
   
   // Update user subscription status if needed
   // This can be extended based on business requirements
+}
+
+// Handle meeting booking payment
+async function handleMeetingBooking(client, session) {
+  console.log('Processing meeting booking:', session.id);
+  
+  try {
+    // Check if meeting already created
+    const existingMeetingCheck = await client.query(
+      'SELECT id FROM meetings WHERE stripe_session_id = $1',
+      [session.id]
+    );
+    
+    if (existingMeetingCheck.rows.length > 0) {
+      console.log('Meeting already created for session:', session.id);
+      return;
+    }
+
+    await client.query('BEGIN');
+
+    const metadata = session.metadata;
+    const { 
+      consultant_id, 
+      client_id, 
+      start_time, 
+      duration_minutes, 
+      meeting_topic,
+      meeting_url 
+    } = metadata;
+
+    const amount = session.amount_total ? session.amount_total / 100 : 0;
+    const endTime = new Date(new Date(start_time).getTime() + parseInt(duration_minutes) * 60000);
+
+    // Create meeting
+    const result = await client.query(
+      `INSERT INTO meetings (
+        consultant_id, client_id, title, description,
+        start_time, end_time, meeting_topic, duration_minutes,
+        price_paid, currency, payment_status, stripe_session_id,
+        status, meeting_url, meeting_type, created_at, updated_at
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, NOW(), NOW())
+      RETURNING id`,
+      [
+        consultant_id,
+        client_id,
+        `${duration_minutes}min Consultation`,
+        meeting_topic || 'Business Consultation',
+        start_time,
+        endTime.toISOString(),
+        meeting_topic,
+        parseInt(duration_minutes),
+        amount,
+        session.currency?.toUpperCase() || 'USD',
+        'paid',
+        session.id,
+        'scheduled',
+        meeting_url,
+        'video'
+      ]
+    );
+
+    await client.query('COMMIT');
+    console.log('Meeting created successfully:', result.rows[0].id);
+    
+    // TODO: Send email notifications to consultant and client
+  } catch (error) {
+    await client.query('ROLLBACK');
+    console.error('Error in handleMeetingBooking:', error);
+    throw error;
+  }
+  // Note: client is released by parent function, not here
 }
 
 // Handle physical redirection payment
