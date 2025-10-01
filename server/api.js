@@ -21,6 +21,7 @@ import supportRouter from './routes/support.js';
 import availabilityRouter from './routes/availability.js';
 import mailboxRouter from './routes/mailbox.js';
 import fileManagerRouter from './routes/file-manager.js';
+import consultantServicesRouter from './routes/consultant-services.js';
 
 dotenv.config();
 
@@ -107,6 +108,7 @@ app.use('/api/support', supportRouter);
 app.use('/api/availability', availabilityRouter);
 app.use('/api/mailbox', mailboxRouter);
 app.use('/api/file-manager', fileManagerRouter);
+app.use('/api/consultant-services', consultantServicesRouter);
 
 // 404 handler
 app.use((req, res) => {
