@@ -24,6 +24,7 @@ import fileManagerRouter from './routes/file-manager.js';
 import consultantServicesRouter from './routes/consultant-services.js';
 import crossAssignmentsRouter from './routes/cross-assignments.js';
 import cmsContentRouter from './routes/cms-content.js';
+import notificationsRouter from './routes/notifications.js';
 
 dotenv.config();
 
@@ -113,6 +114,7 @@ app.use('/api/file-manager', fileManagerRouter);
 app.use('/api/consultant-services', consultantServicesRouter);
 app.use('/api/cross-assignments', crossAssignmentsRouter);
 app.use('/api/cms-content', cmsContentRouter);
+app.use('/api/notifications', notificationsRouter);
 
 // 404 handler
 app.use((req, res) => {

@@ -19,6 +19,21 @@ export interface UserProfile {
   updated_at: string;
 }
 
+export interface Notification {
+  id: string;
+  user_id: string;
+  type: 'meeting_reminder' | 'message' | 'task_update' | 'payment' | 'system';
+  title: string;
+  message: string;
+  is_read: boolean;
+  related_meeting_id?: string;
+  related_project_id?: string;
+  related_order_id?: string;
+  action_url?: string;
+  created_at: string;
+  read_at?: string;
+}
+
 export interface Country {
   id: string;
   name: string;
