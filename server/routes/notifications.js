@@ -1,6 +1,12 @@
 import express from 'express';
-import { pool } from '../db.js';
+import pkg from 'pg';
+const { Pool } = pkg;
 import { authenticateToken } from '../middleware/auth.js';
+
+const pool = new Pool({
+  connectionString: process.env.DATABASE_URL,
+  ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false
+});
 
 const router = express.Router();
 
