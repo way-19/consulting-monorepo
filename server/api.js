@@ -11,6 +11,12 @@ import ordersRouter from './routes/orders.js';
 import adminRouter from './routes/admin.js';
 import commissionsRouter from './routes/commissions.js';
 import stripeWebhookRouter from './routes/stripe-webhook.js';
+import dashboardRouter from './routes/dashboard.js';
+import projectsRouter from './routes/projects.js';
+import meetingsRouter from './routes/meetings.js';
+import preferencesRouter from './routes/preferences.js';
+import departmentsRouter from './routes/departments.js';
+import activityRouter from './routes/activity.js';
 
 dotenv.config();
 
@@ -82,11 +88,17 @@ app.get('/health', (req, res) => {
 app.use('/api/documents', documentsRouter);
 app.use('/api/messages', messagesRouter);
 app.use('/api/clients', clientsRouter);
+app.use('/api/clients', dashboardRouter);
 app.use('/api/users', usersRouter);
 app.use('/api/tasks', tasksRouter);
 app.use('/api/orders', ordersRouter);
 app.use('/api/commissions', commissionsRouter);
 app.use('/api/admin', adminRouter);
+app.use('/api/projects', projectsRouter);
+app.use('/api/meetings', meetingsRouter);
+app.use('/api/preferences', preferencesRouter);
+app.use('/api/departments', departmentsRouter);
+app.use('/api/activity', activityRouter);
 
 // 404 handler
 app.use((req, res) => {

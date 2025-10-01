@@ -155,7 +155,7 @@ router.get('/:id/stats', authenticateToken, async (req, res) => {
     // Get projects count
     const projectsQuery = `
       SELECT COUNT(*) as count
-      FROM orders
+      FROM service_orders
       WHERE client_id = $1
     `;
     const projectsResult = await pool.query(projectsQuery, [id]);
@@ -173,7 +173,7 @@ router.get('/:id/stats', authenticateToken, async (req, res) => {
     // Get total spent (sum of all order amounts)
     const spentQuery = `
       SELECT COALESCE(SUM(total_amount), 0) as total
-      FROM orders
+      FROM service_orders
       WHERE client_id = $1 AND status IN ('completed', 'processing', 'pending')
     `;
     const spentResult = await pool.query(spentQuery, [id]);
