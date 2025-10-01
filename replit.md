@@ -88,6 +88,31 @@ consulting19/
 - **Production**: Configured for deployment via Replit
 
 ## Recent Changes
+- 2025-10-01: **Advanced Features Integration Complete**
+  - ✅ **Kanban Task Board**: Full drag & drop task management with @hello-pangea/dnd
+    * Real-time timer tracking (start/stop with automatic hour logging)
+    * 4-column layout (Todo → In Progress → Review → Completed)
+    * Optimistic UI updates for smooth UX
+    * Client/project metadata display
+    * Route: /tasks/board
+  - ✅ **Stripe Webhook Integration**: Production-ready payment processing
+    * Raw body parsing for signature verification
+    * Idempotent order creation (UNIQUE constraint + ON CONFLICT)
+    * Automatic user registration on checkout
+    * Consultant auto-assignment
+    * Database transactions (BEGIN/COMMIT/ROLLBACK)
+    * Endpoint: POST /webhook/stripe
+  - ✅ **Commission Payout System**: Automated 65/35 revenue split
+    * Automatic commission calculation on orders
+    * Period-based payout tracking
+    * Commission stats API (total/pending/paid earnings)
+    * Endpoints: /api/commissions, /api/commissions/:id/items, /api/commissions/stats
+  - ✅ **Security & Reliability**:
+    * Webhook signature verification
+    * RBAC on commission endpoints
+    * Unique constraint on stripe_session_id (prevents duplicate orders)
+    * Graceful shutdown handling
+
 - 2025-10-01: **Production-Ready Migration Complete**
   - ✅ Migrated from Supabase to Replit PostgreSQL with custom JWT authentication
   - ✅ Built secure backend API infrastructure (Auth: 3001, API: 3002)
