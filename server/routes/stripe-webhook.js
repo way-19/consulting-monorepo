@@ -151,18 +151,43 @@ async function handleCheckoutCompleted(session) {
     const clientId = clientResult.rows[0].id;
     let consultantId = clientResult.rows[0].assigned_consultant_id;
     
-    // If no consultant assigned, find available consultant
+    // If no consultant assigned, find available consultant by country
     if (!consultantId) {
-      const consultantResult = await client.query(
-        `SELECT up.id FROM user_profiles up
-         WHERE up.role = 'consultant'
-         ORDER BY RANDOM()
-         LIMIT 1`
-      );
+      const countryCode = orderData.selectedCountry?.code;
       
-      if (consultantResult.rows.length > 0) {
-        consultantId = consultantResult.rows[0].id;
+      // Try to find consultant for specific country first
+      let consultantQuery = `
+        SELECT up.id FROM user_profiles up
+        WHERE up.role = 'consultant' AND up.is_active = true
+      `;
+      const queryParams = [];
+      
+      if (countryCode) {
+        consultantQuery += ` AND up.country_code = $1`;
+        queryParams.push(countryCode);
+      }
+      
+      consultantQuery += ` ORDER BY RANDOM() LIMIT 1`;
+      
+      const consultantResult = await client.query(consultantQuery, queryParams);
+      
+      // If no country-specific consultant found, fallback to any consultant
+      if (consultantResult.rows.length === 0 && countryCode) {
+        const fallbackResult = await client.query(
+          `SELECT up.id FROM user_profiles up
+           WHERE up.role = 'consultant' AND up.is_active = true
+           ORDER BY RANDOM()
+           LIMIT 1`
+        );
         
+        if (fallbackResult.rows.length > 0) {
+          consultantId = fallbackResult.rows[0].id;
+        }
+      } else if (consultantResult.rows.length > 0) {
+        consultantId = consultantResult.rows[0].id;
+      }
+      
+      if (consultantId) {
         // Assign consultant to client
         await client.query(
           'UPDATE clients SET assigned_consultant_id = $1 WHERE id = $2',
@@ -259,6 +284,56 @@ async function handleCheckoutCompleted(session) {
       );
       
       console.log(`Commission created: $${consultantCommission} for consultant ${consultantId}`);
+    }
+    
+    // Create project and task for company formation orders
+    if (consultantId) {
+      const countryCode = orderData.selectedCountry?.code || 'UNKNOWN';
+      const countryName = orderData.selectedCountry?.name || 'Unknown Country';
+      const companyName = orderData.dynamicCompanyData?.companyName || orderData.companyDetails?.companyName || 'Unknown Company';
+      
+      // Create project for the order
+      const projectResult = await client.query(
+        `INSERT INTO projects (
+          title, description_i18n, status, priority, progress,
+          client_id, consultant_id, country_code,
+          start_date, created_at
+        ) VALUES ($1, $2, 'in_progress', 'high', 0, $3, $4, $5, NOW(), NOW())
+        RETURNING id`,
+        [
+          `Company Formation - ${companyName}`,
+          JSON.stringify({
+            en: `Company formation process for ${companyName} in ${countryName}`,
+            tr: `${countryName} için ${companyName} şirket kuruluş süreci`,
+            pt: `Processo de formação de empresa para ${companyName} em ${countryName}`
+          }),
+          clientId,
+          consultantId,
+          countryCode
+        ]
+      );
+      
+      const projectId = projectResult.rows[0].id;
+      
+      // Create initial task for consultant
+      await client.query(
+        `INSERT INTO tasks (
+          title, description, status, priority,
+          consultant_id, client_id, project_id,
+          is_client_visible, billable,
+          estimated_hours, actual_hours,
+          created_at
+        ) VALUES ($1, $2, 'todo', 'high', $3, $4, $5, false, true, 8, 0, NOW())`,
+        [
+          `Process Company Formation - ${companyName}`,
+          `Review order details and initiate company formation process for ${companyName} in ${countryName}. Order ID: ${orderId}`,
+          consultantId,
+          clientId,
+          projectId
+        ]
+      );
+      
+      console.log(`Project and task created for order ${orderId}`);
     }
     
     // Commit transaction
