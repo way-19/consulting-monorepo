@@ -122,6 +122,38 @@ consulting19/
 - **Production**: Configured for deployment via Replit
 
 ## Recent Changes
+- 2025-10-01: **Professional CMS Admin Panel - Complete Redesign**
+  - ✅ **Database Schema Enhancements**:
+    * New `cms_images` table for BYTEA-based image storage (no external URLs)
+    * Multi-language fields added to `cms_pages`: title_*, meta_description_*, meta_keywords_* (EN/TR/PT/ES)
+    * Multi-language SEO fields added to `cms_blocks`: seo_keywords_* (EN/TR/PT/ES)
+    * Indexes on cms_images for performance (uploaded_by, created_at)
+  - ✅ **Backend APIs (Port 3002)**:
+    * POST /api/cms-content/media - Image upload with Multer (5MB limit, MIME validation)
+    * GET /api/cms-content/media - List consultant's uploaded images
+    * GET /api/cms-content/media/:id/data - Serve image binary with ownership check (security fix applied)
+    * POST /api/cms-content/translate - DeepL API integration for EN→TR/PT/ES translation
+    * All endpoints protected with JWT + RBAC + ownership verification
+  - ✅ **Frontend Professional UI** (apps/consultant/src/pages/consultant/ConsultantContent.tsx):
+    * Dashboard-first design (no country cards, direct admin interface on load)
+    * 3-tab layout: Content Sections, Media Library, SEO Settings
+    * Modular section editors with structured forms (no JSON editor)
+    * **Translation Workflow**: English input → "Translate" button → auto-fill TR/PT/ES fields before save
+    * Image upload modal with drag-drop and preview
+    * Media library grid view with database-served images
+    * Section management: Hero, Services, Features (with placeholders for FAQ/SEO expansion)
+  - ✅ **DeepL Integration**:
+    * API key managed via Replit Secrets (DEEPL_API_KEY)
+    * Free tier: 500,000 characters/month
+    * Automatic translation of all content fields (titles, descriptions, meta keywords)
+    * Error handling and fallback for API failures
+  - ✅ **Security Enhancements**:
+    * Ownership checks on all image operations
+    * Cross-consultant access prevention
+    * File type validation (images only)
+    * File size limits (5MB max)
+    * Parameterized queries throughout
+
 - 2025-10-01: **SYSTEM COMPLETION - All Production Features Implemented**
   - ✅ **Consultant Custom Services**: Full service catalog with country visibility
     * Backend: CRUD API (/api/consultant-services)
