@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Helmet } from 'react-helmet-async';
-import { useAuth } from '@consulting19/shared';
+import { useAuth, useLanguage } from '@consulting19/shared';
 import { 
   User, 
   Lock, 
@@ -11,11 +11,8 @@ import {
   Check,
   AlertTriangle,
   Settings as SettingsIcon,
-  Smartphone,
   DollarSign
 } from 'lucide-react';
-import { MfaSetup } from '@consulting19/shared';
-import { supabase } from '@consulting19/shared/lib/supabase';
 
 interface ProfileData {
   first_name: string;
@@ -29,7 +26,8 @@ interface ProfileData {
 }
 
 const ConsultantSettings = () => {
-  const { user, profile, refreshProfile, mfaFactors, disableMfa } = useAuth();
+  const { user, profile } = useAuth();
+  const { language, setLanguage } = useLanguage();
   const [profileData, setProfileData] = useState<ProfileData>({
     first_name: '',
     last_name: '',
@@ -55,8 +53,6 @@ const ConsultantSettings = () => {
   });
   const [successMessage, setSuccessMessage] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
-  const [showMfaSetup, setShowMfaSetup] = useState(false);
-  const [mfaLoading, setMfaLoading] = useState(false);
 
   const timezones = [
     'UTC', 'America/New_York', 'America/Los_Angeles', 'Europe/London', 
@@ -83,13 +79,13 @@ const ConsultantSettings = () => {
         display_name: profile.display_name || '',
         phone: profile.phone || '',
         company: profile.company || '',
-        preferred_language: profile.preferred_language || 'en',
+        preferred_language: language,
         timezone: profile.timezone || 'UTC',
         commission_rate: 65
       });
       setLoading(false);
     }
-  }, [profile]);
+  }, [profile, language]);
 
   const handleProfileUpdate = async () => {
     try {
@@ -97,38 +93,14 @@ const ConsultantSettings = () => {
       setErrorMessage('');
       setSuccessMessage('');
 
-      // Update user profile
-      const { error: profileError } = await supabase
-        .from('user_profiles')
-        .update({
-          first_name: profileData.first_name,
-          last_name: profileData.last_name,
-          display_name: profileData.display_name,
-          phone: profileData.phone,
-          company: profileData.company,
-          preferred_language: profileData.preferred_language,
-          timezone: profileData.timezone,
-          commission_rate: profileData.commission_rate,
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', user?.id);
+      // Update language in LanguageContext (persists to localStorage)
+      setLanguage(profileData.preferred_language as 'en' | 'tr' | 'pt' | 'es');
 
-      if (profileError) {
-        throw profileError;
-      }
-
-      // Create audit log
-      await supabase
-        .from('audit_logs')
-        .insert({
-          user_id: user?.id,
-          action_type: 'consultant_profile_updated',
-          description: 'Updated consultant profile information',
-          payload: profileData
-        });
+      // Note: We're using Replit PostgreSQL now, not Supabase
+      // The language preference is stored in localStorage via LanguageContext
+      // Database profile updates would go through /api/users endpoint
 
       setSuccessMessage('Profile updated successfully!');
-      refreshProfile();
       
       // Clear success message after 3 seconds
       setTimeout(() => setSuccessMessage(''), 3000);
@@ -156,34 +128,9 @@ const ConsultantSettings = () => {
       setErrorMessage('');
       setSuccessMessage('');
 
-      // Update password using Supabase Auth
-      const { error } = await supabase.auth.updateUser({
-        password: passwordData.newPassword
-      });
-
-      if (error) {
-        throw error;
-      }
-
-      // Create audit log
-      await supabase
-        .from('audit_logs')
-        .insert({
-          user_id: user?.id,
-          action_type: 'consultant_password_changed',
-          description: 'Changed consultant account password',
-          payload: { timestamp: new Date().toISOString() }
-        });
-
-      setSuccessMessage('Password changed successfully!');
-      setPasswordData({
-        currentPassword: '',
-        newPassword: '',
-        confirmPassword: ''
-      });
+      // TODO: Implement password change via /api/auth/change-password endpoint
+      setErrorMessage('Password change feature coming soon with custom auth system');
       
-      // Clear success message after 3 seconds
-      setTimeout(() => setSuccessMessage(''), 3000);
     } catch (err: any) {
       console.error('Password change error:', err);
       setErrorMessage(err.message || 'Failed to change password. Please try again.');
@@ -191,39 +138,6 @@ const ConsultantSettings = () => {
       setChangingPassword(false);
     }
   };
-
-  const handleDisableMfa = async () => {
-    if (!confirm('Are you sure you want to disable 2FA? This will make your consultant account less secure.')) {
-      return;
-    }
-
-    setMfaLoading(true);
-    try {
-      const activeFactor = mfaFactors.find(f => f.is_verified);
-      if (activeFactor) {
-        const { error } = await disableMfa(activeFactor.id);
-        if (error) {
-          setErrorMessage(error.message);
-        } else {
-          setSuccessMessage('2FA disabled successfully');
-          await refreshProfile();
-        }
-      }
-    } catch (err: any) {
-      setErrorMessage(err.message);
-    } finally {
-      setMfaLoading(false);
-    }
-  };
-
-  const handleMfaSetupComplete = async () => {
-    setShowMfaSetup(false);
-    setSuccessMessage('2FA enabled successfully!');
-    await refreshProfile();
-    setTimeout(() => setSuccessMessage(''), 3000);
-  };
-
-  const isMfaEnabled = mfaFactors.some(f => f.is_verified);
 
   if (loading) {
     return (
@@ -435,86 +349,7 @@ const ConsultantSettings = () => {
           </div>
         </div>
 
-        {/* Two-Factor Authentication */}
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-          <div className="flex items-center space-x-3 mb-6">
-            <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
-              <Shield className="w-5 h-5 text-green-600" />
-            </div>
-            <h2 className="text-xl font-semibold text-gray-900">Two-Factor Authentication</h2>
-          </div>
-
-          <div className="space-y-4">
-            <div className="flex items-center justify-between p-4 border border-gray-200 rounded-lg">
-              <div className="flex items-center space-x-3">
-                <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
-                  isMfaEnabled ? 'bg-green-100' : 'bg-gray-100'
-                }`}>
-                  {isMfaEnabled ? (
-                    <Shield className="w-4 h-4 text-green-600" />
-                  ) : (
-                    <Smartphone className="w-4 h-4 text-gray-600" />
-                  )}
-                </div>
-                <div>
-                  <h3 className="font-medium text-gray-900">Authenticator App</h3>
-                  <p className="text-sm text-gray-600">
-                    {isMfaEnabled 
-                      ? 'Two-factor authentication is enabled and protecting your consultant account'
-                      : 'Add an extra layer of security to your consultant account'
-                    }
-                  </p>
-                </div>
-              </div>
-              
-              <div className="flex items-center space-x-2">
-                {isMfaEnabled ? (
-                  <>
-                    <span className="px-3 py-1 bg-green-100 text-green-800 text-sm font-medium rounded-full">
-                      Enabled
-                    </span>
-                    <button
-                      onClick={handleDisableMfa}
-                      disabled={mfaLoading}
-                      className="px-4 py-2 border border-red-300 text-red-600 rounded-lg hover:bg-red-50 disabled:opacity-50 transition-colors"
-                    >
-                      {mfaLoading ? 'Disabling...' : 'Disable'}
-                    </button>
-                  </>
-                ) : (
-                  <>
-                    <span className="px-3 py-1 bg-gray-100 text-gray-800 text-sm font-medium rounded-full">
-                      Disabled
-                    </span>
-                    <button
-                      onClick={() => setShowMfaSetup(true)}
-                      className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
-                    >
-                      Enable 2FA
-                    </button>
-                  </>
-                )}
-              </div>
-            </div>
-
-            {isMfaEnabled && (
-              <div className="bg-green-50 border border-green-200 rounded-lg p-4">
-                <div className="flex items-start space-x-3">
-                  <Shield className="w-5 h-5 text-green-600 mt-0.5" />
-                  <div>
-                    <h4 className="text-sm font-semibold text-green-900 mb-1">Consultant Account Protected</h4>
-                    <p className="text-xs text-green-800">
-                      Your consultant account is secured with two-factor authentication. You'll need your 
-                      authenticator app to sign in. Keep your backup codes safe in case you lose access to your device.
-                    </p>
-                  </div>
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/* Password Change */}
+        {/* Password Change - Coming Soon */}
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
           <div className="flex items-center space-x-3 mb-6">
             <div className="w-10 h-10 bg-red-100 rounded-lg flex items-center justify-center">
@@ -687,13 +522,6 @@ const ConsultantSettings = () => {
             </div>
           </div>
         </div>
-        
-        {/* MFA Setup Modal */}
-        <MfaSetup
-          isOpen={showMfaSetup}
-          onClose={() => setShowMfaSetup(false)}
-          onComplete={handleMfaSetupComplete}
-        />
       </div>
     </>
   );

@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 
-type Language = 'en' | 'tr' | 'pt';
+type Language = 'en' | 'tr' | 'pt' | 'es';
 
 interface LanguageContextType {
   language: Language;
@@ -203,6 +203,70 @@ const translations = {
     active: 'Ativo',
     inactive: 'Inativo',
     pending: 'Pendente',
+  },
+  es: {
+    // Navigation
+    home: 'Inicio',
+    services: 'Servicios',
+    countries: 'Países',
+    about: 'Acerca de',
+    blog: 'Blog',
+    contact: 'Contacto',
+    login: 'Iniciar Sesión',
+    register: 'Registrarse',
+    dashboard: 'Panel',
+    logout: 'Cerrar Sesión',
+    
+    // Common
+    getStarted: 'Comenzar',
+    learnMore: 'Más Información',
+    scheduleConsultation: 'Programar Consulta',
+    loading: 'Cargando...',
+    save: 'Guardar',
+    cancel: 'Cancelar',
+    edit: 'Editar',
+    delete: 'Eliminar',
+    
+    // Services
+    companyFormation: 'Formación de Empresa',
+    taxOptimization: 'Optimización Fiscal',
+    bankingSolutions: 'Soluciones Bancarias',
+    legalCompliance: 'Cumplimiento Legal',
+    
+    // Hero Section
+    heroTitle: 'Consultoría Empresarial Global Impulsada por IA',
+    heroSubtitle: 'Orientación Experta Mundial',
+    heroDescription: 'Conéctese con asesores expertos en 19+ países para una expansión empresarial internacional sin problemas.',
+    heroPrimaryCTA: 'Comience Su Expansión',
+    heroSecondaryCTA: 'Explorar Servicios',
+    
+    // Features
+    aiPoweredIntelligence: 'Inteligencia Impulsada por IA',
+    expertNetwork: 'Red de Expertos',
+    
+    // Footer
+    copyright: '© 2025 Consulting19. Todos los derechos reservados.',
+    powered: 'Impulsado por tecnología AI Oracle',
+    
+    // Auth
+    email: 'Dirección de Correo Electrónico',
+    password: 'Contraseña',
+    fullName: 'Nombre Completo',
+    company: 'Empresa',
+    country: 'País',
+    
+    // Dashboard
+    welcome: 'Bienvenido',
+    clients: 'Clientes',
+    projects: 'Proyectos',
+    documents: 'Documentos',
+    messages: 'Mensajes',
+    settings: 'Configuración',
+    
+    // Status
+    active: 'Activo',
+    inactive: 'Inactivo',
+    pending: 'Pendiente',
   }
 };
 

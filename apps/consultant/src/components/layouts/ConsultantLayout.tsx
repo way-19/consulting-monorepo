@@ -14,10 +14,10 @@ import {
   Briefcase,
   BarChart3,
   PenTool,
-  Kanban
+  Kanban,
+  Languages
 } from 'lucide-react';
-import { useAuth } from '@consulting19/shared';
-import ConsultantSyncManager from '../ConsultantSyncManager';
+import { useAuth, useLanguage } from '@consulting19/shared';
 
 interface ConsultantLayoutProps {
   children: React.ReactNode;
@@ -26,7 +26,9 @@ interface ConsultantLayoutProps {
 const ConsultantLayout: React.FC<ConsultantLayoutProps> = ({ children }) => {
   const location = useLocation();
   const { signOut, user, profile } = useAuth();
+  const { language, setLanguage } = useLanguage();
   const [showNotifications, setShowNotifications] = useState(false);
+  const [showLanguageMenu, setShowLanguageMenu] = useState(false);
 
   const navigation = [
     { name: 'Dashboard', href: '/', icon: Home },
@@ -147,12 +149,45 @@ const ConsultantLayout: React.FC<ConsultantLayoutProps> = ({ children }) => {
                 </button>
               </div>
 
-              {/* User Badge */}
-              <div className="flex items-center space-x-2 px-3 py-2 bg-blue-50 border border-blue-200 rounded-lg">
-                <div className="w-6 h-6 bg-blue-100 rounded-full flex items-center justify-center">
-                  <User className="w-3 h-3 text-blue-600" />
-                </div>
-                <span className="text-sm font-medium text-blue-700">Consultant</span>
+              {/* Language Switcher */}
+              <div className="relative">
+                <button
+                  onClick={() => setShowLanguageMenu(!showLanguageMenu)}
+                  className="flex items-center space-x-2 px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg hover:bg-gray-100 transition-colors"
+                >
+                  <Languages className="w-4 h-4 text-gray-600" />
+                  <span className="text-sm font-medium text-gray-700 uppercase">{language}</span>
+                </button>
+                
+                {showLanguageMenu && (
+                  <>
+                    <div 
+                      className="fixed inset-0 z-10" 
+                      onClick={() => setShowLanguageMenu(false)}
+                    />
+                    <div className="absolute right-0 mt-2 w-36 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-20">
+                      {[
+                        { code: 'en', name: 'English' },
+                        { code: 'tr', name: 'Türkçe' },
+                        { code: 'pt', name: 'Português' },
+                        { code: 'es', name: 'Español' }
+                      ].map((lang) => (
+                        <button
+                          key={lang.code}
+                          onClick={() => {
+                            setLanguage(lang.code as 'en' | 'tr' | 'pt' | 'es');
+                            setShowLanguageMenu(false);
+                          }}
+                          className={`w-full text-left px-4 py-2 text-sm hover:bg-gray-50 transition-colors ${
+                            language === lang.code ? 'bg-blue-50 text-blue-700 font-medium' : 'text-gray-700'
+                          }`}
+                        >
+                          {lang.name}
+                        </button>
+                      ))}
+                    </div>
+                  </>
+                )}
               </div>
 
               {/* Logout */}
@@ -171,9 +206,6 @@ const ConsultantLayout: React.FC<ConsultantLayoutProps> = ({ children }) => {
           {children}
         </main>
       </div>
-
-      {/* Sync Manager */}
-      <ConsultantSyncManager />
     </div>
   );
 };
