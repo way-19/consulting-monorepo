@@ -164,18 +164,26 @@ const FeaturesList = () => {
 
   return (
     <div className="p-8 max-w-6xl mx-auto">
-      <div className="flex items-center justify-between mb-6">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900">Features Section</h1>
-          <p className="text-gray-600 mt-1">Highlight key features of your services</p>
+      <div className="mb-6">
+        <div className="flex items-center justify-between mb-3">
+          <h1 className="text-3xl font-bold text-gray-900">Key Features</h1>
+          <button
+            onClick={addFeature}
+            className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+          >
+            <Plus className="w-4 h-4 mr-2" />
+            Add Feature
+          </button>
         </div>
-        <button
-          onClick={addFeature}
-          className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
-        >
-          <Plus className="w-4 h-4 mr-2" />
-          Add Feature
-        </button>
+        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+          <p className="text-sm text-gray-700">
+            <strong>What is this section?</strong> Manage the feature cards displayed on your country's homepage.
+            <br />
+            <strong>Examples:</strong> "Company Formation", "Tax Optimization", "Banking Solutions" - highlight your main service offerings.
+            <br />
+            <strong>Where it appears:</strong> Homepage → "Why Choose Us" section
+          </p>
+        </div>
       </div>
 
       {features.length === 0 ? (
