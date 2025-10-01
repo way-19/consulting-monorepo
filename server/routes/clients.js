@@ -124,4 +124,73 @@ router.get('/:id', authenticateToken, async (req, res) => {
   }
 });
 
+// GET /api/clients/:id/stats - Get client statistics
+router.get('/:id/stats', authenticateToken, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { role, id: userId } = req.user;
+    
+    // Check if client exists and user has access
+    const clientQuery = `
+      SELECT c.*, up.first_name, up.last_name
+      FROM clients c
+      LEFT JOIN user_profiles up ON c.profile_id = up.id
+      WHERE c.id = $1
+    `;
+    const clientResult = await pool.query(clientQuery, [id]);
+    
+    if (clientResult.rows.length === 0) {
+      return res.status(404).json({ error: 'Client not found' });
+    }
+    
+    const client = clientResult.rows[0];
+    
+    // Check access permissions
+    if (role === 'consultant' && client.assigned_consultant_id !== userId) {
+      return res.status(403).json({ error: 'Access denied' });
+    } else if (role === 'client' && client.profile_id !== userId) {
+      return res.status(403).json({ error: 'Access denied' });
+    }
+    
+    // Get projects count
+    const projectsQuery = `
+      SELECT COUNT(*) as count
+      FROM orders
+      WHERE client_id = $1
+    `;
+    const projectsResult = await pool.query(projectsQuery, [id]);
+    const projectsCount = parseInt(projectsResult.rows[0].count) || 0;
+    
+    // Get tasks count
+    const tasksQuery = `
+      SELECT COUNT(*) as count
+      FROM tasks
+      WHERE client_id = $1
+    `;
+    const tasksResult = await pool.query(tasksQuery, [id]);
+    const tasksCount = parseInt(tasksResult.rows[0].count) || 0;
+    
+    // Get total spent (sum of all order amounts)
+    const spentQuery = `
+      SELECT COALESCE(SUM(total_amount), 0) as total
+      FROM orders
+      WHERE client_id = $1 AND status IN ('completed', 'processing', 'pending')
+    `;
+    const spentResult = await pool.query(spentQuery, [id]);
+    const totalSpent = parseFloat(spentResult.rows[0].total) || 0;
+    
+    res.json({
+      client_id: id,
+      stats: {
+        projects: projectsCount,
+        tasks: tasksCount,
+        spent: totalSpent
+      }
+    });
+  } catch (error) {
+    console.error('Error fetching client stats:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
 export default router;
