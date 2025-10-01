@@ -37,24 +37,44 @@ serve(async (req) => {
       const session = event.data.object as Stripe.Checkout.Session
       const orderData = JSON.parse(session.metadata?.orderData || '{}')
 
-      // Create user account
-      const { data: authUser, error: authError } = await supabase.auth.admin.createUser({
-        email: orderData.userCredentials.email,
-        password: orderData.userCredentials.password,
-        email_confirm: true,
+      console.log('Processing checkout session:', session.id)
+      console.log('Order data:', orderData)
+
+      // Call auto-user-registration function
+      const autoRegResponse = await fetch(`${supabaseUrl}/functions/v1/auto-user-registration`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${supabaseKey}`
+        },
+        body: JSON.stringify({
+          orderId: session.metadata?.orderId || session.id,
+          customerEmail: session.customer_details?.email || orderData.userCredentials?.email,
+          customerName: session.customer_details?.name || `${orderData.userCredentials?.firstName} ${orderData.userCredentials?.lastName}`,
+          customerPhone: session.customer_details?.phone || orderData.userCredentials?.phone,
+          companyName: orderData.dynamicCompanyData?.companyName || orderData.companyDetails?.companyName,
+          country: orderData.selectedCountry?.name || orderData.selectedCountry?.code,
+          serviceType: orderData.selectedPackage?.id || orderData.selectedDynamicPackage || 'company_formation',
+          amount: session.amount_total ? session.amount_total / 100 : 0, // Convert from cents
+          stripeSessionId: session.id
+        })
       })
 
-      if (authError) {
-        console.error('Error creating user:', authError)
-        throw authError
+      if (!autoRegResponse.ok) {
+        const errorText = await autoRegResponse.text()
+        console.error('Auto registration failed:', errorText)
+        throw new Error(`Auto registration failed: ${errorText}`)
       }
 
-      // Find consultant by country
+      const autoRegResult = await autoRegResponse.json()
+      console.log('Auto registration result:', autoRegResult)
+
+      // Find consultant by country for commission calculation
       const { data: consultants } = await supabase
-        .from('consultants')
-        .select('*')
-        .eq('country', orderData.selectedCountry.name)
-        .eq('status', 'active')
+        .from('users')
+        .select('id, first_name, last_name, email')
+        .eq('role', 'consultant')
+        .eq('is_active', true)
         .limit(1)
 
       const assignedConsultant = consultants?.[0] || null

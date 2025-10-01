@@ -1,6 +1,6 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import { AuthProvider, useAuth } from '@consulting19/shared';
-import LoginPage from './pages/auth/LoginPage';
+import { CustomAuthProvider, useCustomAuth } from '@consulting19/shared';
+import CustomAuthLoginPage from './pages/auth/CustomAuthLoginPage';
 import ConsultantDashboard from './pages/consultant/ConsultantDashboard';
 import ConsultantClients from './pages/consultant/ConsultantClients';
 import ConsultantTasks from './pages/consultant/ConsultantTasks';
@@ -15,9 +15,9 @@ import ConsultantSettings from './pages/consultant/ConsultantSettings';
 import ConsultantLayout from './components/layouts/ConsultantLayout';
 import CustomAuthTest from './components/CustomAuthTest';
 
-function App() {
+function AppWithCustomAuth() {
   return (
-    <AuthProvider>
+    <CustomAuthProvider>
       <Router
         future={{
           v7_startTransition: true,
@@ -26,29 +26,30 @@ function App() {
       >
         <div className="min-h-screen bg-gray-50">
           <Routes>
-            <Route path="/login" element={<LoginPage />} />
+            <Route path="/login" element={<CustomAuthLoginPage />} />
             <Route path="/*" element={<ProtectedConsultantRoutes />} />
           </Routes>
         </div>
       </Router>
-    </AuthProvider>
+    </CustomAuthProvider>
   );
 }
 
 const ProtectedConsultantRoutes = () => {
-  const { user, profile, loading } = useAuth();
+  const { user, profile, loading } = useCustomAuth();
   
-  console.log('Consultant App - User:', user?.email, 'Profile role:', profile?.role, 'Loading:', loading);
+  console.log('Consultant App (Custom Auth) - User:', user?.email, 'Profile role:', profile?.role, 'Loading:', loading);
   
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
-          <div className="w-16 h-16 bg-gradient-to-r from-blue-600 to-teal-600 rounded-lg flex items-center justify-center mx-auto mb-6">
+          <div className="w-16 h-16 bg-gradient-to-r from-purple-600 to-pink-600 rounded-lg flex items-center justify-center mx-auto mb-6">
             <span className="text-white font-bold text-xl">C19</span>
           </div>
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-gray-600 font-medium">Loading Consultant Dashboard...</p>
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-600 mx-auto mb-4"></div>
+          <p className="text-gray-600 font-medium">Loading Custom Auth Dashboard...</p>
+          <p className="text-sm text-gray-500 mt-2">Using Custom JWT Authentication</p>
         </div>
       </div>
     );
@@ -68,7 +69,8 @@ const ProtectedConsultantRoutes = () => {
             <p className="text-sm text-gray-700">
               <strong>Current role:</strong> {profile?.role || 'unknown'}<br />
               <strong>Required role:</strong> consultant<br />
-              <strong>Email:</strong> {user?.email}
+              <strong>Email:</strong> {user?.email}<br />
+              <strong>Auth Type:</strong> Custom JWT
             </p>
           </div>
         </div>
@@ -97,4 +99,4 @@ const ProtectedConsultantRoutes = () => {
   );
 };
 
-export default App;
+export default AppWithCustomAuth;
