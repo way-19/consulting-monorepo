@@ -211,27 +211,49 @@ const ConsultantContent = () => {
     }
 
     try {
-      const response = await authFetch('/api/cms-content/blocks', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          page_id: selectedPage.id,
-          block_type: createBlockForm.block_type,
-          content: parsedContent
-        })
-      });
+      if (editingBlock) {
+        // Update existing block
+        const response = await authFetch(`/api/cms-content/blocks/${editingBlock.id}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            content: parsedContent
+          })
+        });
 
-      if (response.ok) {
-        await fetchPageWithBlocks(selectedPage.id);
-        setShowCreateBlock(false);
-        setCreateBlockForm({ block_type: 'hero', content: '{}' });
+        if (response.ok) {
+          await fetchPageWithBlocks(selectedPage.id);
+          setShowCreateBlock(false);
+          setEditingBlock(null);
+          setCreateBlockForm({ block_type: 'hero', content: '{}' });
+        } else {
+          const data = await response.json();
+          setFormError(data.error || 'Failed to update block');
+        }
       } else {
-        const data = await response.json();
-        setFormError(data.error || 'Failed to create block');
+        // Create new block
+        const response = await authFetch('/api/cms-content/blocks', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            page_id: selectedPage.id,
+            block_type: createBlockForm.block_type,
+            content: parsedContent
+          })
+        });
+
+        if (response.ok) {
+          await fetchPageWithBlocks(selectedPage.id);
+          setShowCreateBlock(false);
+          setCreateBlockForm({ block_type: 'hero', content: '{}' });
+        } else {
+          const data = await response.json();
+          setFormError(data.error || 'Failed to create block');
+        }
       }
     } catch (error) {
-      console.error('Error creating block:', error);
-      setFormError('Failed to create block');
+      console.error('Error saving block:', error);
+      setFormError('Failed to save block');
     }
   };
 
@@ -412,6 +434,20 @@ const ConsultantContent = () => {
                         </div>
                         <div className="flex space-x-2">
                           <button
+                            onClick={() => {
+                              setEditingBlock(block);
+                              setCreateBlockForm({ 
+                                block_type: block.block_type, 
+                                content: JSON.stringify(block.content, null, 2) 
+                              });
+                              setShowCreateBlock(true);
+                            }}
+                            className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                            title="Edit Block"
+                          >
+                            <Edit className="w-5 h-5" />
+                          </button>
+                          <button
                             onClick={() => handleBlockVisibilityToggle(block.id, block.is_visible)}
                             className="p-2 text-gray-600 hover:bg-gray-50 rounded-lg transition-colors"
                             title={block.is_visible ? 'Hide' : 'Show'}
@@ -559,10 +595,13 @@ const ConsultantContent = () => {
               <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
                 <div className="p-6">
                   <div className="flex items-center justify-between mb-6">
-                    <h2 className="text-2xl font-bold text-gray-900">Add Content Block</h2>
+                    <h2 className="text-2xl font-bold text-gray-900">
+                      {editingBlock ? 'Edit Content Block' : 'Add Content Block'}
+                    </h2>
                     <button
                       onClick={() => {
                         setShowCreateBlock(false);
+                        setEditingBlock(null);
                         setFormError('');
                       }}
                       className="p-2 text-gray-400 hover:text-gray-600"
@@ -586,6 +625,7 @@ const ConsultantContent = () => {
                         value={createBlockForm.block_type}
                         onChange={(e) => setCreateBlockForm(prev => ({ ...prev, block_type: e.target.value }))}
                         className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        disabled={!!editingBlock}
                       >
                         {BLOCK_TYPES.map(type => (
                           <option key={type.value} value={type.value}>
@@ -593,6 +633,9 @@ const ConsultantContent = () => {
                           </option>
                         ))}
                       </select>
+                      {editingBlock && (
+                        <p className="text-xs text-gray-500 mt-1">Block type cannot be changed when editing</p>
+                      )}
                     </div>
 
                     <div>
@@ -617,6 +660,7 @@ const ConsultantContent = () => {
                         type="button"
                         onClick={() => {
                           setShowCreateBlock(false);
+                          setEditingBlock(null);
                           setFormError('');
                         }}
                         className="px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
@@ -627,7 +671,7 @@ const ConsultantContent = () => {
                         type="submit"
                         className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
                       >
-                        Add Block
+                        {editingBlock ? 'Update Block' : 'Add Block'}
                       </button>
                     </div>
                   </form>
