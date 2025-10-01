@@ -24,6 +24,35 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   useEffect(() => {
     // Check for existing token on mount
     checkAuth();
+
+    // Auto-refresh token every 6 days (token expires in 7 days)
+    const refreshInterval = setInterval(async () => {
+      const token = localStorage.getItem(TOKEN_KEY);
+      if (token) {
+        try {
+          const response = await fetch(`${AUTH_API_URL}/refresh`, {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${token}`
+            }
+          });
+
+          if (response.ok) {
+            const data = await response.json();
+            localStorage.setItem(TOKEN_KEY, data.token);
+            console.log('Token refreshed successfully');
+          } else {
+            console.error('Token refresh failed, logging out');
+            signOut();
+          }
+        } catch (error) {
+          console.error('Token refresh error:', error);
+          signOut();
+        }
+      }
+    }, 6 * 24 * 60 * 60 * 1000); // 6 days in milliseconds
+
+    return () => clearInterval(refreshInterval);
   }, []);
 
   const checkAuth = async () => {
@@ -142,7 +171,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const resetPassword = async (email: string) => {
     // TODO: Implement password reset functionality
-    console.warn('Password reset not implemented yet');
+    console.warn('Password reset not implemented yet for:', email);
     return { error: 'Not implemented' };
   };
 
@@ -174,3 +203,41 @@ export const useAuth = () => {
 
 // Backward compatibility aliases
 export { useAuth as useAuthContext };
+
+// Authenticated fetch helper
+export const createAuthenticatedFetch = () => {
+  return async (url: string, options: RequestInit = {}) => {
+    const token = localStorage.getItem(TOKEN_KEY);
+    
+    if (!token) {
+      throw new Error('No authentication token found');
+    }
+
+    // Don't override Content-Type if already set (for file uploads, etc.)
+    const headers: HeadersInit = {
+      ...options.headers,
+      'Authorization': `Bearer ${token}`,
+    };
+
+    // Only add Content-Type if not set and body is present
+    if (!options.headers || !('Content-Type' in options.headers)) {
+      if (options.body && typeof options.body === 'string') {
+        headers['Content-Type'] = 'application/json';
+      }
+    }
+
+    const response = await fetch(url, {
+      ...options,
+      headers,
+    });
+
+    if (response.status === 401 || response.status === 403) {
+      // Token expired or invalid, clear and redirect to login
+      localStorage.removeItem(TOKEN_KEY);
+      window.location.href = '/login';
+      throw new Error('Session expired');
+    }
+
+    return response;
+  };
+};
