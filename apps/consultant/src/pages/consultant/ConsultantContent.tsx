@@ -1,687 +1,674 @@
-import { useState, useEffect } from 'react';
-import { Helmet } from 'react-helmet-async';
-import { 
-  FileText, Plus, Edit, Trash2, Eye, Globe, Save, X, 
-  ArrowUp, ArrowDown, Copy
-} from 'lucide-react';
+import React, { useState, useEffect } from 'react';
 import { createAuthenticatedFetch } from '@consulting19/shared';
+import { 
+  Globe, Plus, Edit, Trash2, Eye, EyeOff, Save, X, Upload, Image as ImageIcon,
+  Languages, CheckCircle, AlertCircle, Loader, FileText, List, Layout
+} from 'lucide-react';
+
+const authFetch = createAuthenticatedFetch('http://localhost:3002');
 
 interface CMSPage {
   id: string;
   title: string;
   slug: string;
-  meta_description: string | null;
-  is_published: boolean;
   country_code: string;
+  is_published: boolean;
   created_at: string;
-  updated_at: string;
 }
 
-interface CMSBlock {
+interface CMSImage {
   id: string;
-  page_id: string;
-  block_type: string;
+  filename: string;
+  mime_type: string;
+  file_size: number;
+  alt_text_en?: string;
+  created_at: string;
+}
+
+type SectionType = 'hero' | 'features' | 'services' | 'stats' | 'faq' | 'cta';
+
+interface SectionData {
+  id: string;
+  block_type: SectionType;
   content: any;
   order_index: number;
   is_visible: boolean;
-  created_at: string;
-  updated_at: string;
 }
-
-const BLOCK_TYPES = [
-  { value: 'hero', label: 'Hero Section' },
-  { value: 'features', label: 'Features Grid' },
-  { value: 'services', label: 'Services List' },
-  { value: 'testimonials', label: 'Testimonials' },
-  { value: 'faq', label: 'FAQ Section' },
-  { value: 'cta', label: 'Call to Action' },
-  { value: 'text_content', label: 'Text Content' },
-  { value: 'image_gallery', label: 'Image Gallery' },
-  { value: 'video', label: 'Video Embed' },
-  { value: 'contact_form', label: 'Contact Form' }
-];
 
 const ConsultantContent = () => {
   const [pages, setPages] = useState<CMSPage[]>([]);
   const [selectedPage, setSelectedPage] = useState<CMSPage | null>(null);
-  const [blocks, setBlocks] = useState<CMSBlock[]>([]);
+  const [sections, setSections] = useState<SectionData[]>([]);
+  const [images, setImages] = useState<CMSImage[]>([]);
   const [loading, setLoading] = useState(true);
-  const [editingBlock, setEditingBlock] = useState<CMSBlock | null>(null);
-  const [showCreatePage, setShowCreatePage] = useState(false);
-  const [showCreateBlock, setShowCreateBlock] = useState(false);
-  const [createPageForm, setCreatePageForm] = useState({
-    title: '',
-    slug: '',
-    country_code: '',
-    meta_description: ''
-  });
-  const [createBlockForm, setCreateBlockForm] = useState({
-    block_type: 'hero',
-    content: '{}'
-  });
-  const [formError, setFormError] = useState('');
-  const authFetch = createAuthenticatedFetch();
+  const [activeTab, setActiveTab] = useState<'sections' | 'media' | 'seo'>('sections');
+  const [editingSection, setEditingSection] = useState<SectionData | null>(null);
+  const [showImageUpload, setShowImageUpload] = useState(false);
+  const [translating, setTranslating] = useState(false);
 
   useEffect(() => {
     fetchPages();
+    fetchImages();
   }, []);
+
+  useEffect(() => {
+    if (selectedPage) {
+      fetchPageSections(selectedPage.id);
+    }
+  }, [selectedPage]);
 
   const fetchPages = async () => {
     try {
-      setLoading(true);
       const response = await authFetch('/api/cms-content/pages');
-      
-      if (response.ok) {
-        const data = await response.json();
-        setPages(data.pages || []);
+      const data = await response.json();
+      if (data.success) {
+        setPages(data.pages);
+        if (data.pages.length > 0 && !selectedPage) {
+          setSelectedPage(data.pages[0]);
+        }
       }
     } catch (error) {
-      console.error('Error fetching CMS pages:', error);
+      console.error('Error fetching pages:', error);
     } finally {
       setLoading(false);
     }
   };
 
-  const fetchPageWithBlocks = async (pageId: string) => {
+  const fetchPageSections = async (pageId: string) => {
     try {
       const response = await authFetch(`/api/cms-content/pages/${pageId}`);
-      
-      if (response.ok) {
-        const data = await response.json();
-        setSelectedPage(data.page);
-        setBlocks(data.blocks || []);
+      const data = await response.json();
+      if (data.success) {
+        setSections(data.blocks || []);
       }
     } catch (error) {
-      console.error('Error fetching page blocks:', error);
+      console.error('Error fetching sections:', error);
     }
   };
 
-  const handlePublishToggle = async (pageId: string, currentStatus: boolean) => {
+  const fetchImages = async () => {
     try {
-      const response = await authFetch(`/api/cms-content/pages/${pageId}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ is_published: !currentStatus })
+      const response = await authFetch('/api/cms-content/media');
+      const data = await response.json();
+      if (data.success) {
+        setImages(data.images || []);
+      }
+    } catch (error) {
+      console.error('Error fetching images:', error);
+    }
+  };
+
+  const handleImageUpload = async (file: File) => {
+    try {
+      const formData = new FormData();
+      formData.append('image', file);
+      formData.append('alt_text_en', '');
+
+      const response = await authFetch('/api/cms-content/media', {
+        method: 'POST',
+        body: formData
       });
 
-      if (response.ok) {
-        await fetchPages();
-        if (selectedPage?.id === pageId) {
-          setSelectedPage(prev => prev ? { ...prev, is_published: !currentStatus } : null);
-        }
+      const data = await response.json();
+      if (data.success) {
+        fetchImages();
+        return data.image.id;
       }
     } catch (error) {
-      console.error('Error toggling publish status:', error);
+      console.error('Error uploading image:', error);
     }
   };
 
-  const handleDeletePage = async (pageId: string) => {
-    if (!confirm('Delete this page? All blocks will also be deleted.')) return;
-
+  const handleTranslate = async (text: string) => {
+    if (!text.trim()) return { tr: '', pt: '', es: '' };
+    
+    setTranslating(true);
     try {
-      const response = await authFetch(`/api/cms-content/pages/${pageId}`, {
-        method: 'DELETE'
-      });
-
-      if (response.ok) {
-        await fetchPages();
-        if (selectedPage?.id === pageId) {
-          setSelectedPage(null);
-          setBlocks([]);
-        }
-      }
-    } catch (error) {
-      console.error('Error deleting page:', error);
-    }
-  };
-
-  const handleBlockVisibilityToggle = async (blockId: string, currentStatus: boolean) => {
-    try {
-      const response = await authFetch(`/api/cms-content/blocks/${blockId}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ is_visible: !currentStatus })
-      });
-
-      if (response.ok) {
-        if (selectedPage) {
-          await fetchPageWithBlocks(selectedPage.id);
-        }
-      }
-    } catch (error) {
-      console.error('Error toggling block visibility:', error);
-    }
-  };
-
-  const handleDeleteBlock = async (blockId: string) => {
-    if (!confirm('Delete this block?')) return;
-
-    try {
-      const response = await authFetch(`/api/cms-content/blocks/${blockId}`, {
-        method: 'DELETE'
-      });
-
-      if (response.ok) {
-        if (selectedPage) {
-          await fetchPageWithBlocks(selectedPage.id);
-        }
-      }
-    } catch (error) {
-      console.error('Error deleting block:', error);
-    }
-  };
-
-  const handleCreatePage = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setFormError('');
-
-    try {
-      const response = await authFetch('/api/cms-content/pages', {
+      const response = await authFetch('/api/cms-content/translate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(createPageForm)
+        body: JSON.stringify({ text, target_langs: ['TR', 'PT', 'ES'] })
       });
 
-      if (response.ok) {
-        await fetchPages();
-        setShowCreatePage(false);
-        setCreatePageForm({ title: '', slug: '', country_code: '', meta_description: '' });
-      } else {
-        const data = await response.json();
-        setFormError(data.error || 'Failed to create page');
+      const data = await response.json();
+      if (data.success) {
+        return data.translations;
       }
+      return { tr: '', pt: '', es: '' };
     } catch (error) {
-      console.error('Error creating page:', error);
-      setFormError('Failed to create page');
-    }
-  };
-
-  const handleCreateBlock = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setFormError('');
-
-    if (!selectedPage) return;
-
-    let parsedContent;
-    try {
-      parsedContent = JSON.parse(createBlockForm.content);
-    } catch {
-      setFormError('Invalid JSON content');
-      return;
-    }
-
-    try {
-      if (editingBlock) {
-        // Update existing block
-        const response = await authFetch(`/api/cms-content/blocks/${editingBlock.id}`, {
-          method: 'PATCH',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            content: parsedContent
-          })
-        });
-
-        if (response.ok) {
-          await fetchPageWithBlocks(selectedPage.id);
-          setShowCreateBlock(false);
-          setEditingBlock(null);
-          setCreateBlockForm({ block_type: 'hero', content: '{}' });
-        } else {
-          const data = await response.json();
-          setFormError(data.error || 'Failed to update block');
-        }
-      } else {
-        // Create new block
-        const response = await authFetch('/api/cms-content/blocks', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            page_id: selectedPage.id,
-            block_type: createBlockForm.block_type,
-            content: parsedContent
-          })
-        });
-
-        if (response.ok) {
-          await fetchPageWithBlocks(selectedPage.id);
-          setShowCreateBlock(false);
-          setCreateBlockForm({ block_type: 'hero', content: '{}' });
-        } else {
-          const data = await response.json();
-          setFormError(data.error || 'Failed to create block');
-        }
-      }
-    } catch (error) {
-      console.error('Error saving block:', error);
-      setFormError('Failed to save block');
+      console.error('Error translating:', error);
+      return { tr: '', pt: '', es: '' };
+    } finally {
+      setTranslating(false);
     }
   };
 
   if (loading) {
     return (
-      <>
-        <Helmet>
-          <title>Content Management - Consultant Portal</title>
-        </Helmet>
-        <div className="min-h-screen bg-gray-50">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-            <div className="animate-pulse space-y-6">
-              <div className="h-8 bg-gray-200 rounded w-1/3"></div>
-              <div className="space-y-4">
-                {[1, 2, 3].map(i => (
-                  <div key={i} className="h-24 bg-gray-200 rounded-lg"></div>
-                ))}
-              </div>
-            </div>
-          </div>
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <Loader className="w-8 h-8 text-blue-600 animate-spin" />
+      </div>
+    );
+  }
+
+  if (!selectedPage) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <Globe className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+          <h2 className="text-2xl font-bold text-gray-900 mb-2">No Content Pages</h2>
+          <p className="text-gray-600">Contact admin to create your country page</p>
         </div>
-      </>
+      </div>
     );
   }
 
   return (
-    <>
-      <Helmet>
-        <title>Content Management - Consultant Portal</title>
-      </Helmet>
-      
-      <div className="min-h-screen bg-gray-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
-          {/* Header */}
-          <div className="flex items-start justify-between">
+    <div className="min-h-screen bg-gray-50">
+      {/* Header */}
+      <div className="bg-white border-b border-gray-200">
+        <div className="max-w-7xl mx-auto px-6 py-4">
+          <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-3xl font-bold text-gray-900">Content Management</h1>
+              <h1 className="text-2xl font-bold text-gray-900">Content Management</h1>
               <p className="text-gray-600 mt-1">
-                Create and manage your country landing page with modular blocks
+                Manage your country landing page content
               </p>
             </div>
-            <button
-              onClick={() => setShowCreatePage(true)}
-              className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-            >
-              <Plus className="w-4 h-4 mr-2" />
-              Create Page
-            </button>
+            <div className="flex items-center space-x-3">
+              <select
+                value={selectedPage.id}
+                onChange={(e) => {
+                  const page = pages.find(p => p.id === e.target.value);
+                  if (page) setSelectedPage(page);
+                }}
+                className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+              >
+                {pages.map(page => (
+                  <option key={page.id} value={page.id}>
+                    {page.country_code.toUpperCase()} - {page.title}
+                  </option>
+                ))}
+              </select>
+              <button
+                className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+                  selectedPage.is_published
+                    ? 'bg-green-100 text-green-800'
+                    : 'bg-gray-100 text-gray-800'
+                }`}
+              >
+                {selectedPage.is_published ? (
+                  <>
+                    <Eye className="w-4 h-4 inline mr-2" />
+                    Published
+                  </>
+                ) : (
+                  <>
+                    <EyeOff className="w-4 h-4 inline mr-2" />
+                    Draft
+                  </>
+                )}
+              </button>
+            </div>
           </div>
 
-          {/* Pages List */}
-          {!selectedPage && (
-            <div className="space-y-4">
-              {pages.length > 0 ? (
-                pages.map(page => (
-                  <div key={page.id} className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+          {/* Tabs */}
+          <div className="flex space-x-6 mt-6 border-b border-gray-200">
+            <button
+              onClick={() => setActiveTab('sections')}
+              className={`pb-3 px-1 font-medium transition-colors ${
+                activeTab === 'sections'
+                  ? 'border-b-2 border-blue-600 text-blue-600'
+                  : 'text-gray-600 hover:text-gray-900'
+              }`}
+            >
+              <Layout className="w-4 h-4 inline mr-2" />
+              Content Sections
+            </button>
+            <button
+              onClick={() => setActiveTab('media')}
+              className={`pb-3 px-1 font-medium transition-colors ${
+                activeTab === 'media'
+                  ? 'border-b-2 border-blue-600 text-blue-600'
+                  : 'text-gray-600 hover:text-gray-900'
+              }`}
+            >
+              <ImageIcon className="w-4 h-4 inline mr-2" />
+              Media Library
+            </button>
+            <button
+              onClick={() => setActiveTab('seo')}
+              className={`pb-3 px-1 font-medium transition-colors ${
+                activeTab === 'seo'
+                  ? 'border-b-2 border-blue-600 text-blue-600'
+                  : 'text-gray-600 hover:text-gray-900'
+              }`}
+            >
+              <FileText className="w-4 h-4 inline mr-2" />
+              SEO Settings
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* Content Area */}
+      <div className="max-w-7xl mx-auto px-6 py-8">
+        {activeTab === 'sections' && (
+          <div className="space-y-6">
+            <div className="flex items-center justify-between">
+              <h2 className="text-xl font-bold text-gray-900">Page Sections</h2>
+              <button
+                onClick={() => {
+                  setEditingSection({
+                    id: 'new',
+                    block_type: 'hero',
+                    content: {},
+                    order_index: sections.length,
+                    is_visible: true
+                  });
+                }}
+                className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+              >
+                <Plus className="w-4 h-4 mr-2" />
+                Add Section
+              </button>
+            </div>
+
+            {sections.length === 0 ? (
+              <div className="bg-white rounded-lg border-2 border-dashed border-gray-300 p-12 text-center">
+                <List className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+                <h3 className="text-lg font-semibold text-gray-900 mb-2">No Sections Yet</h3>
+                <p className="text-gray-600 mb-4">Start building your page by adding content sections</p>
+                <button
+                  onClick={() => {
+                    setEditingSection({
+                      id: 'new',
+                      block_type: 'hero',
+                      content: {},
+                      order_index: 0,
+                      is_visible: true
+                    });
+                  }}
+                  className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                >
+                  <Plus className="w-4 h-4 mr-2" />
+                  Add Your First Section
+                </button>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {sections.map((section, index) => (
+                  <div
+                    key={section.id}
+                    className="bg-white rounded-lg border border-gray-200 p-6 hover:shadow-md transition-shadow"
+                  >
                     <div className="flex items-start justify-between">
                       <div className="flex-1">
-                        <div className="flex items-center space-x-3 mb-2">
-                          <h3 className="text-xl font-semibold text-gray-900">{page.title}</h3>
-                          <span className={`px-3 py-1 rounded-full text-xs font-medium ${
-                            page.is_published 
-                              ? 'bg-green-100 text-green-800' 
-                              : 'bg-gray-100 text-gray-800'
+                        <div className="flex items-center space-x-3 mb-3">
+                          <span className="px-3 py-1 bg-purple-100 text-purple-800 rounded-full text-sm font-medium">
+                            {section.block_type.toUpperCase()}
+                          </span>
+                          <span className="text-sm text-gray-500">Order: {section.order_index}</span>
+                          <span className={`px-2 py-1 rounded text-xs ${
+                            section.is_visible
+                              ? 'bg-green-100 text-green-800'
+                              : 'bg-gray-100 text-gray-600'
                           }`}>
-                            {page.is_published ? 'Published' : 'Draft'}
+                            {section.is_visible ? 'Visible' : 'Hidden'}
                           </span>
                         </div>
-                        <p className="text-sm text-gray-600 mb-2">
-                          <strong>Slug:</strong> /{page.slug}
-                        </p>
-                        <p className="text-sm text-gray-600">
-                          <strong>Country:</strong> {page.country_code}
-                        </p>
-                        {page.meta_description && (
-                          <p className="text-sm text-gray-500 mt-2">{page.meta_description}</p>
-                        )}
+                        <div className="text-sm text-gray-700">
+                          <strong>Content:</strong> {JSON.stringify(section.content).substring(0, 100)}...
+                        </div>
                       </div>
-                      <div className="flex space-x-2">
+                      <div className="flex items-center space-x-2">
                         <button
-                          onClick={() => fetchPageWithBlocks(page.id)}
+                          onClick={() => setEditingSection(section)}
                           className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
-                          title="Edit Page"
+                          title="Edit Section"
                         >
                           <Edit className="w-5 h-5" />
                         </button>
                         <button
-                          onClick={() => handlePublishToggle(page.id, page.is_published)}
                           className="p-2 text-gray-600 hover:bg-gray-50 rounded-lg transition-colors"
-                          title={page.is_published ? 'Unpublish' : 'Publish'}
+                          title={section.is_visible ? 'Hide' : 'Show'}
                         >
-                          <Globe className="w-5 h-5" />
+                          {section.is_visible ? <Eye className="w-5 h-5" /> : <EyeOff className="w-5 h-5" />}
                         </button>
                         <button
-                          onClick={() => handleDeletePage(page.id)}
                           className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                          title="Delete Page"
+                          title="Delete"
                         >
                           <Trash2 className="w-5 h-5" />
                         </button>
                       </div>
                     </div>
                   </div>
-                ))
-              ) : (
-                <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-12 text-center">
-                  <FileText className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-                  <h3 className="text-xl font-semibold text-gray-900 mb-2">
-                    No Pages Yet
-                  </h3>
-                  <p className="text-gray-600 mb-4">
-                    Create your first country landing page to get started
-                  </p>
-                  <button
-                    onClick={() => setShowCreatePage(true)}
-                    className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-                  >
-                    <Plus className="w-4 h-4 mr-2" />
-                    Create Page
-                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
+        {activeTab === 'media' && (
+          <div>
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-xl font-bold text-gray-900">Media Library</h2>
+              <button
+                onClick={() => setShowImageUpload(true)}
+                className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+              >
+                <Upload className="w-4 h-4 mr-2" />
+                Upload Image
+              </button>
+            </div>
+
+            <div className="grid grid-cols-4 gap-4">
+              {images.map(image => (
+                <div key={image.id} className="bg-white rounded-lg border border-gray-200 p-4">
+                  <div className="aspect-square bg-gray-100 rounded-lg mb-3 flex items-center justify-center">
+                    <img
+                      src={`/api/cms-content/media/${image.id}/data`}
+                      alt={image.filename}
+                      className="max-w-full max-h-full object-contain"
+                    />
+                  </div>
+                  <p className="text-sm font-medium text-gray-900 truncate">{image.filename}</p>
+                  <p className="text-xs text-gray-500">{(image.file_size / 1024).toFixed(1)} KB</p>
                 </div>
-              )}
+              ))}
+            </div>
+          </div>
+        )}
+
+        {activeTab === 'seo' && (
+          <div className="bg-white rounded-lg border border-gray-200 p-6">
+            <h2 className="text-xl font-bold text-gray-900 mb-6">SEO Settings</h2>
+            <p className="text-gray-600">SEO meta tags and keywords editor coming soon...</p>
+          </div>
+        )}
+      </div>
+
+      {/* Section Editor Modal */}
+      {editingSection && (
+        <SectionEditor
+          section={editingSection}
+          pageId={selectedPage.id}
+          onClose={() => setEditingSection(null)}
+          onSave={() => {
+            setEditingSection(null);
+            fetchPageSections(selectedPage.id);
+          }}
+          onTranslate={handleTranslate}
+          translating={translating}
+        />
+      )}
+
+      {/* Image Upload Modal */}
+      {showImageUpload && (
+        <ImageUploadModal
+          onClose={() => setShowImageUpload(false)}
+          onUpload={async (file) => {
+            await handleImageUpload(file);
+            setShowImageUpload(false);
+          }}
+        />
+      )}
+    </div>
+  );
+};
+
+// Section Editor Component
+const SectionEditor: React.FC<{
+  section: SectionData;
+  pageId: string;
+  onClose: () => void;
+  onSave: () => void;
+  onTranslate: (text: string) => Promise<any>;
+  translating: boolean;
+}> = ({ section, pageId, onClose, onSave, onTranslate, translating }) => {
+  const [formData, setFormData] = useState<any>(section.content || {});
+  const [error, setError] = useState('');
+
+  const handleSave = async () => {
+    try {
+      const authFetch = createAuthenticatedFetch('http://localhost:3002');
+      
+      if (section.id === 'new') {
+        await authFetch('/api/cms-content/blocks', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            page_id: pageId,
+            block_type: section.block_type,
+            content: formData
+          })
+        });
+      } else {
+        await authFetch(`/api/cms-content/blocks/${section.id}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ content: formData })
+        });
+      }
+      
+      onSave();
+    } catch (error) {
+      setError('Failed to save section');
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+      <div className="bg-white rounded-lg shadow-xl max-w-4xl w-full mx-4 max-h-[90vh] overflow-y-auto">
+        <div className="p-6 border-b border-gray-200">
+          <div className="flex items-center justify-between">
+            <h2 className="text-2xl font-bold text-gray-900">
+              {section.id === 'new' ? 'Add Section' : 'Edit Section'}
+            </h2>
+            <button onClick={onClose} className="p-2 text-gray-400 hover:text-gray-600">
+              <X className="w-6 h-6" />
+            </button>
+          </div>
+        </div>
+
+        <div className="p-6">
+          {error && (
+            <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg text-red-800">
+              {error}
             </div>
           )}
 
-          {/* Page Editor */}
-          {selectedPage && (
-            <div className="space-y-6">
-              {/* Page Header */}
-              <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-                <div className="flex items-start justify-between mb-4">
-                  <div>
-                    <h2 className="text-2xl font-bold text-gray-900">{selectedPage.title}</h2>
-                    <p className="text-gray-600">/{selectedPage.slug}</p>
-                  </div>
-                  <button
-                    onClick={() => {
-                      setSelectedPage(null);
-                      setBlocks([]);
-                    }}
-                    className="p-2 text-gray-600 hover:bg-gray-50 rounded-lg transition-colors"
-                  >
-                    <X className="w-5 h-5" />
-                  </button>
-                </div>
-                <button
-                  onClick={() => setShowCreateBlock(true)}
-                  className="inline-flex items-center px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
-                >
-                  <Plus className="w-4 h-4 mr-2" />
-                  Add Block
-                </button>
-              </div>
+          <div className="space-y-6">
+            {section.block_type === 'hero' && (
+              <HeroEditor formData={formData} setFormData={setFormData} onTranslate={onTranslate} translating={translating} />
+            )}
+            {section.block_type === 'services' && (
+              <ServicesEditor formData={formData} setFormData={setFormData} onTranslate={onTranslate} translating={translating} />
+            )}
+            {section.block_type === 'features' && (
+              <FeaturesEditor formData={formData} setFormData={setFormData} onTranslate={onTranslate} translating={translating} />
+            )}
+          </div>
 
-              {/* Blocks */}
-              <div className="space-y-4">
-                {blocks.length > 0 ? (
-                  blocks.map((block, index) => (
-                    <div key={block.id} className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-                      <div className="flex items-start justify-between">
-                        <div className="flex-1">
-                          <div className="flex items-center space-x-3 mb-2">
-                            <span className="px-3 py-1 bg-purple-100 text-purple-800 rounded-full text-xs font-medium">
-                              {BLOCK_TYPES.find(t => t.value === block.block_type)?.label || block.block_type}
-                            </span>
-                            <span className={`px-3 py-1 rounded-full text-xs font-medium ${
-                              block.is_visible 
-                                ? 'bg-green-100 text-green-800' 
-                                : 'bg-gray-100 text-gray-800'
-                            }`}>
-                              {block.is_visible ? 'Visible' : 'Hidden'}
-                            </span>
-                            <span className="text-sm text-gray-500">Order: {block.order_index}</span>
-                          </div>
-                          <pre className="text-sm text-gray-600 bg-gray-50 p-3 rounded overflow-x-auto max-h-32">
-                            {JSON.stringify(block.content, null, 2)}
-                          </pre>
-                        </div>
-                        <div className="flex space-x-2">
-                          <button
-                            onClick={() => {
-                              setEditingBlock(block);
-                              setCreateBlockForm({ 
-                                block_type: block.block_type, 
-                                content: JSON.stringify(block.content, null, 2) 
-                              });
-                              setShowCreateBlock(true);
-                            }}
-                            className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
-                            title="Edit Block"
-                          >
-                            <Edit className="w-5 h-5" />
-                          </button>
-                          <button
-                            onClick={() => handleBlockVisibilityToggle(block.id, block.is_visible)}
-                            className="p-2 text-gray-600 hover:bg-gray-50 rounded-lg transition-colors"
-                            title={block.is_visible ? 'Hide' : 'Show'}
-                          >
-                            <Eye className="w-5 h-5" />
-                          </button>
-                          <button
-                            onClick={() => handleDeleteBlock(block.id)}
-                            className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                            title="Delete Block"
-                          >
-                            <Trash2 className="w-5 h-5" />
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-                  ))
-                ) : (
-                  <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-12 text-center">
-                    <Copy className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-                    <h3 className="text-xl font-semibold text-gray-900 mb-2">
-                      No Blocks Yet
-                    </h3>
-                    <p className="text-gray-600 mb-4">
-                      Add content blocks to build your page
-                    </p>
-                    <button
-                      onClick={() => setShowCreateBlock(true)}
-                      className="inline-flex items-center px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
-                    >
-                      <Plus className="w-4 h-4 mr-2" />
-                      Add Block
-                    </button>
-                  </div>
-                )}
-              </div>
-            </div>
-          )}
-
-          {/* Create Page Modal */}
-          {showCreatePage && (
-            <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-              <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
-                <div className="p-6">
-                  <div className="flex items-center justify-between mb-6">
-                    <h2 className="text-2xl font-bold text-gray-900">Create New Page</h2>
-                    <button
-                      onClick={() => {
-                        setShowCreatePage(false);
-                        setFormError('');
-                      }}
-                      className="p-2 text-gray-400 hover:text-gray-600"
-                    >
-                      <X className="w-6 h-6" />
-                    </button>
-                  </div>
-
-                  {formError && (
-                    <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg text-red-800">
-                      {formError}
-                    </div>
-                  )}
-
-                  <form onSubmit={handleCreatePage} className="space-y-4">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Page Title *
-                      </label>
-                      <input
-                        type="text"
-                        value={createPageForm.title}
-                        onChange={(e) => setCreatePageForm(prev => ({ ...prev, title: e.target.value }))}
-                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                        required
-                      />
-                    </div>
-
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        URL Slug * (lowercase, hyphens only)
-                      </label>
-                      <input
-                        type="text"
-                        value={createPageForm.slug}
-                        onChange={(e) => setCreatePageForm(prev => ({ ...prev, slug: e.target.value }))}
-                        pattern="[a-z0-9-]+"
-                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                        required
-                      />
-                    </div>
-
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Country Code * (2 letters, e.g., GE, CR)
-                      </label>
-                      <input
-                        type="text"
-                        value={createPageForm.country_code}
-                        onChange={(e) => setCreatePageForm(prev => ({ ...prev, country_code: e.target.value.toUpperCase() }))}
-                        maxLength={2}
-                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent uppercase"
-                        required
-                      />
-                    </div>
-
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Meta Description
-                      </label>
-                      <textarea
-                        value={createPageForm.meta_description}
-                        onChange={(e) => setCreatePageForm(prev => ({ ...prev, meta_description: e.target.value }))}
-                        rows={3}
-                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                      />
-                    </div>
-
-                    <div className="flex justify-end space-x-3 pt-4">
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setShowCreatePage(false);
-                          setFormError('');
-                        }}
-                        className="px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
-                      >
-                        Cancel
-                      </button>
-                      <button
-                        type="submit"
-                        className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-                      >
-                        Create Page
-                      </button>
-                    </div>
-                  </form>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* Add Block Modal */}
-          {showCreateBlock && selectedPage && (
-            <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-              <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
-                <div className="p-6">
-                  <div className="flex items-center justify-between mb-6">
-                    <h2 className="text-2xl font-bold text-gray-900">
-                      {editingBlock ? 'Edit Content Block' : 'Add Content Block'}
-                    </h2>
-                    <button
-                      onClick={() => {
-                        setShowCreateBlock(false);
-                        setEditingBlock(null);
-                        setFormError('');
-                      }}
-                      className="p-2 text-gray-400 hover:text-gray-600"
-                    >
-                      <X className="w-6 h-6" />
-                    </button>
-                  </div>
-
-                  {formError && (
-                    <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg text-red-800">
-                      {formError}
-                    </div>
-                  )}
-
-                  <form onSubmit={handleCreateBlock} className="space-y-4">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Block Type *
-                      </label>
-                      <select
-                        value={createBlockForm.block_type}
-                        onChange={(e) => setCreateBlockForm(prev => ({ ...prev, block_type: e.target.value }))}
-                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                        disabled={!!editingBlock}
-                      >
-                        {BLOCK_TYPES.map(type => (
-                          <option key={type.value} value={type.value}>
-                            {type.label}
-                          </option>
-                        ))}
-                      </select>
-                      {editingBlock && (
-                        <p className="text-xs text-gray-500 mt-1">Block type cannot be changed when editing</p>
-                      )}
-                    </div>
-
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Content (JSON) *
-                      </label>
-                      <textarea
-                        value={createBlockForm.content}
-                        onChange={(e) => setCreateBlockForm(prev => ({ ...prev, content: e.target.value }))}
-                        rows={10}
-                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent font-mono text-sm"
-                        placeholder='{"title": "Welcome", "description": "..."}'
-                        required
-                      />
-                      <p className="text-xs text-gray-500 mt-1">
-                        Enter JSON object with block-specific fields
-                      </p>
-                    </div>
-
-                    <div className="flex justify-end space-x-3 pt-4">
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setShowCreateBlock(false);
-                          setEditingBlock(null);
-                          setFormError('');
-                        }}
-                        className="px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
-                      >
-                        Cancel
-                      </button>
-                      <button
-                        type="submit"
-                        className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
-                      >
-                        {editingBlock ? 'Update Block' : 'Add Block'}
-                      </button>
-                    </div>
-                  </form>
-                </div>
-              </div>
-            </div>
-          )}
+          <div className="flex justify-end space-x-3 mt-8 pt-6 border-t border-gray-200">
+            <button
+              onClick={onClose}
+              className="px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={handleSave}
+              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors inline-flex items-center"
+            >
+              <Save className="w-4 h-4 mr-2" />
+              Save Section
+            </button>
+          </div>
         </div>
       </div>
-    </>
+    </div>
+  );
+};
+
+// Hero Editor
+const HeroEditor: React.FC<any> = ({ formData, setFormData, onTranslate, translating }) => {
+  return (
+    <div className="space-y-4">
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-2">
+          Title (English) *
+        </label>
+        <input
+          type="text"
+          value={formData.title_en || ''}
+          onChange={(e) => setFormData({ ...formData, title_en: e.target.value })}
+          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+          placeholder="Enter title in English"
+        />
+        <button
+          onClick={async () => {
+            if (formData.title_en) {
+              const translations = await onTranslate(formData.title_en);
+              setFormData({
+                ...formData,
+                title_tr: translations.tr,
+                title_pt: translations.pt,
+                title_es: translations.es
+              });
+            }
+          }}
+          disabled={translating || !formData.title_en}
+          className="mt-2 inline-flex items-center px-3 py-1 text-sm bg-purple-600 text-white rounded hover:bg-purple-700 disabled:bg-gray-300"
+        >
+          {translating ? <Loader className="w-4 h-4 mr-2 animate-spin" /> : <Languages className="w-4 h-4 mr-2" />}
+          Translate Title
+        </button>
+      </div>
+
+      <div className="grid grid-cols-3 gap-4">
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">Title (Turkish)</label>
+          <input
+            type="text"
+            value={formData.title_tr || ''}
+            onChange={(e) => setFormData({ ...formData, title_tr: e.target.value })}
+            className="w-full px-4 py-2 border border-gray-300 rounded-lg"
+            placeholder="Türkçe başlık"
+          />
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">Title (Portuguese)</label>
+          <input
+            type="text"
+            value={formData.title_pt || ''}
+            onChange={(e) => setFormData({ ...formData, title_pt: e.target.value })}
+            className="w-full px-4 py-2 border border-gray-300 rounded-lg"
+            placeholder="Título em português"
+          />
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">Title (Spanish)</label>
+          <input
+            type="text"
+            value={formData.title_es || ''}
+            onChange={(e) => setFormData({ ...formData, title_es: e.target.value })}
+            className="w-full px-4 py-2 border border-gray-300 rounded-lg"
+            placeholder="Título en español"
+          />
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// Services Editor (placeholder)
+const ServicesEditor: React.FC<any> = ({ formData, setFormData }) => {
+  return (
+    <div className="text-gray-600">
+      <p>Services editor with per-service FAQ - coming in next update...</p>
+    </div>
+  );
+};
+
+// Features Editor (placeholder)
+const FeaturesEditor: React.FC<any> = ({ formData, setFormData }) => {
+  return (
+    <div className="text-gray-600">
+      <p>Features editor - coming in next update...</p>
+    </div>
+  );
+};
+
+// Image Upload Modal
+const ImageUploadModal: React.FC<{
+  onClose: () => void;
+  onUpload: (file: File) => void;
+}> = ({ onClose, onUpload }) => {
+  const [file, setFile] = useState<File | null>(null);
+  const [preview, setPreview] = useState<string>('');
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      const selectedFile = e.target.files[0];
+      setFile(selectedFile);
+      setPreview(URL.createObjectURL(selectedFile));
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+      <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full mx-4">
+        <div className="p-6 border-b border-gray-200">
+          <div className="flex items-center justify-between">
+            <h2 className="text-2xl font-bold text-gray-900">Upload Image</h2>
+            <button onClick={onClose} className="p-2 text-gray-400 hover:text-gray-600">
+              <X className="w-6 h-6" />
+            </button>
+          </div>
+        </div>
+
+        <div className="p-6">
+          <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center">
+            <input
+              type="file"
+              accept="image/*"
+              onChange={handleFileChange}
+              className="hidden"
+              id="file-upload"
+            />
+            <label htmlFor="file-upload" className="cursor-pointer">
+              {preview ? (
+                <img src={preview} alt="Preview" className="max-h-64 mx-auto rounded-lg" />
+              ) : (
+                <>
+                  <Upload className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+                  <p className="text-gray-600">Click to upload or drag and drop</p>
+                  <p className="text-sm text-gray-500 mt-2">PNG, JPG, GIF up to 5MB</p>
+                </>
+              )}
+            </label>
+          </div>
+
+          <div className="flex justify-end space-x-3 mt-6">
+            <button
+              onClick={onClose}
+              className="px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={() => file && onUpload(file)}
+              disabled={!file}
+              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-300"
+            >
+              Upload
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
   );
 };
 
