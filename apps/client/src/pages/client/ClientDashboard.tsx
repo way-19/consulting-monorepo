@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Helmet } from 'react-helmet-async';
-import { useAuth } from '@consulting19/shared';
+import { useAuth, createAuthenticatedFetch } from '@consulting19/shared';
 import { 
   User, 
   DollarSign, 
@@ -15,7 +15,6 @@ import {
   RefreshCw,
   ExternalLink
 } from 'lucide-react';
-import { supabase } from '@consulting19/shared/lib/supabase';
 
 interface ClientStats {
   activeProjects: number;
@@ -67,6 +66,8 @@ const ClientDashboard = () => {
   const [activeProjects, setActiveProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
 
+  const authFetch = createAuthenticatedFetch();
+
   useEffect(() => {
     if (user && profile) {
       fetchDashboardData();
@@ -77,138 +78,28 @@ const ClientDashboard = () => {
     try {
       setLoading(true);
 
-      // Get client profile ID first
-      const { data: profileData, error: profileError } = await supabase
-        .from('user_profiles')
-        .select('id')
-        .eq('user_id', user?.id)
-        .eq('role', 'client')
-        .single();
-
-      if (profileError || !profileData) {
-        console.error('Client profile not found:', profileError);
-        return;
-      }
-
-      // Fetch client data
-      const { data: clientData } = await supabase
-        .from('clients')
-        .select('id, assigned_consultant_id')
-        .eq('profile_id', profileData.id)
-        .single();
-
-      if (!clientData) {
-        console.error('Client data not found');
-        return;
-      }
-
-      const clientId = clientData.id;
-
-      // Fetch assigned consultant details
-      if (clientData?.assigned_consultant_id) {
-        const { data: consultantData } = await supabase
-          .from('user_profiles')
-          .select('id, first_name, last_name, email, phone, avatar_url')
-          .eq('id', clientData.assigned_consultant_id)
-          .single();
-
-        if (consultantData) {
-          // Get consultant rating
-          const { data: ratingData } = await supabase
-            .from('client_feedback')
-            .select('rating')
-            .eq('consultant_id', consultantData.id);
-
-          const avgRating = ratingData && ratingData.length > 0
-            ? ratingData.reduce((sum, r) => sum + r.rating, 0) / ratingData.length
-            : 0;
-
-          setAssignedConsultant({
-            ...consultantData,
-            rating: avgRating
-          });
-        }
-      }
-
-      // Fetch dashboard stats in parallel
-      const [
-        projectsData,
-        tasksData,
-        ordersData,
-        messagesData,
-        meetingsData,
-        documentsData,
-        activityData
-      ] = await Promise.all([
-        // Active projects
-        supabase
-          .from('projects')
-          .select('id, name, status, progress, created_at')
-          .eq('client_id', clientId)
-          .in('status', ['active', 'in_progress']),
-        
-        // Completed tasks
-        supabase
-          .from('tasks')
-          .select('id')
-          .eq('client_id', clientId)
-          .eq('status', 'completed'),
-        
-        // Total spent
-        supabase
-          .from('service_orders')
-          .select('total_amount')
-          .eq('client_id', clientId)
-          .in('status', ['completed', 'paid']),
-        
-        // Unread messages
-        supabase
-          .from('messages')
-          .select('id')
-          .eq('receiver_id', profileData.id)
-          .eq('is_read', false),
-        
-        // Upcoming meetings
-        supabase
-          .from('meetings')
-          .select('id')
-          .eq('client_id', clientId)
-          .gte('start_time', new Date().toISOString()),
-        
-        // Documents uploaded
-        supabase
-          .from('documents')
-          .select('id')
-          .eq('client_id', clientId),
-        
-        // Recent activity
-        supabase
-          .from('audit_logs')
-          .select('id, action_type, description, created_at')
-          .eq('user_id', user?.id)
-          .order('created_at', { ascending: false })
-          .limit(5)
-      ]);
-
-      // Calculate stats
-      const activeProjects = projectsData.data?.length || 0;
-      const completedTasks = tasksData.data?.length || 0;
-      const totalSpent = ordersData.data?.reduce((sum, order) => sum + Number(order.total_amount), 0) || 0;
-      const unreadMessages = messagesData.data?.length || 0;
-      const upcomingMeetings = meetingsData.data?.length || 0;
-      const documentsUploaded = documentsData.data?.length || 0;
-
-      setStats({
-        activeProjects,
-        completedTasks,
-        totalSpent,
-        unreadMessages,
-        upcomingMeetings,
-        documentsUploaded
+      const response = await authFetch('/api/clients/dashboard-stats', {
+        method: 'GET'
       });
 
-      setActiveProjects(projectsData.data || []);
-      setRecentActivity(activityData.data || []);
+      if (!response.ok) {
+        throw new Error('Failed to fetch dashboard data');
+      }
+
+      const data = await response.json();
+
+      setStats(data.stats || {
+        activeProjects: 0,
+        completedTasks: 0,
+        totalSpent: 0,
+        unreadMessages: 0,
+        upcomingMeetings: 0,
+        documentsUploaded: 0
+      });
+
+      setAssignedConsultant(data.assignedConsultant || null);
+      setRecentActivity(data.recentActivity || []);
+      setActiveProjects(data.activeProjects || []);
 
     } catch (err) {
       console.error('Dashboard data fetch error:', err);

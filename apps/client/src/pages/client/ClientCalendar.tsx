@@ -1,7 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Helmet } from 'react-helmet-async';
-import { useAuth } from '@consulting19/shared';
-import { supabase } from '@consulting19/shared/lib/supabase';
+import { useAuth, createAuthenticatedFetch } from '@consulting19/shared';
 import {
   Calendar as CalendarIcon,
   CheckCircle,
@@ -58,6 +57,7 @@ interface UserPreferences {
 
 const ClientCalendar = () => {
   const { user } = useAuth();
+  const authFetch = createAuthenticatedFetch();
   
   // State variables
   const [departments, setDepartments] = useState<Department[]>([]);
@@ -84,41 +84,40 @@ const ClientCalendar = () => {
 
   // Fetch data functions
   const fetchDepartments = useCallback(async () => {
-    const { data, error } = await supabase
-      .from('departments')
-      .select('*')
-      .eq('is_active', true)
-      .order('sort_order');
-    
-    if (error) {
-      console.error('Error fetching departments:', error);
-    } else {
+    try {
+      const response = await authFetch('/api/departments');
+      
+      if (!response.ok) {
+        throw new Error('Failed to fetch departments');
+      }
+
+      const data = await response.json();
       setDepartments(data || []);
+    } catch (error) {
+      console.error('Error fetching departments:', error);
     }
   }, []);
 
   const fetchConsultants = useCallback(async () => {
-    const { data, error } = await supabase
-      .from('user_profiles')
-      .select(`
-        id, full_name, email, timezone,
-        consultant_availability(price_per_hour, currency)
-      `)
-      .eq('role', 'consultant')
-      .eq('is_active', true);
-    
-    if (error) {
-      console.error('Error fetching consultants:', error);
-    } else {
+    try {
+      const response = await authFetch('/api/users?role=consultant&is_active=true');
+      
+      if (!response.ok) {
+        throw new Error('Failed to fetch consultants');
+      }
+
+      const data = await response.json();
       const mappedConsultants = (data || []).map((c: any) => ({
         id: c.id,
         full_name: c.full_name,
         email: c.email,
         timezone: c.timezone || 'UTC',
-        price_per_hour: c.consultant_availability?.[0]?.price_per_hour || 150,
-        currency: c.consultant_availability?.[0]?.currency || 'USD',
+        price_per_hour: c.price_per_hour || 150,
+        currency: c.currency || 'USD',
       }));
       setConsultants(mappedConsultants);
+    } catch (error) {
+      console.error('Error fetching consultants:', error);
     }
   }, []);
 
@@ -126,29 +125,14 @@ const ClientCalendar = () => {
     if (!user?.id) return;
     
     try {
-      const { data: clientData } = await supabase
-        .from('clients')
-        .select('id')
-        .eq('profile_id', user.id)
-        .single();
+      const response = await authFetch('/api/meetings');
 
-      if (!clientData) return;
-
-      const { data, error } = await supabase
-        .from('meetings')
-        .select(`
-          *,
-          consultant:user_profiles(full_name),
-          department:departments(name)
-        `)
-        .eq('client_id', clientData.id)
-        .order('start_time');
-
-      if (error) {
-        console.error('Error fetching meetings:', error);
-      } else {
-        setMeetings(data || []);
+      if (!response.ok) {
+        throw new Error('Failed to fetch meetings');
       }
+
+      const data = await response.json();
+      setMeetings(data.meetings || []);
     } catch (err) {
       console.error('Error:', err);
     }
@@ -157,16 +141,16 @@ const ClientCalendar = () => {
   const fetchUserPreferences = useCallback(async () => {
     if (!user?.id) return;
     
-    const { data, error } = await supabase
-      .from('user_preferences')
-      .select('*')
-      .eq('user_id', user.id);
+    try {
+      const response = await authFetch('/api/preferences');
 
-    if (error) {
-      console.error('Error fetching preferences:', error);
-    } else {
+      if (!response.ok) {
+        throw new Error('Failed to fetch preferences');
+      }
+
+      const data = await response.json();
       const prefs: any = {};
-      (data || []).forEach(p => {
+      (data || []).forEach((p: any) => {
         prefs[p.setting_key] = p.setting_value;
       });
       setUserPreferences(prefs);
@@ -179,6 +163,8 @@ const ClientCalendar = () => {
       if (prefs.preferred_consultant_id) {
         setSelectedConsultant(prefs.preferred_consultant_id);
       }
+    } catch (error) {
+      console.error('Error fetching preferences:', error);
     }
   }, [user?.id]);
 
@@ -202,17 +188,14 @@ const ClientCalendar = () => {
   const handleSavePreferences = async () => {
     setBookingLoading(true);
     try {
-      const updates = Object.keys(tempPreferences).map(key => ({
-        user_id: user?.id,
-        setting_key: key,
-        setting_value: tempPreferences[key],
-      }));
+      const response = await authFetch('/api/preferences', {
+        method: 'PUT',
+        body: JSON.stringify(tempPreferences),
+      });
 
-      const { error } = await supabase
-        .from('user_preferences')
-        .upsert(updates, { onConflict: 'user_id,setting_key' });
-
-      if (error) throw error;
+      if (!response.ok) {
+        throw new Error('Failed to save preferences');
+      }
 
       setUserPreferences(tempPreferences);
       setLiveSlotDuration(tempPreferences.default_slot_duration || 60);
@@ -221,6 +204,51 @@ const ClientCalendar = () => {
     } catch (error: any) {
       console.error('Error saving preferences:', error);
       alert('Failed to save preferences');
+    } finally {
+      setBookingLoading(false);
+    }
+  };
+
+  // Handle meeting booking
+  const handleBookMeeting = async () => {
+    if (!meetingTitle.trim()) {
+      alert('Please enter a meeting title');
+      return;
+    }
+
+    if (!selectedConsultant) {
+      alert('Please select a consultant first');
+      return;
+    }
+
+    setBookingLoading(true);
+    try {
+      const response = await authFetch('/api/meetings', {
+        method: 'POST',
+        body: JSON.stringify({
+          consultant_id: selectedConsultant,
+          department_id: selectedDepartment || null,
+          title: meetingTitle,
+          description: meetingDescription,
+          start_time: selectedSlot.start.toISOString(),
+          end_time: selectedSlot.end.toISOString(),
+          slot_duration: liveSlotDuration,
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || 'Failed to book meeting');
+      }
+
+      alert('Meeting booked successfully!');
+      setShowBookingModal(false);
+      setMeetingTitle('');
+      setMeetingDescription('');
+      await fetchMeetings();
+    } catch (error: any) {
+      console.error('Error booking meeting:', error);
+      alert(error.message || 'Failed to book meeting');
     } finally {
       setBookingLoading(false);
     }
@@ -617,11 +645,17 @@ const ClientCalendar = () => {
                   Cancel
                 </button>
                 <button
-                  onClick={() => alert('Meeting booking will be implemented with database!')}
+                  onClick={handleBookMeeting}
                   disabled={bookingLoading || !meetingTitle.trim()}
                   className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 transition-colors"
                 >
-                  Book Meeting
+                  {bookingLoading ? (
+                    <div className="flex items-center justify-center">
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                    </div>
+                  ) : (
+                    'Book Meeting'
+                  )}
                 </button>
               </div>
             </div>

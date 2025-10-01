@@ -16,7 +16,7 @@ router.get('/', authenticateToken, validatePagination, async (req, res) => {
   try {
     const { role, id: userId } = req.user;
     const { page, limit, offset } = req.pagination;
-    const { status, priority, is_client_visible } = req.query;
+    const { status, priority, is_client_visible, project_id } = req.query;
     
     let query = `
       SELECT 
@@ -80,6 +80,13 @@ router.get('/', authenticateToken, validatePagination, async (req, res) => {
     if (is_client_visible !== undefined) {
       query += ` AND t.is_client_visible = $${paramCount}`;
       params.push(is_client_visible === 'true');
+      paramCount++;
+    }
+    
+    // Filter by project_id
+    if (project_id) {
+      query += ` AND t.project_id = $${paramCount}`;
+      params.push(project_id);
       paramCount++;
     }
     

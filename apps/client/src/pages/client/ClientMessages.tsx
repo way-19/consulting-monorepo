@@ -6,8 +6,6 @@ import {
   Send, 
   User, 
   Globe, 
-  Bot, 
-  Languages,
   Circle,
   CheckCircle2,
   Loader2

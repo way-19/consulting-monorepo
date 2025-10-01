@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { X, MapPin, CreditCard, Truck } from 'lucide-react';
-import { supabase } from '@consulting19/shared/lib/supabase';
-import { useAuth } from '@consulting19/shared';
+import { createAuthenticatedFetch } from '@consulting19/shared';
 
 interface Document {
   id: string;
@@ -33,7 +32,6 @@ interface AddressForm {
 }
 
 const PhysicalRedirectionModal = ({ isOpen, onClose, document, onSuccess: _onSuccess }: PhysicalRedirectionModalProps) => {
-  const { user } = useAuth();
   const [step, setStep] = useState<'address' | 'payment' | 'processing'>('address');
   
   // Note: onSuccess is passed but not used here since this component redirects to Stripe
@@ -77,45 +75,37 @@ const PhysicalRedirectionModal = ({ isOpen, onClose, document, onSuccess: _onSuc
     setError(null);
 
     try {
-      // Get client profile
-      const { data: clientData, error: clientError } = await supabase
-        .from('clients')
-        .select('id')
-        .eq('profile_id', user?.id)
-        .single();
-
-      if (clientError) throw clientError;
+      const authFetch = createAuthenticatedFetch();
 
       setStep('processing');
 
-      // Create Stripe checkout session
-      const { data: sessionData, error: sessionError } = await supabase.functions.invoke(
-        'create-physical-redirection-session',
-        {
-          body: {
-            documentId: document.id,
-            documentName: document.name,
-            recipientName: addressForm.recipient_name,
-            recipientAddress: {
-              address_line_1: addressForm.address_line_1,
-              address_line_2: addressForm.address_line_2,
-              city: addressForm.city,
-              state_province: addressForm.state_province,
-              postal_code: addressForm.postal_code,
-              country: addressForm.country,
-            },
-            clientId: clientData.id,
-            amount: 2500, // $25.00 in cents
+      const response = await authFetch('/api/orders/create-physical-redirection-session', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          documentId: document.id,
+          documentName: document.name,
+          recipientName: addressForm.recipient_name,
+          recipientAddress: {
+            address_line_1: addressForm.address_line_1,
+            address_line_2: addressForm.address_line_2,
+            city: addressForm.city,
+            state_province: addressForm.state_province,
+            postal_code: addressForm.postal_code,
+            country: addressForm.country,
           },
-        }
-      );
+          amount: 2500,
+        }),
+      });
 
-      if (sessionError) {
-        console.error('Error creating checkout session:', sessionError);
+      if (!response.ok) {
         throw new Error('Failed to create payment session');
       }
 
-      // Redirect to Stripe checkout
+      const sessionData = await response.json();
+
       if (sessionData?.url) {
         window.location.href = sessionData.url;
       } else {

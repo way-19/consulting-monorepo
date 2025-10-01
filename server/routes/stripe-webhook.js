@@ -75,6 +75,13 @@ async function handleCheckoutCompleted(session) {
   const client = await pool.connect();
   
   try {
+    const sessionType = session.metadata?.type;
+
+    if (sessionType === 'physical_redirection') {
+      await handlePhysicalRedirectionPayment(client, session);
+      return;
+    }
+
     // IDEMPOTENCY CHECK: Prevent duplicate processing
     const existingOrderCheck = await client.query(
       'SELECT id FROM service_orders WHERE stripe_session_id = $1',
@@ -280,6 +287,65 @@ async function handleSubscriptionCancellation(subscription) {
   
   // Update user subscription status if needed
   // This can be extended based on business requirements
+}
+
+// Handle physical redirection payment
+async function handlePhysicalRedirectionPayment(client, session) {
+  console.log('Processing physical redirection payment:', session.id);
+  
+  try {
+    const existingRequestCheck = await client.query(
+      'SELECT id FROM physical_redirection_requests WHERE stripe_payment_intent_id = $1',
+      [session.payment_intent]
+    );
+    
+    if (existingRequestCheck.rows.length > 0) {
+      console.log('Physical redirection request already processed for session:', session.id);
+      return;
+    }
+
+    await client.query('BEGIN');
+
+    const metadata = session.metadata;
+    const recipientAddress = JSON.parse(metadata.recipientAddress);
+    const amount = session.amount_total ? session.amount_total / 100 : 25.00;
+
+    const result = await client.query(
+      `INSERT INTO physical_redirection_requests (
+        client_id, document_id, recipient_name,
+        address_line_1, address_line_2, city, state_province,
+        postal_code, country, payment_amount, payment_currency,
+        stripe_payment_intent_id, payment_status, status,
+        requested_at, paid_at, created_at
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, NOW(), NOW(), NOW())
+      RETURNING id`,
+      [
+        metadata.clientId,
+        metadata.documentId,
+        metadata.recipientName,
+        recipientAddress.address_line_1,
+        recipientAddress.address_line_2 || null,
+        recipientAddress.city,
+        recipientAddress.state_province || null,
+        recipientAddress.postal_code,
+        recipientAddress.country,
+        amount,
+        session.currency?.toUpperCase() || 'USD',
+        session.payment_intent,
+        'completed',
+        'pending'
+      ]
+    );
+
+    await client.query('COMMIT');
+    console.log('Physical redirection request created successfully:', result.rows[0].id);
+  } catch (error) {
+    await client.query('ROLLBACK');
+    console.error('Error in handlePhysicalRedirectionPayment:', error);
+    throw error;
+  } finally {
+    client.release();
+  }
 }
 
 export default router;

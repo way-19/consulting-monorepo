@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
-import { useAuth } from '@consulting19/shared';
+import { useAuth, createAuthenticatedFetch } from '@consulting19/shared';
 import { 
   ArrowLeft,
   Calendar, 
@@ -18,7 +18,6 @@ import {
   Download,
   Eye
 } from 'lucide-react';
-import { supabase } from '@consulting19/shared/lib/supabase';
 
 interface ProjectDetails {
   id: string;
@@ -52,6 +51,8 @@ const ClientProjectDetails = () => {
   const [error, setError] = useState('');
   const [activeTab, setActiveTab] = useState('overview');
 
+  const authFetch = createAuthenticatedFetch();
+
   useEffect(() => {
     if (user && profile && projectId) {
       fetchProjectDetails();
@@ -61,67 +62,39 @@ const ClientProjectDetails = () => {
   const fetchProjectDetails = async () => {
     try {
       setLoading(true);
+      setError('');
+
+      const projectResponse = await authFetch(`/api/projects/${projectId}`);
       
-      // Get client profile ID first
-      const { data: profileData, error: profileError } = await supabase
-        .from('user_profiles')
-        .select('id')
-        .eq('user_id', user?.id)
-        .eq('role', 'client')
-        .single();
-
-      if (profileError || !profileData) {
-        setError('Client profile not found');
+      if (!projectResponse.ok) {
+        if (projectResponse.status === 404) {
+          setError('Project not found');
+        } else {
+          setError('Failed to load project');
+        }
         return;
       }
 
-      // Get client ID using profile_id
-      const { data: clientData, error: clientError } = await supabase
-        .from('clients')
-        .select('id')
-        .eq('profile_id', profileData.id)
-        .single();
+      const projectData = await projectResponse.json();
 
-      if (clientError || !clientData) {
-        setError('Client data not found');
-        return;
+      const tasksResponse = await authFetch(`/api/tasks?project_id=${projectId}&is_client_visible=true&limit=100`);
+      let tasksData = [];
+      if (tasksResponse.ok) {
+        const tasksResult = await tasksResponse.json();
+        tasksData = tasksResult.tasks || [];
       }
 
-      // Fetch project details with consultant info
-      const { data: projectData, error: projectError } = await supabase
-        .from('projects')
-        .select(`
-          *,
-          consultant:user_profiles!projects_consultant_id_fkey(id, full_name, email, timezone)
-        `)
-        .eq('id', projectId)
-        .eq('client_id', clientData.id)
-        .single();
-
-      if (projectError || !projectData) {
-        setError('Project not found');
-        return;
+      const documentsResponse = await authFetch(`/api/documents?limit=100`);
+      let documentsData = [];
+      if (documentsResponse.ok) {
+        const documentsResult = await documentsResponse.json();
+        documentsData = documentsResult.documents || [];
       }
-
-      // Fetch project tasks
-      const { data: tasksData } = await supabase
-        .from('tasks')
-        .select('*')
-        .eq('project_id', projectId)
-        .eq('is_client_visible', true)
-        .order('created_at', { ascending: true });
-
-      // Fetch project documents
-      const { data: documentsData } = await supabase
-        .from('documents')
-        .select('*')
-        .eq('client_id', clientData.id)
-        .order('uploaded_at', { ascending: false });
 
       setProject({
-        ...projectData,
-        tasks: tasksData || [],
-        documents: documentsData || []
+        ...projectData.project,
+        tasks: tasksData,
+        documents: documentsData
       });
 
     } catch (err) {

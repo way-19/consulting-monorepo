@@ -6,7 +6,6 @@ expertMode = true
 channel = "stable-25_05"
 
 [workflows]
-runButton = "Project"
 
 [[workflows.workflow]]
 name = "Project"
@@ -118,7 +117,7 @@ localPort = 36499
 externalPort = 3003
 
 [[ports]]
-localPort = 39149
+localPort = 37959
 externalPort = 4200
 
 [deployment]

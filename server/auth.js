@@ -190,6 +190,55 @@ app.post('/api/auth/logout', (req, res) => {
   res.json({ message: 'Logged out successfully' });
 });
 
+// Change password endpoint
+app.post('/api/auth/change-password', authenticateToken, async (req, res) => {
+  try {
+    const { id: userId } = req.user;
+    const { currentPassword, newPassword } = req.body;
+
+    if (!currentPassword || !newPassword) {
+      return res.status(400).json({ error: 'Current password and new password are required' });
+    }
+
+    if (newPassword.length < 6) {
+      return res.status(400).json({ error: 'New password must be at least 6 characters long' });
+    }
+
+    // Get current user with password hash
+    const userResult = await pool.query(
+      'SELECT id, password_hash FROM user_profiles WHERE id = $1',
+      [userId]
+    );
+
+    if (userResult.rows.length === 0) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    const user = userResult.rows[0];
+
+    // Verify current password
+    const validPassword = await bcrypt.compare(currentPassword, user.password_hash);
+
+    if (!validPassword) {
+      return res.status(401).json({ error: 'Current password is incorrect' });
+    }
+
+    // Hash new password
+    const newPasswordHash = await bcrypt.hash(newPassword, 10);
+
+    // Update password
+    await pool.query(
+      'UPDATE user_profiles SET password_hash = $1, updated_at = NOW() WHERE id = $2',
+      [newPasswordHash, userId]
+    );
+
+    res.json({ message: 'Password changed successfully' });
+  } catch (error) {
+    console.error('Password change error:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
 // Get current user info
 app.get('/api/auth/me', authenticateToken, async (req, res) => {
   try {

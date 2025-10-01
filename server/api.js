@@ -17,6 +17,7 @@ import meetingsRouter from './routes/meetings.js';
 import preferencesRouter from './routes/preferences.js';
 import departmentsRouter from './routes/departments.js';
 import activityRouter from './routes/activity.js';
+import supportRouter from './routes/support.js';
 
 dotenv.config();
 
@@ -99,6 +100,7 @@ app.use('/api/meetings', meetingsRouter);
 app.use('/api/preferences', preferencesRouter);
 app.use('/api/departments', departmentsRouter);
 app.use('/api/activity', activityRouter);
+app.use('/api/support', supportRouter);
 
 // 404 handler
 app.use((req, res) => {
