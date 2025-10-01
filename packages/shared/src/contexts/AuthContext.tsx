@@ -6,6 +6,7 @@ const TOKEN_KEY = 'auth_token';
 
 interface AuthContextType {
   user: UserProfile | null;
+  profile: UserProfile | null;
   loading: boolean;
   signIn: (email: string, password: string) => Promise<{ error: any }>;
   signUp: (email: string, password: string, metadata?: any) => Promise<{ error: any }>;
@@ -149,6 +150,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     <AuthContext.Provider 
       value={{
         user,
+        profile: user,
         loading,
         signIn,
         signUp,
