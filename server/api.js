@@ -9,6 +9,8 @@ import usersRouter from './routes/users.js';
 import tasksRouter from './routes/tasks.js';
 import ordersRouter from './routes/orders.js';
 import adminRouter from './routes/admin.js';
+import commissionsRouter from './routes/commissions.js';
+import stripeWebhookRouter from './routes/stripe-webhook.js';
 
 dotenv.config();
 
@@ -55,6 +57,10 @@ const corsOptions = {
   allowedHeaders: ['Content-Type', 'Authorization']
 };
 
+// CRITICAL: Stripe webhook MUST have raw body parser BEFORE json middleware
+// This route must be registered first to avoid body parsing conflicts
+app.post('/webhook/stripe', express.raw({ type: 'application/json' }), stripeWebhookRouter);
+
 // Middleware
 app.use(cors(corsOptions));
 app.use(express.json({ limit: '10mb' }));
@@ -79,6 +85,7 @@ app.use('/api/clients', clientsRouter);
 app.use('/api/users', usersRouter);
 app.use('/api/tasks', tasksRouter);
 app.use('/api/orders', ordersRouter);
+app.use('/api/commissions', commissionsRouter);
 app.use('/api/admin', adminRouter);
 
 // 404 handler
@@ -139,19 +146,20 @@ app.use((err, req, res, next) => {
   });
 });
 
-// Graceful shutdown
-process.on('SIGTERM', () => {
-  console.log('SIGTERM signal received: closing HTTP server');
-  app.close(() => {
-    console.log('HTTP server closed');
-  });
-});
-
 // Start server
-app.listen(PORT, '0.0.0.0', () => {
+const server = app.listen(PORT, '0.0.0.0', () => {
   console.log(`API server running on http://0.0.0.0:${PORT}`);
   console.log(`Environment: ${process.env.NODE_ENV || 'development'}`);
   console.log(`CORS: Restricted to allowed origins`);
+});
+
+// Graceful shutdown
+process.on('SIGTERM', () => {
+  console.log('SIGTERM signal received: closing HTTP server');
+  server.close(() => {
+    console.log('HTTP server closed');
+    process.exit(0);
+  });
 });
 
 export default app;

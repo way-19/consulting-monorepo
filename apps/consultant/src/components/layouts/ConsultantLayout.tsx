@@ -14,7 +14,8 @@ import {
   Bell,
   Briefcase,
   BarChart3,
-  PenTool
+  PenTool,
+  Kanban
 } from 'lucide-react';
 import { useAuth } from '@consulting19/shared';
 import ConsultantSyncManager from '../ConsultantSyncManager';
@@ -32,6 +33,7 @@ const ConsultantLayout: React.FC<ConsultantLayoutProps> = ({ children }) => {
     { name: 'Dashboard', href: '/', icon: Home },
     { name: 'Clients', href: '/clients', icon: Users },
     { name: 'Tasks', href: '/tasks', icon: CheckSquare },
+    { name: 'Task Board', href: '/tasks/board', icon: Kanban },
     { name: 'Documents', href: '/documents', icon: FileText },
     { name: 'Messages', href: '/messages', icon: MessageCircle },
     { name: 'Services', href: '/services', icon: Briefcase },
