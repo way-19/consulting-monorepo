@@ -18,6 +18,7 @@ import preferencesRouter from './routes/preferences.js';
 import departmentsRouter from './routes/departments.js';
 import activityRouter from './routes/activity.js';
 import supportRouter from './routes/support.js';
+import availabilityRouter from './routes/availability.js';
 
 dotenv.config();
 
@@ -101,6 +102,7 @@ app.use('/api/preferences', preferencesRouter);
 app.use('/api/departments', departmentsRouter);
 app.use('/api/activity', activityRouter);
 app.use('/api/support', supportRouter);
+app.use('/api/availability', availabilityRouter);
 
 // 404 handler
 app.use((req, res) => {
