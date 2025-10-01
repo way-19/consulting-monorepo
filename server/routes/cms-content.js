@@ -732,4 +732,507 @@ router.post('/translate', authenticateToken, async (req, res) => {
   }
 });
 
+// ==================== SERVICES CRUD ====================
+
+// GET /api/cms-content/services - List consultant's services
+router.get('/services', authenticateToken, async (req, res) => {
+  try {
+    if (req.user.role !== 'consultant') {
+      return res.status(403).json({ success: false, error: 'Unauthorized' });
+    }
+
+    const result = await pool.query(
+      `SELECT * FROM cms_services 
+       WHERE consultant_id = $1 
+       ORDER BY order_index ASC`,
+      [req.user.id]
+    );
+
+    res.json({ success: true, services: result.rows });
+  } catch (error) {
+    console.error('Error fetching services:', error);
+    res.status(500).json({ success: false, error: 'Failed to fetch services' });
+  }
+});
+
+// POST /api/cms-content/services - Create new service
+router.post('/services', authenticateToken, async (req, res) => {
+  try {
+    if (req.user.role !== 'consultant') {
+      return res.status(403).json({ success: false, error: 'Unauthorized' });
+    }
+
+    const { country_code, title_en, description_en, duration, category, link, show_on_homepage, order_index } = req.body;
+
+    const result = await pool.query(
+      `INSERT INTO cms_services 
+        (consultant_id, country_code, title_en, description_en, duration, category, link, show_on_homepage, order_index)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+       RETURNING *`,
+      [req.user.id, country_code, title_en, description_en, duration, category, link, show_on_homepage, order_index || 0]
+    );
+
+    res.json({ success: true, service: result.rows[0] });
+  } catch (error) {
+    console.error('Error creating service:', error);
+    res.status(500).json({ success: false, error: 'Failed to create service' });
+  }
+});
+
+// PATCH /api/cms-content/services/:id - Update service
+router.patch('/services/:id', authenticateToken, async (req, res) => {
+  try {
+    if (req.user.role !== 'consultant') {
+      return res.status(403).json({ success: false, error: 'Unauthorized' });
+    }
+
+    const { id } = req.params;
+    const updates = req.body;
+    
+    const fields = [];
+    const values = [];
+    let paramCount = 1;
+
+    Object.keys(updates).forEach(key => {
+      if (key !== 'id' && key !== 'consultant_id' && key !== 'created_at') {
+        fields.push(`${key} = $${paramCount}`);
+        values.push(updates[key]);
+        paramCount++;
+      }
+    });
+
+    if (fields.length === 0) {
+      return res.status(400).json({ success: false, error: 'No fields to update' });
+    }
+
+    fields.push(`updated_at = NOW()`);
+    values.push(id);
+    values.push(req.user.id);
+
+    const result = await pool.query(
+      `UPDATE cms_services 
+       SET ${fields.join(', ')}
+       WHERE id = $${paramCount} AND consultant_id = $${paramCount + 1}
+       RETURNING *`,
+      values
+    );
+
+    if (result.rowCount === 0) {
+      return res.status(404).json({ success: false, error: 'Service not found' });
+    }
+
+    res.json({ success: true, service: result.rows[0] });
+  } catch (error) {
+    console.error('Error updating service:', error);
+    res.status(500).json({ success: false, error: 'Failed to update service' });
+  }
+});
+
+// DELETE /api/cms-content/services/:id - Delete service
+router.delete('/services/:id', authenticateToken, async (req, res) => {
+  try {
+    if (req.user.role !== 'consultant') {
+      return res.status(403).json({ success: false, error: 'Unauthorized' });
+    }
+
+    const { id } = req.params;
+
+    const result = await pool.query(
+      'DELETE FROM cms_services WHERE id = $1 AND consultant_id = $2 RETURNING id',
+      [id, req.user.id]
+    );
+
+    if (result.rowCount === 0) {
+      return res.status(404).json({ success: false, error: 'Service not found' });
+    }
+
+    res.json({ success: true, message: 'Service deleted' });
+  } catch (error) {
+    console.error('Error deleting service:', error);
+    res.status(500).json({ success: false, error: 'Failed to delete service' });
+  }
+});
+
+// ==================== SERVICE FAQs CRUD ====================
+
+// GET /api/cms-content/services/:id/faqs - Get service FAQs
+router.get('/services/:id/faqs', authenticateToken, async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const result = await pool.query(
+      'SELECT * FROM service_faqs WHERE service_id = $1 ORDER BY order_index ASC',
+      [id]
+    );
+
+    res.json({ success: true, faqs: result.rows });
+  } catch (error) {
+    console.error('Error fetching service FAQs:', error);
+    res.status(500).json({ success: false, error: 'Failed to fetch FAQs' });
+  }
+});
+
+// POST /api/cms-content/services/:id/faqs - Create service FAQ
+router.post('/services/:id/faqs', authenticateToken, async (req, res) => {
+  try {
+    if (req.user.role !== 'consultant') {
+      return res.status(403).json({ success: false, error: 'Unauthorized' });
+    }
+
+    const { id } = req.params;
+    const { question_en, answer_en, order_index } = req.body;
+
+    const result = await pool.query(
+      `INSERT INTO service_faqs (service_id, question_en, answer_en, order_index)
+       VALUES ($1, $2, $3, $4)
+       RETURNING *`,
+      [id, question_en, answer_en, order_index || 0]
+    );
+
+    res.json({ success: true, faq: result.rows[0] });
+  } catch (error) {
+    console.error('Error creating service FAQ:', error);
+    res.status(500).json({ success: false, error: 'Failed to create FAQ' });
+  }
+});
+
+// PATCH /api/cms-content/faqs/:faqId - Update service FAQ
+router.patch('/faqs/:faqId', authenticateToken, async (req, res) => {
+  try {
+    if (req.user.role !== 'consultant') {
+      return res.status(403).json({ success: false, error: 'Unauthorized' });
+    }
+
+    const { faqId } = req.params;
+    const updates = req.body;
+    
+    const fields = [];
+    const values = [];
+    let paramCount = 1;
+
+    Object.keys(updates).forEach(key => {
+      if (key !== 'id' && key !== 'service_id' && key !== 'created_at') {
+        fields.push(`${key} = $${paramCount}`);
+        values.push(updates[key]);
+        paramCount++;
+      }
+    });
+
+    if (fields.length === 0) {
+      return res.status(400).json({ success: false, error: 'No fields to update' });
+    }
+
+    fields.push(`updated_at = NOW()`);
+    values.push(faqId);
+
+    const result = await pool.query(
+      `UPDATE service_faqs 
+       SET ${fields.join(', ')}
+       WHERE id = $${paramCount}
+       RETURNING *`,
+      values
+    );
+
+    if (result.rowCount === 0) {
+      return res.status(404).json({ success: false, error: 'FAQ not found' });
+    }
+
+    res.json({ success: true, faq: result.rows[0] });
+  } catch (error) {
+    console.error('Error updating FAQ:', error);
+    res.status(500).json({ success: false, error: 'Failed to update FAQ' });
+  }
+});
+
+// DELETE /api/cms-content/faqs/:faqId - Delete service FAQ
+router.delete('/faqs/:faqId', authenticateToken, async (req, res) => {
+  try {
+    if (req.user.role !== 'consultant') {
+      return res.status(403).json({ success: false, error: 'Unauthorized' });
+    }
+
+    const { faqId } = req.params;
+
+    const result = await pool.query(
+      'DELETE FROM service_faqs WHERE id = $1 RETURNING id',
+      [faqId]
+    );
+
+    if (result.rowCount === 0) {
+      return res.status(404).json({ success: false, error: 'FAQ not found' });
+    }
+
+    res.json({ success: true, message: 'FAQ deleted' });
+  } catch (error) {
+    console.error('Error deleting FAQ:', error);
+    res.status(500).json({ success: false, error: 'Failed to delete FAQ' });
+  }
+});
+
+// ==================== GENERAL FAQs CRUD ====================
+
+// GET /api/cms-content/general-faqs - List general FAQs
+router.get('/general-faqs', authenticateToken, async (req, res) => {
+  try {
+    if (req.user.role !== 'consultant') {
+      return res.status(403).json({ success: false, error: 'Unauthorized' });
+    }
+
+    const result = await pool.query(
+      `SELECT * FROM general_faqs 
+       WHERE consultant_id = $1 
+       ORDER BY order_index ASC`,
+      [req.user.id]
+    );
+
+    res.json({ success: true, faqs: result.rows });
+  } catch (error) {
+    console.error('Error fetching general FAQs:', error);
+    res.status(500).json({ success: false, error: 'Failed to fetch FAQs' });
+  }
+});
+
+// POST /api/cms-content/general-faqs - Create general FAQ
+router.post('/general-faqs', authenticateToken, async (req, res) => {
+  try {
+    if (req.user.role !== 'consultant') {
+      return res.status(403).json({ success: false, error: 'Unauthorized' });
+    }
+
+    const { country_code, question_en, answer_en, order_index } = req.body;
+
+    const result = await pool.query(
+      `INSERT INTO general_faqs 
+        (consultant_id, country_code, question_en, answer_en, order_index)
+       VALUES ($1, $2, $3, $4, $5)
+       RETURNING *`,
+      [req.user.id, country_code, question_en, answer_en, order_index || 0]
+    );
+
+    res.json({ success: true, faq: result.rows[0] });
+  } catch (error) {
+    console.error('Error creating general FAQ:', error);
+    res.status(500).json({ success: false, error: 'Failed to create FAQ' });
+  }
+});
+
+// PATCH /api/cms-content/general-faqs/:id - Update general FAQ
+router.patch('/general-faqs/:id', authenticateToken, async (req, res) => {
+  try {
+    if (req.user.role !== 'consultant') {
+      return res.status(403).json({ success: false, error: 'Unauthorized' });
+    }
+
+    const { id } = req.params;
+    const updates = req.body;
+    
+    const fields = [];
+    const values = [];
+    let paramCount = 1;
+
+    Object.keys(updates).forEach(key => {
+      if (key !== 'id' && key !== 'consultant_id' && key !== 'created_at') {
+        fields.push(`${key} = $${paramCount}`);
+        values.push(updates[key]);
+        paramCount++;
+      }
+    });
+
+    if (fields.length === 0) {
+      return res.status(400).json({ success: false, error: 'No fields to update' });
+    }
+
+    fields.push(`updated_at = NOW()`);
+    values.push(id);
+    values.push(req.user.id);
+
+    const result = await pool.query(
+      `UPDATE general_faqs 
+       SET ${fields.join(', ')}
+       WHERE id = $${paramCount} AND consultant_id = $${paramCount + 1}
+       RETURNING *`,
+      values
+    );
+
+    if (result.rowCount === 0) {
+      return res.status(404).json({ success: false, error: 'FAQ not found' });
+    }
+
+    res.json({ success: true, faq: result.rows[0] });
+  } catch (error) {
+    console.error('Error updating general FAQ:', error);
+    res.status(500).json({ success: false, error: 'Failed to update FAQ' });
+  }
+});
+
+// DELETE /api/cms-content/general-faqs/:id - Delete general FAQ
+router.delete('/general-faqs/:id', authenticateToken, async (req, res) => {
+  try {
+    if (req.user.role !== 'consultant') {
+      return res.status(403).json({ success: false, error: 'Unauthorized' });
+    }
+
+    const { id } = req.params;
+
+    const result = await pool.query(
+      'DELETE FROM general_faqs WHERE id = $1 AND consultant_id = $2 RETURNING id',
+      [id, req.user.id]
+    );
+
+    if (result.rowCount === 0) {
+      return res.status(404).json({ success: false, error: 'FAQ not found' });
+    }
+
+    res.json({ success: true, message: 'FAQ deleted' });
+  } catch (error) {
+    console.error('Error deleting general FAQ:', error);
+    res.status(500).json({ success: false, error: 'Failed to delete FAQ' });
+  }
+});
+
+// ==================== BLOG CRUD ====================
+
+// GET /api/cms-content/blog - List blog posts
+router.get('/blog', authenticateToken, async (req, res) => {
+  try {
+    if (req.user.role !== 'consultant') {
+      return res.status(403).json({ success: false, error: 'Unauthorized' });
+    }
+
+    const result = await pool.query(
+      `SELECT * FROM blog_posts 
+       WHERE consultant_id = $1 
+       ORDER BY created_at DESC`,
+      [req.user.id]
+    );
+
+    res.json({ success: true, posts: result.rows });
+  } catch (error) {
+    console.error('Error fetching blog posts:', error);
+    res.status(500).json({ success: false, error: 'Failed to fetch posts' });
+  }
+});
+
+// GET /api/cms-content/blog/:id - Get single blog post
+router.get('/blog/:id', authenticateToken, async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const result = await pool.query(
+      'SELECT * FROM blog_posts WHERE id = $1 AND consultant_id = $2',
+      [id, req.user.id]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ success: false, error: 'Post not found' });
+    }
+
+    res.json({ success: true, post: result.rows[0] });
+  } catch (error) {
+    console.error('Error fetching blog post:', error);
+    res.status(500).json({ success: false, error: 'Failed to fetch post' });
+  }
+});
+
+// POST /api/cms-content/blog - Create blog post
+router.post('/blog', authenticateToken, async (req, res) => {
+  try {
+    if (req.user.role !== 'consultant') {
+      return res.status(403).json({ success: false, error: 'Unauthorized' });
+    }
+
+    const { country_code, slug, title_en, excerpt_en, content_en, featured_image_id, is_published } = req.body;
+
+    const result = await pool.query(
+      `INSERT INTO blog_posts 
+        (consultant_id, country_code, slug, title_en, excerpt_en, content_en, featured_image_id, is_published, published_at)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+       RETURNING *`,
+      [req.user.id, country_code, slug, title_en, excerpt_en, content_en, featured_image_id, is_published || false, is_published ? new Date() : null]
+    );
+
+    res.json({ success: true, post: result.rows[0] });
+  } catch (error) {
+    console.error('Error creating blog post:', error);
+    res.status(500).json({ success: false, error: 'Failed to create post' });
+  }
+});
+
+// PATCH /api/cms-content/blog/:id - Update blog post
+router.patch('/blog/:id', authenticateToken, async (req, res) => {
+  try {
+    if (req.user.role !== 'consultant') {
+      return res.status(403).json({ success: false, error: 'Unauthorized' });
+    }
+
+    const { id } = req.params;
+    const updates = req.body;
+    
+    const fields = [];
+    const values = [];
+    let paramCount = 1;
+
+    Object.keys(updates).forEach(key => {
+      if (key !== 'id' && key !== 'consultant_id' && key !== 'created_at') {
+        if (key === 'is_published' && updates[key] === true) {
+          fields.push(`published_at = NOW()`);
+        }
+        fields.push(`${key} = $${paramCount}`);
+        values.push(updates[key]);
+        paramCount++;
+      }
+    });
+
+    if (fields.length === 0) {
+      return res.status(400).json({ success: false, error: 'No fields to update' });
+    }
+
+    fields.push(`updated_at = NOW()`);
+    values.push(id);
+    values.push(req.user.id);
+
+    const result = await pool.query(
+      `UPDATE blog_posts 
+       SET ${fields.join(', ')}
+       WHERE id = $${paramCount} AND consultant_id = $${paramCount + 1}
+       RETURNING *`,
+      values
+    );
+
+    if (result.rowCount === 0) {
+      return res.status(404).json({ success: false, error: 'Post not found' });
+    }
+
+    res.json({ success: true, post: result.rows[0] });
+  } catch (error) {
+    console.error('Error updating blog post:', error);
+    res.status(500).json({ success: false, error: 'Failed to update post' });
+  }
+});
+
+// DELETE /api/cms-content/blog/:id - Delete blog post
+router.delete('/blog/:id', authenticateToken, async (req, res) => {
+  try {
+    if (req.user.role !== 'consultant') {
+      return res.status(403).json({ success: false, error: 'Unauthorized' });
+    }
+
+    const { id } = req.params;
+
+    const result = await pool.query(
+      'DELETE FROM blog_posts WHERE id = $1 AND consultant_id = $2 RETURNING id',
+      [id, req.user.id]
+    );
+
+    if (result.rowCount === 0) {
+      return res.status(404).json({ success: false, error: 'Post not found' });
+    }
+
+    res.json({ success: true, message: 'Post deleted' });
+  } catch (error) {
+    console.error('Error deleting blog post:', error);
+    res.status(500).json({ success: false, error: 'Failed to delete post' });
+  }
+});
+
 export default router;
