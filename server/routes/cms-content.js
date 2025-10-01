@@ -632,9 +632,10 @@ router.get('/media/:id/data', authenticateToken, async (req, res) => {
   try {
     const { id } = req.params;
 
+    // Ownership check - consultant can only access their own images
     const result = await pool.query(
-      'SELECT image_data, mime_type FROM cms_images WHERE id = $1',
-      [id]
+      'SELECT image_data, mime_type FROM cms_images WHERE id = $1 AND uploaded_by = $2',
+      [id, req.user.id]
     );
 
     if (result.rows.length === 0) {
