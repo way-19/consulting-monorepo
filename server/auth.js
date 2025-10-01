@@ -34,24 +34,29 @@ const corsOptions = {
   origin: function (origin, callback) {
     if (!origin) return callback(null, true);
     
-    const allowedOrigins = [
-      'http://localhost:5000',
-      'http://localhost:5173',
-      'http://localhost:5174',
-      'http://localhost:5176',
-      'http://localhost:5177',
-      'http://localhost:3000',
-      process.env.REPLIT_DEV_DOMAIN ? `https://${process.env.REPLIT_DEV_DOMAIN}` : null,
-    ].filter(Boolean);
-    
-    const isAllowed = allowedOrigins.some(allowed => {
-      return origin === allowed || origin.endsWith('.replit.dev') || origin.endsWith('.repl.co');
-    });
-    
-    if (isAllowed) {
-      callback(null, true);
-    } else {
+    try {
+      const originUrl = new URL(origin);
+      const hostname = originUrl.hostname;
+      
+      // Allowed localhost origins
+      const allowedLocalhost = [
+        'localhost',
+      ];
+      
+      // Check if localhost with any port
+      if (allowedLocalhost.includes(hostname)) {
+        return callback(null, true);
+      }
+      
+      // Check if Replit domain
+      if (hostname.endsWith('.replit.dev') || hostname.endsWith('.repl.co')) {
+        return callback(null, true);
+      }
+      
       console.warn('CORS blocked origin:', origin);
+      callback(new Error('Not allowed by CORS'));
+    } catch (err) {
+      console.warn('CORS invalid origin:', origin);
       callback(new Error('Not allowed by CORS'));
     }
   },
