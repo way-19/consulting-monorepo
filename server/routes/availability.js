@@ -51,22 +51,25 @@ router.get('/:consultantId', authenticateToken, async (req, res) => {
 // POST /api/availability - Create availability slot
 router.post('/', authenticateToken, async (req, res) => {
   try {
-    const { consultant_id, day_of_week, start_time, end_time, status, notes } = req.body;
+    const { day_of_week, start_time, end_time, status, notes } = req.body;
 
     // Only consultants can create their own availability
-    if (req.user.role !== 'consultant' && req.user.id !== consultant_id) {
+    if (req.user.role !== 'consultant') {
       return res.status(403).json({ 
         success: false, 
-        error: 'Unauthorized to create availability for this consultant' 
+        error: 'Unauthorized: Only consultants can create availability' 
       });
     }
+
+    // Use authenticated user's ID (server-derived, not client-provided)
+    const consultantId = req.user.id;
 
     const result = await pool.query(
       `INSERT INTO consultant_availability 
         (consultant_id, day_of_week, start_time, end_time, status, notes)
       VALUES ($1, $2, $3, $4, $5, $6)
       RETURNING *`,
-      [consultant_id, day_of_week, start_time, end_time, status || 'available', notes]
+      [consultantId, day_of_week, start_time, end_time, status || 'available', notes]
     );
 
     res.status(201).json({
@@ -88,26 +91,32 @@ router.patch('/:id', authenticateToken, async (req, res) => {
     const { id } = req.params;
     const { day_of_week, start_time, end_time, status, notes } = req.body;
 
-    // Check ownership if consultant
-    if (req.user.role === 'consultant') {
-      const checkOwnership = await pool.query(
-        'SELECT consultant_id FROM consultant_availability WHERE id = $1',
-        [id]
-      );
+    // Only consultants can update availability
+    if (req.user.role !== 'consultant') {
+      return res.status(403).json({ 
+        success: false, 
+        error: 'Unauthorized: Only consultants can update availability' 
+      });
+    }
 
-      if (checkOwnership.rows.length === 0) {
-        return res.status(404).json({ 
-          success: false, 
-          error: 'Availability slot not found' 
-        });
-      }
+    // Check ownership
+    const checkOwnership = await pool.query(
+      'SELECT consultant_id FROM consultant_availability WHERE id = $1',
+      [id]
+    );
 
-      if (checkOwnership.rows[0].consultant_id !== req.user.id) {
-        return res.status(403).json({ 
-          success: false, 
-          error: 'Unauthorized to update this availability' 
-        });
-      }
+    if (checkOwnership.rows.length === 0) {
+      return res.status(404).json({ 
+        success: false, 
+        error: 'Availability slot not found' 
+      });
+    }
+
+    if (checkOwnership.rows[0].consultant_id !== req.user.id) {
+      return res.status(403).json({ 
+        success: false, 
+        error: 'Unauthorized: Can only update your own availability' 
+      });
     }
 
     const updates = [];
@@ -164,26 +173,32 @@ router.delete('/:id', authenticateToken, async (req, res) => {
   try {
     const { id } = req.params;
 
-    // Check ownership if consultant
-    if (req.user.role === 'consultant') {
-      const checkOwnership = await pool.query(
-        'SELECT consultant_id FROM consultant_availability WHERE id = $1',
-        [id]
-      );
+    // Only consultants can delete availability
+    if (req.user.role !== 'consultant') {
+      return res.status(403).json({ 
+        success: false, 
+        error: 'Unauthorized: Only consultants can delete availability' 
+      });
+    }
 
-      if (checkOwnership.rows.length === 0) {
-        return res.status(404).json({ 
-          success: false, 
-          error: 'Availability slot not found' 
-        });
-      }
+    // Check ownership
+    const checkOwnership = await pool.query(
+      'SELECT consultant_id FROM consultant_availability WHERE id = $1',
+      [id]
+    );
 
-      if (checkOwnership.rows[0].consultant_id !== req.user.id) {
-        return res.status(403).json({ 
-          success: false, 
-          error: 'Unauthorized to delete this availability' 
-        });
-      }
+    if (checkOwnership.rows.length === 0) {
+      return res.status(404).json({ 
+        success: false, 
+        error: 'Availability slot not found' 
+      });
+    }
+
+    if (checkOwnership.rows[0].consultant_id !== req.user.id) {
+      return res.status(403).json({ 
+        success: false, 
+        error: 'Unauthorized: Can only delete your own availability' 
+      });
     }
 
     await pool.query('DELETE FROM consultant_availability WHERE id = $1', [id]);
