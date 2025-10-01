@@ -149,7 +149,7 @@ router.get('/client', authenticateToken, async (req, res) => {
 router.post('/',
   authenticateToken,
   [
-    body('client_id').isUUID().withMessage('Valid client ID is required'),
+    body('client_id').optional().isUUID(),
     body('target_country_code').trim().notEmpty().isLength({ min: 2, max: 2 }).withMessage('Valid country code is required'),
     body('service_description').trim().notEmpty().withMessage('Service description is required'),
     body('estimated_price').optional().isFloat({ min: 0.01 }).withMessage('Price must be at least $0.01')
@@ -164,26 +164,77 @@ router.post('/',
         });
       }
 
-      if (req.user.role !== 'consultant') {
+      const { client_id, target_country_code, service_description, estimated_price } = req.body;
+      let finalClientId;
+      let referringConsultantId;
+
+      if (req.user.role === 'client') {
+        // Client creating request for themselves
+        const clientResult = await pool.query(
+          'SELECT id, assigned_consultant_id FROM clients WHERE profile_id = $1',
+          [req.user.id]
+        );
+
+        if (clientResult.rows.length === 0) {
+          return res.status(404).json({ 
+            success: false, 
+            error: 'Client profile not found' 
+          });
+        }
+
+        finalClientId = clientResult.rows[0].id;
+        referringConsultantId = clientResult.rows[0].assigned_consultant_id;
+
+        if (!referringConsultantId) {
+          return res.status(400).json({ 
+            success: false, 
+            error: 'You must have an assigned consultant to request services from another country' 
+          });
+        }
+
+      } else if (req.user.role === 'consultant') {
+        // Consultant creating request for their client
+        if (!client_id) {
+          return res.status(400).json({ 
+            success: false, 
+            error: 'client_id is required for consultant requests' 
+          });
+        }
+
+        // Verify client belongs to this consultant
+        const clientCheck = await pool.query(
+          `SELECT c.id FROM clients c
+           WHERE c.id = $1 AND c.assigned_consultant_id = $2`,
+          [client_id, req.user.id]
+        );
+
+        if (clientCheck.rows.length === 0) {
+          return res.status(403).json({ 
+            success: false, 
+            error: 'Unauthorized: Client does not belong to you' 
+          });
+        }
+
+        finalClientId = client_id;
+        referringConsultantId = req.user.id;
+
+      } else {
         return res.status(403).json({ 
           success: false, 
-          error: 'Unauthorized: Only consultants can create assignments' 
+          error: 'Unauthorized: Only clients and consultants can create assignments' 
         });
       }
 
-      const { client_id, target_country_code, service_description, estimated_price } = req.body;
-
-      // Verify client belongs to this consultant
-      const clientCheck = await pool.query(
-        `SELECT c.id FROM clients c
-         WHERE c.id = $1 AND c.assigned_consultant_id = $2`,
-        [client_id, req.user.id]
+      // Verify target country is active
+      const countryCheck = await pool.query(
+        'SELECT code FROM countries WHERE code = $1 AND is_active = true',
+        [target_country_code.toUpperCase()]
       );
 
-      if (clientCheck.rows.length === 0) {
-        return res.status(403).json({ 
+      if (countryCheck.rows.length === 0) {
+        return res.status(404).json({ 
           success: false, 
-          error: 'Unauthorized: Client does not belong to you' 
+          error: 'Target country is not active for cross-assignments' 
         });
       }
 
@@ -207,7 +258,7 @@ router.post('/',
       const targetConsultantId = targetConsultantResult.rows[0].id;
 
       // Prevent self-assignment
-      if (targetConsultantId === req.user.id) {
+      if (targetConsultantId === referringConsultantId) {
         return res.status(400).json({ 
           success: false, 
           error: 'Cannot assign to yourself' 
@@ -222,8 +273,8 @@ router.post('/',
          VALUES ($1, $2, $3, $4, $5, $6, 'pending')
          RETURNING *`,
         [
-          client_id,
-          req.user.id,
+          finalClientId,
+          referringConsultantId,
           targetConsultantId,
           target_country_code.toUpperCase(),
           service_description,
