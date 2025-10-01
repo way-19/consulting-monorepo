@@ -3,6 +3,38 @@
 ## Project Overview
 Consulting19 is an AI-powered platform connecting entrepreneurs with expert business advisors across 19+ countries for international business expansion services including company formation, tax optimization, banking solutions, and legal compliance.
 
+## ⚠️ CRITICAL DEVELOPMENT PRINCIPLES ⚠️
+**"YARIM İŞ BIRAKMA" (NO HALF-DONE WORK) - ABSOLUTE RULES:**
+
+1. ❌ **NEVER CREATE PLACEHOLDER FEATURES**
+   - Every feature must be fully functional from backend to frontend
+   - No mock data, no dummy components, no "coming soon" messages
+   - If a feature needs external service (Stripe, email, etc.), user will provide API keys
+
+2. ✅ **PRODUCTION-READY ONLY**
+   - All features must work exactly like live production
+   - Real database transactions, real file uploads, real payments
+   - Full CRUD operations with proper error handling
+   - Complete backend API + frontend integration
+
+3. 🔒 **SECURITY & DATA INTEGRITY**
+   - Server-derived identity (never trust client-provided IDs)
+   - JWT authentication on all protected endpoints
+   - RBAC (Role-Based Access Control) enforcement
+   - SQL injection prevention (parameterized queries only)
+
+4. 📝 **THIS FILE (replit.md) IS MEMORY**
+   - Always read this file first before starting work
+   - Update this file when adding/removing features
+   - Document all architectural decisions here
+   - This survives session resets - code alone doesn't
+
+5. ❌ **WHAT TO NEVER DO**
+   - Build UI without backend API
+   - Use mock/dummy data in production paths
+   - Leave TODOs or "implement later" comments
+   - Create features that look working but aren't
+
 ## Architecture
 This is a **monorepo** with multiple applications:
 - **apps/marketing** - Main marketing website (consulting19.com) - **Primary frontend on port 5000**
