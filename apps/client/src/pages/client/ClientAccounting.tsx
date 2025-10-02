@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Helmet } from 'react-helmet-async';
-import { useAuth } from '@consulting19/shared';
+import { useAuth, createAuthenticatedFetch } from '@consulting19/shared';
 import { 
   FileText, 
   Upload, 
@@ -12,7 +12,6 @@ import {
   Eye,
   Download
 } from 'lucide-react';
-import { supabase } from '@consulting19/shared/lib/supabase';
 
 interface Document {
   id: string;
@@ -55,62 +54,31 @@ const ClientAccounting = () => {
   const fetchAccountingDocuments = async () => {
     try {
       setLoading(true);
+      const authFetch = createAuthenticatedFetch();
       
-      // Get client ID
-      // Get client profile ID first
-      const { data: profileData, error: profileError } = await supabase
-        .from('user_profiles')
-        .select('id')
-        .eq('user_id', user?.id)
-        .eq('role', 'client')
-        .single();
-
-      if (profileError || !profileData) {
-        console.error('Client profile not found:', profileError);
+      // Fetch financial documents from backend API
+      const response = await authFetch('/api/documents?document_type=financial');
+      
+      if (!response.ok) {
+        console.error('Error fetching documents:', response.statusText);
         setLoading(false);
         return;
       }
 
-      // Get client ID using profile_id
-      const { data: clientData, error: clientError } = await supabase
-        .from('clients')
-        .select('id')
-        .eq('profile_id', profileData.id)
-        .maybeSingle();
-
-      if (clientError || !clientData) {
-        console.error('Client data not found:', clientError);
-        setLoading(false);
-        return;
-      }
-
-      // Fetch financial documents
-      const { data: documentsData, error: documentsError } = await supabase
-        .from('documents')
-        .select('*')
-        .eq('client_id', clientData.id)
-        .eq('type', 'financial')
-        .order('uploaded_at', { ascending: false });
-
-      if (documentsError) {
-        console.error('Error fetching documents:', documentsError);
-        setLoading(false);
-        return;
-      }
-
-      const documentsList = documentsData || [];
+      const data = await response.json();
+      const documentsList = data.documents || [];
       setDocuments(documentsList);
 
       // Calculate stats
       const totalDocuments = documentsList.length;
-      const totalAmount = documentsList.reduce((sum, doc) => sum + (doc.amount || 0), 0);
-      const pendingReview = documentsList.filter(doc => doc.status === 'pending').length;
+      const totalAmount = documentsList.reduce((sum: number, doc: Document) => sum + (doc.amount || 0), 0);
+      const pendingReview = documentsList.filter((doc: Document) => doc.status === 'pending').length;
       
       // This month documents
       const thisMonthStart = new Date();
       thisMonthStart.setDate(1);
       thisMonthStart.setHours(0, 0, 0, 0);
-      const thisMonth = documentsList.filter(doc => 
+      const thisMonth = documentsList.filter((doc: Document) => 
         new Date(doc.uploaded_at) >= thisMonthStart
       ).length;
 

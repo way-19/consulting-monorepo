@@ -1,0 +1,85 @@
+C:\Users\Way19\supabase-temp>npx supabase db dump --data-only -f
+Usage:
+  supabase db dump [flags]
+
+Flags:
+      --data-only         Dumps only data records.
+      --db-url string     Dumps from the database specified by the connection string (must be percent-encoded).
+      --dry-run           Prints the pg_dump script that would be executed.
+  -x, --exclude strings   List of schema.tables to exclude from data-only dump.
+  -f, --file string       File path to save the dumped contents.
+  -h, --help              help for dump
+      --keep-comments     Keeps commented lines from pg_dump output.
+      --linked            Dumps from the linked project. (default true)
+      --local             Dumps from the local database.
+  -p, --password string   Password to your remote Postgres database.
+      --role-only         Dumps only cluster roles.
+  -s, --schema strings    Comma separated list of schema to include.
+      --use-copy          Uses copy statements in place of inserts.
+
+Global Flags:
+      --create-ticket                                  create a support ticket for any CLI error
+      --debug                                          output debug logs to stderr
+      --dns-resolver [ native | https ]                lookup domain names using the specified resolver (default native)
+      --experimental                                   enable experimental features
+      --network-id string                              use the specified docker network instead of a generated one
+  -o, --output [ env | pretty | json | toml | yaml ]   output format of status variables (default pretty)
+      --profile string                                 use a specific profile for connecting to Supabase API (default "supabase")
+e6dd2376f89c: Pull complete
+fe61e5184149: Pull complete
+8c6a3af638f0: Pull complete
+c55108e84a01: Pull complete
+da37e1866d2b: Pull complete
+c47c8589a962: Pull complete
+9b39732b4eb0: Pull complete
+837d6bea7da7: Pull complete
+df43889a07dd: Pull complete
+33dd99cb7eb9: Pull complete
+649caad4c7f9: Pull complete
+0e9e827a1ee3: Pull complete
+ee676d58cab3: Pull complete
+3ce123157ae7: Pull complete
+a1acdf97e7ba: Pull complete
+71c688022171: Pull complete
+c7771b18b3de: Pull complete
+22ebc37d9326: Pull complete
+6ebe0399c979: Pull complete
+fad797ffa181: Pull complete
+ee123e4cc04d: Pull complete
+8914887dce7d: Pull complete
+357f8fd8fd77: Pull complete
+dca4d63f6072: Pull complete
+255b92ecebb6: Pull complete
+33932ade8f0d: Pull complete
+947172c7e15d: Pull complete
+73a5b742f1eb: Pull complete
+64053f759123: Pull complete
+Digest: sha256:dc436b5b4ebeb0f3bdf6d8dda2b390cc094e14d24cd434d5fe02840459e67670
+Status: Downloaded newer image for public.ecr.aws/supabase/postgres:17.4.1.074]    172MB/414.3MB
+pg_dump: error: connection to server at "aws-1-eu-central-1.pooler.supabase.com" (3.65.151.229), port 5432 failed: SSL connection has been closed unexpectedly
+error running container: exit 1================>                              ]  168.8MB/414.3MB
+Try rerunning the command with --debug to troubleshoot the error.
+
+C:\Users\Way19\supabase-temp>==================>                              ]  168.8MB/414.3MB
+837d6bea7da7: Download complete
+df43889a07dd: Download complete
+33dd99cb7eb9: Download complete
+649caad4c7f9: Download complete
+0e9e827a1ee3: Download complete
+ee676d58cab3: Download complete
+3ce123157ae7: Download complete
+a1acdf97e7ba: Download complete
+71c688022171: Download complete
+c7771b18b3de: Download complete
+22ebc37d9326: Download complete
+6ebe0399c979: Download complete
+fad797ffa181: Download complete
+ee123e4cc04d: Download complete
+8914887dce7d: Download complete
+357f8fd8fd77: Download complete
+dca4d63f6072: Download complete
+255b92ecebb6: Download complete
+33932ade8f0d: Download complete
+947172c7e15d: Download complete
+73a5b742f1eb: Download complete
+64053f759123: Download complete

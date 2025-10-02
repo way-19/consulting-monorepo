@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Helmet } from 'react-helmet-async';
-import { useAuth } from '@consulting19/shared';
+import { useAuth, createAuthenticatedFetch } from '@consulting19/shared';
 import { 
   HelpCircle, 
   Plus, 
@@ -18,7 +18,6 @@ import {
   Reply,
   RefreshCw
 } from 'lucide-react';
-import { supabase } from '@consulting19/shared/lib/supabase';
 
 interface SupportTicket {
   id: string;
@@ -66,55 +65,23 @@ const ClientSupport = () => {
     try {
       setLoading(true);
       
-      // Get client ID
-      // Get client profile ID first
-      const { data: profileData, error: profileError } = await supabase
-        .from('user_profiles')
-        .select('id')
-        .eq('user_id', user?.id)
-        .eq('role', 'client')
-        .single();
+      const authFetch = createAuthenticatedFetch();
+      const response = await authFetch('/api/support');
 
-      if (profileError || !profileData) {
-        console.error('Client profile not found:', profileError);
+      if (!response.ok) {
+        console.error('Error fetching tickets:', response.statusText);
         return;
       }
 
-      // Get client ID using profile_id
-      const { data: clientData, error: clientError } = await supabase
-        .from('clients')
-        .select('id')
-        .eq('profile_id', profileData.id)
-        .maybeSingle();
-
-      if (clientError || !clientData) {
-        console.error('Client data not found:', clientError);
-        return;
-      }
-
-      // Fetch support tickets with consultant info
-      const { data: ticketsData, error: ticketsError } = await supabase
-        .from('support_tickets')
-        .select(`
-          *,
-          consultant:user_profiles!support_tickets_consultant_id_fkey(full_name)
-        `)
-        .eq('client_id', clientData.id)
-        .order('created_at', { ascending: false });
-
-      if (ticketsError) {
-        console.error('Error fetching tickets:', ticketsError);
-        return;
-      }
-
-      const ticketsList = ticketsData || [];
+      const data = await response.json();
+      const ticketsList = data.tickets || [];
       setTickets(ticketsList);
 
       // Calculate stats
       const totalTickets = ticketsList.length;
-      const openTickets = ticketsList.filter(t => t.status === 'open').length;
-      const inProgressTickets = ticketsList.filter(t => t.status === 'in_progress').length;
-      const resolvedTickets = ticketsList.filter(t => t.status === 'resolved').length;
+      const openTickets = ticketsList.filter((t: SupportTicket) => t.status === 'open').length;
+      const inProgressTickets = ticketsList.filter((t: SupportTicket) => t.status === 'in_progress').length;
+      const resolvedTickets = ticketsList.filter((t: SupportTicket) => t.status === 'resolved').length;
 
       setStats({
         totalTickets,

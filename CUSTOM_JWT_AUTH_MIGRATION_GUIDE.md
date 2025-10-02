@@ -49,10 +49,17 @@ Implements comprehensive authentication endpoints:
 // Sign-up endpoint
 router.post('/signup', signupLimiter, async (req, res) => {
   const { email, password, firstName, lastName, role = 'client' } = req.body;
+<<<<<<< HEAD
   
   // Hash password
   const hashedPassword = await bcrypt.hash(password, 12);
   
+=======
+
+  // Hash password
+  const hashedPassword = await bcrypt.hash(password, 12);
+
+>>>>>>> a6e84847bf39cf77ec0c270d940002697d97fcec
   // Create user in database
   const { data: user } = await supabase
     .from('users')
@@ -64,14 +71,22 @@ router.post('/signup', signupLimiter, async (req, res) => {
     })
     .select()
     .single();
+<<<<<<< HEAD
     
+=======
+
+>>>>>>> a6e84847bf39cf77ec0c270d940002697d97fcec
   // Generate JWT token
   const token = jwt.sign(
     { userId: user.id, email: user.email, role: user.role },
     JWT_SECRET,
     { expiresIn: '24h' }
   );
+<<<<<<< HEAD
   
+=======
+
+>>>>>>> a6e84847bf39cf77ec0c270d940002697d97fcec
   res.json({ user, token });
 });
 ```
@@ -95,7 +110,11 @@ export const authenticateToken = (req: Request, res: Response, next: NextFunctio
     if (err) {
       return res.status(403).json({ error: 'Invalid or expired token' });
     }
+<<<<<<< HEAD
     
+=======
+
+>>>>>>> a6e84847bf39cf77ec0c270d940002697d97fcec
     req.user = decoded;
     next();
   });
@@ -128,7 +147,11 @@ export const CustomAuthProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       setProfile(profile);
       return { user, profile };
     }
+<<<<<<< HEAD
     
+=======
+
+>>>>>>> a6e84847bf39cf77ec0c270d940002697d97fcec
     throw new Error('Authentication failed');
   };
 
@@ -141,7 +164,11 @@ export const CustomAuthProvider: React.FC<{ children: React.ReactNode }> = ({ ch
           const response = await fetch('/api/auth/refresh', {
             headers: { 'Authorization': `Bearer ${token}` }
           });
+<<<<<<< HEAD
           
+=======
+
+>>>>>>> a6e84847bf39cf77ec0c270d940002697d97fcec
           if (response.ok) {
             const { token: newToken } = await response.json();
             localStorage.setItem('auth_token', newToken);
@@ -204,7 +231,11 @@ export const CustomAuthProvider: React.FC<{ children: React.ReactNode }> = ({ ch
    ```typescript
    // In App.tsx
    import { CustomAuthProvider } from '@consulting19/shared/contexts/CustomAuthContext';
+<<<<<<< HEAD
    
+=======
+
+>>>>>>> a6e84847bf39cf77ec0c270d940002697d97fcec
    function App() {
      return (
        <CustomAuthProvider>
@@ -221,7 +252,11 @@ export const CustomAuthProvider: React.FC<{ children: React.ReactNode }> = ({ ch
    // Before
    import { useAuth } from './contexts/AuthContext';
    const { user } = useAuth(); // Supabase user
+<<<<<<< HEAD
    
+=======
+
+>>>>>>> a6e84847bf39cf77ec0c270d940002697d97fcec
    // After
    import { useAuth } from '@consulting19/shared/contexts/CustomAuthContext';
    const { user, profile } = useAuth(); // Custom user
@@ -239,7 +274,11 @@ export const CustomAuthProvider: React.FC<{ children: React.ReactNode }> = ({ ch
    ```typescript
    // Use the authenticated fetch helper
    import { createAuthenticatedFetch } from '@consulting19/shared/contexts/CustomAuthContext';
+<<<<<<< HEAD
    
+=======
+
+>>>>>>> a6e84847bf39cf77ec0c270d940002697d97fcec
    const authenticatedFetch = createAuthenticatedFetch();
    const response = await authenticatedFetch('/api/protected-endpoint');
    ```
@@ -417,4 +456,8 @@ const logError = (error: Error, context: string) => {
 
 This migration provides a robust, scalable authentication system with full control over user management and security policies. The custom JWT approach enables better integration with external systems while maintaining security best practices.
 
+<<<<<<< HEAD
 For additional support or questions about the migration, refer to the implementation files or contact the development team.
+=======
+For additional support or questions about the migration, refer to the implementation files or contact the development team.
+>>>>>>> a6e84847bf39cf77ec0c270d940002697d97fcec

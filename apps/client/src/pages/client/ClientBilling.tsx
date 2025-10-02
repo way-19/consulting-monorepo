@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Helmet } from 'react-helmet-async';
-import { useAuth } from '@consulting19/shared';
+import { useAuth, createAuthenticatedFetch } from '@consulting19/shared';
 import { 
   Clock, 
   FileText, 
@@ -15,7 +15,6 @@ import {
   Shield,
   Info
 } from 'lucide-react';
-import { supabase } from '@consulting19/shared/lib/supabase';
 
 interface Invoice {
   id: string;
@@ -56,55 +55,28 @@ const ClientBilling = () => {
   const fetchBillingData = async () => {
     try {
       setLoading(true);
+      const authFetch = createAuthenticatedFetch();
       
-      // Get client profile ID first
-      const { data: profileData, error: profileError } = await supabase
-        .from('user_profiles')
-        .select('id')
-        .eq('user_id', user?.id)
-        .eq('role', 'client')
-        .single();
-
-      if (profileError || !profileData) {
-        console.error('Client profile not found:', profileError);
+      // Fetch invoices from backend API
+      const response = await authFetch('/api/orders/invoices');
+      
+      if (!response.ok) {
+        console.error('Error fetching invoices:', response.statusText);
         return;
       }
 
-      // Get client ID using profile_id
-      const { data: clientData, error: clientError } = await supabase
-        .from('clients')
-        .select('id')
-        .eq('profile_id', profileData.id)
-        .maybeSingle();
-
-      if (clientError || !clientData) {
-        console.error('Client data not found:', clientError);
-        return;
-      }
-
-      // Fetch invoices
-      const { data: invoicesData, error: invoicesError } = await supabase
-        .from('invoices')
-        .select('*')
-        .eq('client_id', clientData.id)
-        .order('created_at', { ascending: false });
-
-      if (invoicesError) {
-        console.error('Error fetching invoices:', invoicesError);
-        return;
-      }
-
-      const invoicesList = invoicesData || [];
+      const data = await response.json();
+      const invoicesList = data.invoices || [];
       setInvoices(invoicesList);
 
       // Calculate stats
       const totalSpent = invoicesList
-        .filter(invoice => invoice.status === 'paid')
-        .reduce((sum, invoice) => sum + Number(invoice.amount_due), 0);
+        .filter((invoice: Invoice) => invoice.status === 'paid')
+        .reduce((sum: number, invoice: Invoice) => sum + Number(invoice.amount_due), 0);
       
       const pendingPayments = invoicesList
-        .filter(invoice => invoice.status === 'pending')
-        .reduce((sum, invoice) => sum + Number(invoice.amount_due), 0);
+        .filter((invoice: Invoice) => invoice.status === 'pending')
+        .reduce((sum: number, invoice: Invoice) => sum + Number(invoice.amount_due), 0);
       
       const totalInvoices = invoicesList.length;
 

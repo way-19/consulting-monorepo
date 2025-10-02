@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react';
-import { supabase } from '../lib/supabase';
-import { CountryConfigService, CrossDomainSync } from '@consulting19/shared';
+import { CountryConfigService, CrossDomainSync, createAuthenticatedFetch } from '@consulting19/shared';
 
 export interface Country {
   id: string;
@@ -22,7 +21,7 @@ export interface AdditionalService {
   name: string;
   description: string;
   base_price: number;
-  price: number; // This will be the country-specific price
+  price: number;
 }
 
 export interface Bank {
@@ -65,14 +64,14 @@ export const useOrderForm = () => {
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  const authFetch = createAuthenticatedFetch();
+
   useEffect(() => {
     fetchInitialData();
 
-    // Set up CrossDomainSync listener for automatic updates from admin panel
     const handleCountryConfigUpdate = (data: any) => {
       console.log('🔄 ORDER FORM - Received country config update from admin', data);
       
-      // Reload countries from updated localStorage
       const configService = CountryConfigService.getInstance();
       configService.reloadFromStorage();
       
@@ -91,20 +90,17 @@ export const useOrderForm = () => {
       setCountries(formattedCountries);
     };
 
-    // Initialize CrossDomainSync and add listener
     const crossDomainSync = CrossDomainSync.getInstance();
     console.log('🔄 ORDER FORM - Setting up CrossDomainSync listener');
     crossDomainSync.addListener(handleCountryConfigUpdate);
     console.log('🔄 ORDER FORM - CrossDomainSync listener added successfully');
 
-    // Listen for localStorage changes (cross-tab communication)
     const handleStorageChange = (event: StorageEvent) => {
       if (event.key === 'country_configurations') {
         console.log('🔄 Country configurations updated in localStorage, refreshing...');
-        // Force reload countries from updated localStorage
         setTimeout(() => {
           const configService = CountryConfigService.getInstance();
-          configService.reloadFromStorage(); // Force reload from localStorage
+          configService.reloadFromStorage();
           const availableCountries = configService.getAvailableCountries();
           
           const formattedCountries: Country[] = availableCountries.map(config => ({
@@ -123,7 +119,6 @@ export const useOrderForm = () => {
 
     window.addEventListener('storage', handleStorageChange);
 
-    // Also listen for focus events to refresh data when user switches back to tab
     const handleFocus = () => {
       console.log('🔄 Tab focused, checking for country updates...');
       const configService = CountryConfigService.getInstance();
@@ -149,7 +144,6 @@ export const useOrderForm = () => {
     return () => {
       window.removeEventListener('storage', handleStorageChange);
       window.removeEventListener('focus', handleFocus);
-      // Clean up CrossDomainSync listener
       crossDomainSync.removeListener(handleCountryConfigUpdate);
       console.log('🔄 ORDER FORM - CrossDomainSync listener removed');
     };
@@ -159,17 +153,15 @@ export const useOrderForm = () => {
     try {
       setLoading(true);
       
-      // Get countries from CountryConfigService instead of Supabase
       const configService = CountryConfigService.getInstance();
       const availableCountries = configService.getAvailableCountries();
       
-      // Convert CountryConfiguration to Country interface
       const formattedCountries: Country[] = availableCountries.map(config => ({
         id: config.countryCode,
         name: config.countryName,
         code: config.countryCode,
-        flag_emoji: '🏳️', // Default flag, can be enhanced later
-        is_recommended: config.countryCode === 'GE' // Georgia is recommended
+        flag_emoji: '🏳️',
+        is_recommended: config.countryCode === 'GE'
       }));
 
       const [
@@ -177,19 +169,23 @@ export const useOrderForm = () => {
         additionalServicesRes,
         banksRes,
       ] = await Promise.all([
-        supabase.from('packages').select('*').eq('is_active', true).order('price'),
-        supabase.from('additional_services').select('*').eq('is_active', true).order('base_price'),
-        supabase.from('banks').select('*').eq('is_active', true).order('name'),
+        authFetch('/api/orders/packages/list', { method: 'GET' }),
+        authFetch('/api/orders/additional-services/list', { method: 'GET' }),
+        authFetch('/api/orders/banks/list', { method: 'GET' }),
       ]);
 
-      if (packagesRes.error) throw packagesRes.error;
-      if (additionalServicesRes.error) throw additionalServicesRes.error;
-      if (banksRes.error) throw banksRes.error;
+      if (!packagesRes.ok || !additionalServicesRes.ok || !banksRes.ok) {
+        throw new Error('Failed to fetch order form data');
+      }
+
+      const packagesData = await packagesRes.json();
+      const additionalServicesData = await additionalServicesRes.json();
+      const banksData = await banksRes.json();
 
       setCountries(formattedCountries);
-      setPackages(packagesRes.data || []);
-      setAdditionalServices(additionalServicesRes.data?.map(s => ({ ...s, price: s.base_price })) || []); // Use base_price as default
-      setBanks(banksRes.data || []);
+      setPackages(packagesData.packages || []);
+      setAdditionalServices(additionalServicesData.additional_services?.map((s: any) => ({ ...s, price: s.base_price })) || []);
+      setBanks(banksData.banks || []);
 
     } catch (err: any) {
       console.error('Error fetching initial data:', err);
@@ -216,7 +212,6 @@ export const useOrderForm = () => {
     setError(null);
 
     try {
-      // Calculate total amount
       const selectedPackage = packages.find(p => p.id === formData.selectedPackageId);
       const selectedBank = banks.find(b => b.id === formData.selectedBankId);
       const selectedAddOns = additionalServices.filter(s => formData.selectedAdditionalServiceIds.includes(s.id));
@@ -226,50 +221,34 @@ export const useOrderForm = () => {
       if (selectedBank) totalAmount += selectedBank.price;
       selectedAddOns.forEach(s => totalAmount += s.price);
 
-      // Get client ID (assuming user is logged in and has a client profile)
-      const { data: authUser } = await supabase.auth.getUser();
-      if (!authUser.user) {
-        throw new Error('Kullanıcı girişi yapılmamış.');
+      const orderData = {
+        title: `Yeni Sipariş: ${formData.companyName} - ${selectedPackage?.name}`,
+        description: `Ülke: ${countries.find(c => c.id === formData.selectedCountryId)?.name}, Banka: ${selectedBank?.name}, Ek Hizmetler: ${selectedAddOns.map(s => s.name).join(', ')}`,
+        budget: totalAmount,
+        country_code: formData.selectedCountryId,
+        selected_package_id: formData.selectedPackageId,
+        additional_service_ids: formData.selectedAdditionalServiceIds,
+        customer_details: {
+          contactEmail: formData.contactEmail,
+          phoneNumber: formData.phoneNumber,
+          companyName: formData.companyName,
+          companyType: formData.companyType,
+        },
+        total_amount: totalAmount,
+        currency: 'USD',
+      };
+
+      const response = await authFetch('/api/orders', {
+        method: 'POST',
+        body: JSON.stringify(orderData)
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to create order');
       }
-
-      const { data: clientData, error: clientError } = await supabase
-        .from('clients')
-        .select('id')
-        .eq('profile_id', authUser.user.id)
-        .single();
-
-      if (clientError || !clientData) {
-        throw new Error('Müşteri profili bulunamadı.');
-      }
-
-      // Insert into service_orders table
-      const { data: order, error: orderError } = await supabase
-        .from('service_orders')
-        .insert({
-          client_id: clientData.id,
-          title: `Yeni Sipariş: ${formData.companyName} - ${selectedPackage?.name}`,
-          description: `Ülke: ${countries.find(c => c.id === formData.selectedCountryId)?.name}, Banka: ${selectedBank?.name}, Ek Hizmetler: ${selectedAddOns.map(s => s.name).join(', ')}`,
-          budget: totalAmount,
-          status: 'pending',
-          country_code: formData.selectedCountryId,
-          selected_package_id: formData.selectedPackageId,
-          additional_service_ids: formData.selectedAdditionalServiceIds,
-          customer_details: {
-            contactEmail: formData.contactEmail,
-            phoneNumber: formData.phoneNumber,
-            companyName: formData.companyName,
-            companyType: formData.companyType,
-          },
-          total_amount: totalAmount,
-          currency: 'USD',
-        })
-        .select()
-        .single();
-
-      if (orderError) throw orderError;
 
       alert('Siparişiniz başarıyla oluşturuldu!');
-      // Optionally redirect or clear form
       setFormData(initialFormData);
       setCurrentStep(1);
 

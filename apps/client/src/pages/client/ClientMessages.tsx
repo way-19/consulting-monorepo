@@ -1,14 +1,11 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Helmet } from 'react-helmet-async';
-import { useAuth } from '@consulting19/shared';
-import { supabase } from '@consulting19/shared/lib/supabase';
+import { useAuth, createAuthenticatedFetch } from '@consulting19/shared';
 import { 
   MessageSquare, 
   Send, 
   User, 
   Globe, 
-  Bot, 
-  Languages,
   Circle,
   CheckCircle2,
   Loader2
@@ -19,17 +16,19 @@ interface Message {
   sender_id: string;
   receiver_id: string;
   content: string;
-  translated_content?: string;
-  original_language: string;
-  target_language: string;
-  is_translated: boolean;
+  subject?: string;
   is_read: boolean;
   created_at: string;
+  sender_name?: string;
+  sender_avatar?: string;
+  receiver_name?: string;
+  receiver_avatar?: string;
 }
 
 interface Consultant {
   id: string;
-  full_name: string;
+  first_name: string;
+  last_name: string;
   email: string;
   preferred_language: string;
   is_active: boolean;
@@ -42,9 +41,9 @@ const ClientMessages = () => {
   const [newMessage, setNewMessage] = useState('');
   const [loading, setLoading] = useState(true);
   const [sending, setSending] = useState(false);
-  const [autoTranslate, setAutoTranslate] = useState(true);
   const [clientId, setClientId] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const authFetch = createAuthenticatedFetch();
 
   useEffect(() => {
     if (user && profile) {
@@ -56,6 +55,17 @@ const ClientMessages = () => {
     scrollToBottom();
   }, [messages]);
 
+  // Poll for new messages every 5 seconds
+  useEffect(() => {
+    if (!consultant || !clientId) return;
+
+    const interval = setInterval(() => {
+      fetchMessages();
+    }, 5000);
+
+    return () => clearInterval(interval);
+  }, [consultant, clientId]);
+
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
@@ -64,113 +74,44 @@ const ClientMessages = () => {
     try {
       setLoading(true);
       
-      // Get client profile ID first
-      const { data: profileData, error: profileError } = await supabase
-        .from('user_profiles')
-        .select('id')
-        .eq('user_id', user?.id)
-        .eq('role', 'client')
-        .single();
+      // Get assigned consultant info
+      const clientsResponse = await authFetch('/api/clients?limit=1', {
+        method: 'GET'
+      });
 
-      if (profileError || !profileData) {
-        console.error('Client profile not found:', profileError);
+      if (!clientsResponse.ok) {
+        throw new Error('Failed to fetch client data');
+      }
+
+      const clientsData = await clientsResponse.json();
+      const client = clientsData.clients?.[0];
+
+      if (!client || !client.assigned_consultant_id) {
         setLoading(false);
         return;
       }
 
-      // Get client ID and assigned consultant using profile_id
-      const { data: clientData, error: clientError } = await supabase
-        .from('clients')
-        .select('id, assigned_consultant_id')
-        .eq('profile_id', profileData.id)
-        .single();
+      setClientId(client.id);
 
-      if (clientError || !clientData) {
-        console.error('Client data not found:', clientError);
-        setLoading(false);
-        return;
+      // Get consultant profile
+      const consultantResponse = await authFetch(`/api/users/${client.assigned_consultant_id}`, {
+        method: 'GET'
+      });
+
+      if (consultantResponse.ok) {
+        const consultantData = await consultantResponse.json();
+        setConsultant({
+          id: consultantData.user.id,
+          first_name: consultantData.user.first_name,
+          last_name: consultantData.user.last_name,
+          email: consultantData.user.email,
+          preferred_language: consultantData.user.preferred_language || 'en',
+          is_active: consultantData.user.is_active
+        });
       }
 
-      setClientId(clientData.id);
-
-      if (!clientData.assigned_consultant_id) {
-        setLoading(false);
-        return;
-      }
-
-      // Get consultant info
-      const { data: consultantData, error: consultantError } = await supabase
-        .from('user_profiles')
-        .select('id, full_name, email, preferred_language, is_active')
-        .eq('id', clientData.assigned_consultant_id)
-        .single();
-
-      if (consultantError) {
-        console.error('Error fetching consultant:', consultantError);
-      } else {
-        setConsultant(consultantData);
-      }
-
-      // Get messages between client and consultant
-      const { data: messagesData, error: messagesError } = await supabase
-        .from('messages')
-        .select('*')
-        .or(`and(sender_id.eq.${user?.id},receiver_id.eq.${clientData.assigned_consultant_id}),and(sender_id.eq.${clientData.assigned_consultant_id},receiver_id.eq.${user?.id})`)
-        .order('created_at', { ascending: true });
-
-      if (messagesError) {
-        console.error('Error fetching messages:', messagesError);
-      } else {
-        setMessages(messagesData || []);
-        
-        // Mark received messages as read
-        const unreadMessages = messagesData?.filter(m => 
-          m.receiver_id === user?.id && !m.is_read
-        ) || [];
-        
-        if (unreadMessages.length > 0) {
-          await supabase
-            .from('messages')
-            .update({ is_read: true })
-            .in('id', unreadMessages.map(m => m.id));
-        }
-      }
-
-      // Setup real-time subscription for new messages
-      const channel = supabase
-        .channel('messages')
-        .on(
-          'postgres_changes',
-          {
-            event: 'INSERT',
-            schema: 'public',
-            table: 'messages',
-            filter: `receiver_id=eq.${user?.id}`
-          },
-          (payload) => {
-            const newMessage = payload.new as Message;
-            setMessages(prev => [...prev, newMessage]);
-            
-            // Mark as read immediately
-            supabase
-              .from('messages')
-              .update({ is_read: true })
-              .eq('id', newMessage.id)
-              .then(() => {
-                setMessages(prev => 
-                  prev.map(m => 
-                    m.id === newMessage.id ? { ...m, is_read: true } : m
-                  )
-                );
-              });
-          }
-        )
-        .subscribe();
-
-      // Cleanup subscription on unmount
-      return () => {
-        supabase.removeChannel(channel);
-      };
+      // Fetch messages
+      await fetchMessages();
 
     } catch (err) {
       console.error('Unexpected error:', err);
@@ -179,75 +120,70 @@ const ClientMessages = () => {
     }
   };
 
-  const handleSendMessage = async () => {
-    if (!newMessage.trim() || !consultant || !clientId || sending) return;
+  const fetchMessages = async () => {
+    if (!consultant) return;
 
     try {
-      setSending(true);
-      
-      let translatedContent = null;
-      let targetLanguage = profile?.preferred_language || 'en';
-      
-      // Auto-translate if enabled and languages differ
-      if (autoTranslate && consultant.preferred_language !== targetLanguage) {
-        try {
-          const { data: translationData, error: translationError } = await supabase.functions.invoke(
-            'translate',
-            {
-              body: {
-                texts: [newMessage],
-                target_lang: consultant.preferred_language.toUpperCase(),
-                source_lang: targetLanguage.toUpperCase()
-              }
-            }
-          );
+      const response = await authFetch(`/api/messages?conversation_with=${consultant.id}&limit=100`, {
+        method: 'GET'
+      });
 
-          if (!translationError && translationData?.translations?.[0]) {
-            translatedContent = translationData.translations[0];
-          }
-        } catch (translationErr) {
-          console.warn('Translation failed, sending original message:', translationErr);
-        }
+      if (!response.ok) {
+        throw new Error('Failed to fetch messages');
       }
 
-      // Insert message
-      const { data: messageData, error: messageError } = await supabase
-        .from('messages')
-        .insert({
-          sender_id: user?.id,
-          receiver_id: consultant.id,
-          content: newMessage,
-          translated_content: translatedContent,
-          original_language: targetLanguage,
-          target_language: consultant.preferred_language,
-          is_translated: !!translatedContent,
-          is_read: false
-        })
-        .select()
-        .single();
+      const data = await response.json();
+      setMessages(data.messages || []);
 
-      if (messageError) {
-        throw messageError;
+      // Mark unread messages as read
+      const unreadMessages = data.messages?.filter((m: Message) => 
+        m.receiver_id === user?.id && !m.is_read
+      ) || [];
+
+      for (const msg of unreadMessages) {
+        authFetch(`/api/messages/${msg.id}/read`, {
+          method: 'PATCH'
+        }).catch(err => console.error('Failed to mark message as read:', err));
       }
-
-      // Add to local state
-      setMessages(prev => [...prev, messageData]);
-      setNewMessage('');
-
-    } catch (err) {
-      console.error('Error sending message:', err);
-      alert('Failed to send message. Please try again.');
-    } finally {
-      setSending(false);
+    } catch (error) {
+      console.error('Error fetching messages:', error);
     }
   };
 
-  const getMessageDisplayContent = (message: Message) => {
-    // If message is from consultant and auto-translate is on and translated content exists
-    if (message.sender_id !== user?.id && autoTranslate && message.translated_content) {
-      return message.translated_content;
+  const handleSendMessage = async () => {
+    if (!newMessage.trim() || !consultant || sending) return;
+
+    try {
+      setSending(true);
+
+      const response = await authFetch('/api/messages/send', {
+        method: 'POST',
+        body: JSON.stringify({
+          receiver_id: consultant.id,
+          content: newMessage.trim()
+        })
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Failed to send message');
+      }
+
+      const data = await response.json();
+      
+      // Add message to local state immediately
+      setMessages(prev => [...prev, data.data]);
+      setNewMessage('');
+      
+      // Fetch updated messages
+      fetchMessages();
+
+    } catch (err) {
+      console.error('Error sending message:', err);
+      alert(err instanceof Error ? err.message : 'Failed to send message. Please try again.');
+    } finally {
+      setSending(false);
     }
-    return message.content;
   };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
@@ -312,6 +248,8 @@ const ClientMessages = () => {
     );
   }
 
+  const consultantFullName = `${consultant.first_name} ${consultant.last_name}`;
+
   return (
     <>
       <Helmet>
@@ -334,7 +272,7 @@ const ClientMessages = () => {
                   <User className="w-5 h-5 text-blue-600" />
                 </div>
                 <div>
-                  <h3 className="font-semibold text-gray-900">{consultant.full_name}</h3>
+                  <h3 className="font-semibold text-gray-900">{consultantFullName}</h3>
                   <div className="flex items-center space-x-2 text-sm">
                     <span className="text-gray-600">Your Consultant</span>
                     <span className="text-gray-400">•</span>
@@ -347,35 +285,9 @@ const ClientMessages = () => {
                   </div>
                   <div className="flex items-center space-x-1 text-xs text-gray-500">
                     <Globe className="w-3 h-3" />
-                    <span>Speaks: English, {consultant.preferred_language === 'tr' ? 'Türkçe' : consultant.preferred_language === 'pt' ? 'Português' : 'English'}</span>
+                    <span>Language: {consultant.preferred_language.toUpperCase()}</span>
                   </div>
                 </div>
-              </div>
-              
-              <div className="flex items-center space-x-3">
-                {/* Auto-translate toggle */}
-                <div className="flex items-center space-x-2">
-                  <Languages className="w-4 h-4 text-gray-500" />
-                  <button
-                    onClick={() => setAutoTranslate(!autoTranslate)}
-                    className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                      autoTranslate ? 'bg-green-600' : 'bg-gray-200'
-                    }`}
-                  >
-                    <span
-                      className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                        autoTranslate ? 'translate-x-6' : 'translate-x-1'
-                      }`}
-                    />
-                  </button>
-                  <span className="text-xs text-gray-600">Auto-translate: {autoTranslate ? 'ON' : 'OFF'}</span>
-                </div>
-                
-                {/* AI Assistant Button */}
-                <button className="inline-flex items-center px-3 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
-                  <Bot className="w-4 h-4 mr-2" />
-                  AI Assistant
-                </button>
               </div>
             </div>
           </div>
@@ -385,7 +297,6 @@ const ClientMessages = () => {
             {messages.length > 0 ? (
               messages.map((message) => {
                 const isFromMe = message.sender_id === user?.id;
-                const displayContent = getMessageDisplayContent(message);
                 
                 return (
                   <div key={message.id} className={`flex ${isFromMe ? 'justify-end' : 'justify-start'}`}>
@@ -394,15 +305,7 @@ const ClientMessages = () => {
                         ? 'bg-blue-600 text-white' 
                         : 'bg-gray-100 text-gray-900'
                     }`}>
-                      <p className="text-sm whitespace-pre-wrap">{displayContent}</p>
-                      
-                      {/* Show translation indicator */}
-                      {!isFromMe && autoTranslate && message.is_translated && message.translated_content && (
-                        <div className="flex items-center space-x-1 mt-2 pt-2 border-t border-gray-200">
-                          <Languages className="w-3 h-3 text-gray-500" />
-                          <span className="text-xs text-gray-500">Translated from {message.original_language.toUpperCase()}</span>
-                        </div>
-                      )}
+                      <p className="text-sm whitespace-pre-wrap">{message.content}</p>
                       
                       <div className={`flex items-center justify-end space-x-1 mt-2 text-xs ${
                         isFromMe ? 'text-blue-100' : 'text-gray-500'
@@ -428,21 +331,8 @@ const ClientMessages = () => {
                   <MessageSquare className="w-16 h-16 text-gray-400 mx-auto mb-4" />
                   <h3 className="text-lg font-semibold text-gray-900 mb-2">Start Your Conversation</h3>
                   <p className="text-gray-600 mb-4">
-                    Send your first message to {consultant.full_name}
+                    Send your first message to {consultantFullName}
                   </p>
-                  <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 max-w-md mx-auto">
-                    <div className="flex items-start space-x-3">
-                      <div className="w-6 h-6 bg-blue-100 rounded-full flex items-center justify-center mt-1">
-                        <Languages className="w-3 h-3 text-blue-600" />
-                      </div>
-                      <div className="text-left">
-                        <h4 className="text-sm font-semibold text-blue-900 mb-1">Auto-Translation Active</h4>
-                        <p className="text-xs text-blue-800">
-                          Messages will be automatically translated between your language and your consultant's preferred language.
-                        </p>
-                      </div>
-                    </div>
-                  </div>
                 </div>
               </div>
             )}
@@ -457,7 +347,7 @@ const ClientMessages = () => {
                   value={newMessage}
                   onChange={(e) => setNewMessage(e.target.value)}
                   onKeyPress={handleKeyPress}
-                  placeholder={`Message ${consultant.full_name}...`}
+                  placeholder={`Message ${consultantFullName}...`}
                   className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
                   rows={1}
                   style={{ minHeight: '44px', maxHeight: '120px' }}
@@ -467,17 +357,9 @@ const ClientMessages = () => {
                     target.style.height = Math.min(target.scrollHeight, 120) + 'px';
                   }}
                 />
-                <div className="flex items-center justify-between mt-2">
-                  <p className="text-xs text-gray-500">
-                    Press Enter to send, Shift+Enter for new line
-                  </p>
-                  {autoTranslate && consultant.preferred_language !== (profile?.preferred_language || 'en') && (
-                    <div className="flex items-center space-x-1 text-xs text-green-600">
-                      <Languages className="w-3 h-3" />
-                      <span>Auto-translate: ON</span>
-                    </div>
-                  )}
-                </div>
+                <p className="text-xs text-gray-500 mt-2">
+                  Press Enter to send, Shift+Enter for new line
+                </p>
               </div>
               
               <button
@@ -503,7 +385,7 @@ const ClientMessages = () => {
               <User className="w-6 h-6 text-blue-600" />
             </div>
             <div className="flex-1">
-              <h4 className="font-semibold text-gray-900">{consultant.full_name}</h4>
+              <h4 className="font-semibold text-gray-900">{consultantFullName}</h4>
               <p className="text-sm text-gray-600">{consultant.email}</p>
               <div className="flex items-center space-x-2 mt-1">
                 <div className={`w-2 h-2 rounded-full ${consultant.is_active ? 'bg-green-500' : 'bg-gray-400'}`}></div>
@@ -512,7 +394,7 @@ const ClientMessages = () => {
                 </span>
                 <span className="text-gray-400">•</span>
                 <span className="text-xs text-gray-500">
-                  Preferred language: {consultant.preferred_language === 'tr' ? 'Türkçe' : consultant.preferred_language === 'pt' ? 'Português' : 'English'}
+                  Preferred language: {consultant.preferred_language.toUpperCase()}
                 </span>
               </div>
             </div>

@@ -1,6 +1,10 @@
 // Auth
+<<<<<<< HEAD
 export { AuthProvider, useAuth } from './contexts/AuthContext';
 export { CustomAuthProvider, useAuth as useCustomAuth, createAuthenticatedFetch } from './contexts/CustomAuthContext';
+=======
+export { AuthProvider, useAuth, createAuthenticatedFetch } from './contexts/AuthContext';
+>>>>>>> a6e84847bf39cf77ec0c270d940002697d97fcec
 
 // Language
 export { LanguageProvider, useLanguage } from './contexts/LanguageContext';

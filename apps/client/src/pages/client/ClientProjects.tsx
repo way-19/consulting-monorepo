@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Helmet } from 'react-helmet-async';
-import { useAuth } from '@consulting19/shared';
+import { useAuth, createAuthenticatedFetch } from '@consulting19/shared';
 import { 
   FolderOpen, 
   CheckCircle, 
@@ -15,7 +15,6 @@ import {
   Clock,
   Target
 } from 'lucide-react';
-import { supabase } from '@consulting19/shared/lib/supabase';
 import { Link } from 'react-router-dom';
 
 interface Project {
@@ -61,70 +60,37 @@ const ClientProjects = () => {
   const [statusFilter, setStatusFilter] = useState('all');
   const [priorityFilter, setPriorityFilter] = useState('all');
 
+  const authFetch = createAuthenticatedFetch();
+
   useEffect(() => {
     if (user && profile) {
       fetchProjects();
     }
-  }, [user, profile]);
+  }, [user, profile, statusFilter]);
 
   const fetchProjects = async () => {
     try {
       setLoading(true);
       
-      // Get client profile ID first
-      const { data: profileData, error: profileError } = await supabase
-        .from('user_profiles')
-        .select('id')
-        .eq('user_id', user?.id)
-        .eq('role', 'client')
-        .single();
-
-      if (profileError || !profileData) {
-        console.error('Client profile not found:', profileError);
-        return;
+      const queryParams = new URLSearchParams();
+      if (statusFilter && statusFilter !== 'all') {
+        queryParams.append('status', statusFilter);
       }
 
-      // Get client ID using profile_id
-      const { data: clientData, error: clientError } = await supabase
-        .from('clients')
-        .select('id')
-        .eq('profile_id', profileData.id)
-        .maybeSingle();
-
-      if (clientError || !clientData) {
-        console.error('Client data not found:', clientError);
-        return;
+      const url = `/api/projects${queryParams.toString() ? `?${queryParams.toString()}` : ''}`;
+      const response = await authFetch(url);
+      
+      if (!response.ok) {
+        throw new Error('Failed to fetch projects');
       }
 
-      // Fetch projects with consultant info using edge function
-      const { data: projectsData, error: projectsError } = await supabase.functions.invoke(
-        'get_client_projects_with_stats',
-        {
-          body: { client_id_param: clientData.id }
-        }
-      );
-
-      if (projectsError) {
-        console.error('Error fetching projects:', projectsError);
-        return;
-      }
-
-      const projectsList = projectsData || [];
-      setProjects(projectsList);
-
-      // Calculate stats
-      const totalProjects = projectsList.length;
-      const completedProjects = projectsList.filter((p: Project) => p.status === 'completed').length;
-      const totalBudget = projectsList.reduce((sum: number, p: Project) => sum + (p.budget || 0), 0);
-      const averageProgress = totalProjects > 0 
-        ? projectsList.reduce((sum: number, p: Project) => sum + p.progress, 0) / totalProjects 
-        : 0;
-
-      setStats({
-        totalProjects,
-        completedProjects,
-        totalBudget,
-        averageProgress
+      const data = await response.json();
+      setProjects(data.projects || []);
+      setStats(data.stats || {
+        totalProjects: 0,
+        completedProjects: 0,
+        totalBudget: 0,
+        averageProgress: 0
       });
 
     } catch (err) {

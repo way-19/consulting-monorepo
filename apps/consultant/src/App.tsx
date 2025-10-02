@@ -1,24 +1,25 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import { AuthProvider, useAuth } from '@consulting19/shared';
+import { AuthProvider, LanguageProvider, useAuth } from '@consulting19/shared';
 import LoginPage from './pages/auth/LoginPage';
 import ConsultantDashboard from './pages/consultant/ConsultantDashboard';
 import ConsultantClients from './pages/consultant/ConsultantClients';
-import ConsultantTasks from './pages/consultant/ConsultantTasks';
+import ConsultantTaskBoard from './pages/consultant/ConsultantTaskBoard';
 import ConsultantDocuments from './pages/consultant/ConsultantDocuments';
 import ConsultantMessages from './pages/consultant/ConsultantMessages';
 import ConsultantAvailability from './pages/consultant/ConsultantAvailability';
 import ConsultantServices from './pages/consultant/ConsultantServices';
 import ConsultantFinancial from './pages/consultant/ConsultantFinancial';
 import ConsultantCrossAssignments from './pages/consultant/ConsultantCrossAssignments';
-import ConsultantContent from './pages/consultant/ConsultantContent';
+import ContentManagement from './pages/consultant/ContentManagement';
 import ConsultantSettings from './pages/consultant/ConsultantSettings';
 import ConsultantLayout from './components/layouts/ConsultantLayout';
 import CustomAuthTest from './components/CustomAuthTest';
 
 function App() {
   return (
-    <AuthProvider>
-      <Router
+    <LanguageProvider>
+      <AuthProvider>
+        <Router
         future={{
           v7_startTransition: true,
           v7_relativeSplatPath: true,
@@ -31,7 +32,8 @@ function App() {
           </Routes>
         </div>
       </Router>
-    </AuthProvider>
+      </AuthProvider>
+    </LanguageProvider>
   );
 }
 
@@ -81,14 +83,14 @@ const ProtectedConsultantRoutes = () => {
       <Routes>
         <Route path="/" element={<ConsultantDashboard />} />
         <Route path="/clients" element={<ConsultantClients />} />
-        <Route path="/tasks" element={<ConsultantTasks />} />
+        <Route path="/tasks/board" element={<ConsultantTaskBoard />} />
         <Route path="/documents" element={<ConsultantDocuments />} />
         <Route path="/messages" element={<ConsultantMessages />} />
         <Route path="/availability" element={<ConsultantAvailability />} />
         <Route path="/services" element={<ConsultantServices />} />
         <Route path="/financial" element={<ConsultantFinancial />} />
         <Route path="/cross-assignments" element={<ConsultantCrossAssignments />} />
-        <Route path="/content" element={<ConsultantContent />} />
+        <Route path="/content/*" element={<ContentManagement />} />
         <Route path="/settings" element={<ConsultantSettings />} />
         <Route path="/auth-test" element={<CustomAuthTest />} />
         <Route path="*" element={<Navigate to="/" replace />} />

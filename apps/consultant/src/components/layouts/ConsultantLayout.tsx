@@ -1,9 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { 
   Home, 
   Users, 
-  CheckSquare, 
   FileText, 
   MessageCircle, 
   DollarSign, 
@@ -14,10 +13,13 @@ import {
   Bell,
   Briefcase,
   BarChart3,
-  PenTool
+  PenTool,
+  Kanban,
+  Languages,
+  Clock
 } from 'lucide-react';
-import { useAuth } from '@consulting19/shared';
-import ConsultantSyncManager from '../ConsultantSyncManager';
+import { useAuth, useLanguage, createAuthenticatedFetch } from '@consulting19/shared';
+import type { Notification } from '@consulting19/shared';
 
 interface ConsultantLayoutProps {
   children: React.ReactNode;
@@ -26,12 +28,17 @@ interface ConsultantLayoutProps {
 const ConsultantLayout: React.FC<ConsultantLayoutProps> = ({ children }) => {
   const location = useLocation();
   const { signOut, user, profile } = useAuth();
+  const { language, setLanguage } = useLanguage();
   const [showNotifications, setShowNotifications] = useState(false);
+  const [showLanguageMenu, setShowLanguageMenu] = useState(false);
+  const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [unreadCount, setUnreadCount] = useState(0);
+  const authenticatedFetch = createAuthenticatedFetch();
 
   const navigation = [
     { name: 'Dashboard', href: '/', icon: Home },
     { name: 'Clients', href: '/clients', icon: Users },
-    { name: 'Tasks', href: '/tasks', icon: CheckSquare },
+    { name: 'Task Board', href: '/tasks/board', icon: Kanban },
     { name: 'Documents', href: '/documents', icon: FileText },
     { name: 'Messages', href: '/messages', icon: MessageCircle },
     { name: 'Services', href: '/services', icon: Briefcase },
@@ -41,6 +48,67 @@ const ConsultantLayout: React.FC<ConsultantLayoutProps> = ({ children }) => {
     { name: 'Content', href: '/content', icon: PenTool },
     { name: 'Settings', href: '/settings', icon: Settings },
   ];
+
+  useEffect(() => {
+    if (user) {
+      loadNotifications();
+      loadUnreadCount();
+      
+      const interval = setInterval(() => {
+        loadUnreadCount();
+      }, 30000);
+      
+      return () => clearInterval(interval);
+    }
+  }, [user]);
+
+  const loadNotifications = async () => {
+    try {
+      const response = await authenticatedFetch('/api/notifications');
+      const data = await response.json();
+      if (data.success) {
+        setNotifications(data.notifications || []);
+      }
+    } catch (error) {
+      console.error('Error loading notifications:', error);
+    }
+  };
+
+  const loadUnreadCount = async () => {
+    try {
+      const response = await authenticatedFetch('/api/notifications/unread-count');
+      const data = await response.json();
+      if (data.success) {
+        setUnreadCount(data.count || 0);
+      }
+    } catch (error) {
+      console.error('Error loading unread count:', error);
+    }
+  };
+
+  const markAsRead = async (id: string) => {
+    try {
+      await authenticatedFetch(`/api/notifications/${id}/read`, {
+        method: 'POST'
+      });
+      loadNotifications();
+      loadUnreadCount();
+    } catch (error) {
+      console.error('Error marking as read:', error);
+    }
+  };
+
+  const markAllAsRead = async () => {
+    try {
+      await authenticatedFetch('/api/notifications/read-all', {
+        method: 'POST'
+      });
+      loadNotifications();
+      loadUnreadCount();
+    } catch (error) {
+      console.error('Error marking all as read:', error);
+    }
+  };
 
   const handleSignOut = async () => {
     try {
@@ -87,11 +155,6 @@ const ConsultantLayout: React.FC<ConsultantLayoutProps> = ({ children }) => {
                       isActive ? 'text-blue-600' : 'text-gray-500 group-hover:text-gray-700'
                     }`} />
                     <span className="font-medium">{item.name}</span>
-                    {item.name === 'Tasks' && (
-                      <span className="ml-auto bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
-                        1
-                      </span>
-                    )}
                   </Link>
                 </li>
               );
@@ -148,16 +211,116 @@ const ConsultantLayout: React.FC<ConsultantLayoutProps> = ({ children }) => {
                   className="relative p-2 text-gray-500 hover:text-gray-700 transition-colors"
                 >
                   <Bell className="w-5 h-5" />
-                  <span className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full"></span>
+                  {unreadCount > 0 && (
+                    <span className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 rounded-full flex items-center justify-center">
+                      <span className="text-xs text-white font-semibold">{unreadCount > 9 ? '9+' : unreadCount}</span>
+                    </span>
+                  )}
                 </button>
+                
+                {showNotifications && (
+                  <>
+                    <div 
+                      className="fixed inset-0 z-10" 
+                      onClick={() => setShowNotifications(false)}
+                    />
+                    <div className="absolute right-0 mt-2 w-96 bg-white rounded-lg shadow-lg border border-gray-200 z-20 max-h-96 overflow-hidden flex flex-col">
+                      <div className="p-4 border-b border-gray-200 flex justify-between items-center">
+                        <h3 className="font-semibold text-gray-900">Notifications</h3>
+                        {unreadCount > 0 && (
+                          <button
+                            onClick={markAllAsRead}
+                            className="text-sm text-blue-600 hover:text-blue-700"
+                          >
+                            Mark all read
+                          </button>
+                        )}
+                      </div>
+                      <div className="overflow-y-auto">
+                        {notifications.length === 0 ? (
+                          <div className="p-8 text-center text-gray-500">
+                            <Bell className="w-12 h-12 mx-auto mb-2 text-gray-300" />
+                            <p>No notifications</p>
+                          </div>
+                        ) : (
+                          notifications.map((notif) => (
+                            <div
+                              key={notif.id}
+                              onClick={() => markAsRead(notif.id)}
+                              className={`p-4 border-b border-gray-100 hover:bg-gray-50 cursor-pointer transition-colors ${
+                                !notif.is_read ? 'bg-blue-50' : ''
+                              }`}
+                            >
+                              <div className="flex items-start space-x-3">
+                                <div className={`mt-1 ${notif.is_read ? 'text-gray-400' : 'text-blue-600'}`}>
+                                  {notif.type === 'meeting_reminder' ? <Clock className="w-5 h-5" /> : <Bell className="w-5 h-5" />}
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                  <p className={`text-sm font-medium ${notif.is_read ? 'text-gray-700' : 'text-gray-900'}`}>
+                                    {notif.title}
+                                  </p>
+                                  <p className="text-sm text-gray-600 mt-1">{notif.message}</p>
+                                  <p className="text-xs text-gray-400 mt-1">
+                                    {new Date(notif.created_at).toLocaleDateString('en-US', {
+                                      month: 'short',
+                                      day: 'numeric',
+                                      hour: '2-digit',
+                                      minute: '2-digit'
+                                    })}
+                                  </p>
+                                </div>
+                                {!notif.is_read && (
+                                  <div className="w-2 h-2 bg-blue-600 rounded-full mt-2"></div>
+                                )}
+                              </div>
+                            </div>
+                          ))
+                        )}
+                      </div>
+                    </div>
+                  </>
+                )}
               </div>
 
-              {/* User Badge */}
-              <div className="flex items-center space-x-2 px-3 py-2 bg-blue-50 border border-blue-200 rounded-lg">
-                <div className="w-6 h-6 bg-blue-100 rounded-full flex items-center justify-center">
-                  <User className="w-3 h-3 text-blue-600" />
-                </div>
-                <span className="text-sm font-medium text-blue-700">Consultant</span>
+              {/* Language Switcher */}
+              <div className="relative">
+                <button
+                  onClick={() => setShowLanguageMenu(!showLanguageMenu)}
+                  className="flex items-center space-x-2 px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg hover:bg-gray-100 transition-colors"
+                >
+                  <Languages className="w-4 h-4 text-gray-600" />
+                  <span className="text-sm font-medium text-gray-700 uppercase">{language}</span>
+                </button>
+                
+                {showLanguageMenu && (
+                  <>
+                    <div 
+                      className="fixed inset-0 z-10" 
+                      onClick={() => setShowLanguageMenu(false)}
+                    />
+                    <div className="absolute right-0 mt-2 w-36 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-20">
+                      {[
+                        { code: 'en', name: 'English' },
+                        { code: 'tr', name: 'Türkçe' },
+                        { code: 'pt', name: 'Português' },
+                        { code: 'es', name: 'Español' }
+                      ].map((lang) => (
+                        <button
+                          key={lang.code}
+                          onClick={() => {
+                            setLanguage(lang.code as 'en' | 'tr' | 'pt' | 'es');
+                            setShowLanguageMenu(false);
+                          }}
+                          className={`w-full text-left px-4 py-2 text-sm hover:bg-gray-50 transition-colors ${
+                            language === lang.code ? 'bg-blue-50 text-blue-700 font-medium' : 'text-gray-700'
+                          }`}
+                        >
+                          {lang.name}
+                        </button>
+                      ))}
+                    </div>
+                  </>
+                )}
               </div>
 
               {/* Logout */}
@@ -176,9 +339,6 @@ const ConsultantLayout: React.FC<ConsultantLayoutProps> = ({ children }) => {
           {children}
         </main>
       </div>
-
-      {/* Sync Manager */}
-      <ConsultantSyncManager />
     </div>
   );
 };

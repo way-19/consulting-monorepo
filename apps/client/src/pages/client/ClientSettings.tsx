@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Helmet } from 'react-helmet-async';
-import { useAuth } from '@consulting19/shared';
+import { useAuth, createAuthenticatedFetch } from '@consulting19/shared';
 import { 
   User, 
   Lock, 
@@ -16,7 +16,6 @@ import {
   Mail,
   Smartphone
 } from 'lucide-react';
-import { supabase } from '@consulting19/shared/lib/supabase';
 
 interface ProfileData {
   full_name: string;
@@ -95,30 +94,34 @@ const ClientSettings = () => {
       setErrorMessage('');
       setSuccessMessage('');
 
-      const { error } = await supabase
-        .from('user_profiles')
-        .update({
+      const authFetch = createAuthenticatedFetch();
+      const response = await authFetch('/api/users/profile', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
           full_name: profileData.full_name,
           display_name: profileData.display_name,
           phone: profileData.phone,
           company: profileData.company,
           preferred_language: profileData.preferred_language,
-          timezone: profileData.timezone,
-          updated_at: new Date().toISOString()
+          timezone: profileData.timezone
         })
-        .eq('id', user?.id);
+      });
 
-      if (error) {
-        throw error;
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to update profile');
       }
 
       setSuccessMessage('Profile updated successfully!');
       refreshProfile();
       
       setTimeout(() => setSuccessMessage(''), 3000);
-    } catch (err) {
+    } catch (err: any) {
       console.error('Profile update error:', err);
-      setErrorMessage('Failed to update profile. Please try again.');
+      setErrorMessage(err.message || 'Failed to update profile. Please try again.');
     } finally {
       setSaving(false);
     }
@@ -140,12 +143,21 @@ const ClientSettings = () => {
       setErrorMessage('');
       setSuccessMessage('');
 
-      const { error } = await supabase.auth.updateUser({
-        password: passwordData.newPassword
+      const authFetch = createAuthenticatedFetch();
+      const response = await authFetch('http://localhost:3001/api/auth/change-password', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          currentPassword: passwordData.currentPassword,
+          newPassword: passwordData.newPassword
+        })
       });
 
-      if (error) {
-        throw error;
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to change password');
       }
 
       setSuccessMessage('Password changed successfully!');

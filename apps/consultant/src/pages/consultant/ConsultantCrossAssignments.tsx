@@ -1,364 +1,540 @@
-import React, { useState, useEffect } from 'react';
-import { Users, Calendar, Clock, MapPin, Star, Filter, Search, Plus, Eye, MessageSquare } from 'lucide-react';
-import { useAuth } from '@consulting19/shared';
+import { useState, useEffect } from 'react';
+import { Helmet } from 'react-helmet-async';
+import { 
+  CheckCircle, XCircle, Clock, AlertCircle, Globe, 
+  DollarSign, User, MapPin, Calendar, Send, Inbox
+} from 'lucide-react';
+import { createAuthenticatedFetch } from '@consulting19/shared';
 
 interface CrossAssignment {
   id: string;
-  title: string;
-  description: string;
+  service_description: string;
+  estimated_price: number | null;
+  status: string;
+  target_country_code: string;
   client_name: string;
-  location: string;
-  start_date: string;
-  end_date: string;
-  duration: string;
-  status: 'available' | 'applied' | 'assigned' | 'completed' | 'cancelled';
-  required_skills: string[];
-  compensation: number;
-  urgency: 'low' | 'medium' | 'high';
-  team_size: number;
-  lead_consultant: string;
-  applications_count: number;
-  rating?: number;
+  client_email: string;
+  client_company: string;
+  referring_consultant_name?: string;
+  referring_consultant_email?: string;
+  referring_country_code?: string;
+  target_consultant_name?: string;
+  target_consultant_email?: string;
+  target_country_code_display?: string;
+  rejection_reason?: string | null;
+  created_at: string;
+  approved_at?: string | null;
+  rejected_at?: string | null;
 }
 
+interface AssignmentStats {
+  received_pending: number;
+  received_approved: number;
+  sent_pending: number;
+  sent_approved: number;
+  commission_rates: {
+    system: number;
+    assigned_consultant: number;
+    referring_consultant: number;
+  };
+}
 
-
-const ConsultantCrossAssignments: React.FC = () => {
-  const { user } = useAuth();
-  const [assignments, setAssignments] = useState<CrossAssignment[]>([]);
-  const [selectedTab, setSelectedTab] = useState<'available' | 'my-applications' | 'my-assignments'>('available');
-  const [searchTerm, setSearchTerm] = useState('');
-  const [selectedSkill, setSelectedSkill] = useState('');
-  const [selectedUrgency, setSelectedUrgency] = useState('');
+const ConsultantCrossAssignments = () => {
+  const [receivedAssignments, setReceivedAssignments] = useState<CrossAssignment[]>([]);
+  const [sentAssignments, setSentAssignments] = useState<CrossAssignment[]>([]);
+  const [stats, setStats] = useState<AssignmentStats | null>(null);
   const [loading, setLoading] = useState(true);
+  const [activeTab, setActiveTab] = useState<'received' | 'sent'>('received');
+  const [rejectionReason, setRejectionReason] = useState('');
+  const [rejectingId, setRejectingId] = useState<string | null>(null);
+  const authFetch = createAuthenticatedFetch();
 
   useEffect(() => {
-    // Mock data for demonstration
-    const mockAssignments: CrossAssignment[] = [
-      {
-        id: '1',
-        title: 'Digital Transformation Project',
-        description: 'Lead a comprehensive digital transformation initiative for a mid-size manufacturing company.',
-        client_name: 'TechCorp Industries',
-        location: 'New York, NY',
-        start_date: '2024-02-15',
-        end_date: '2024-05-15',
-        duration: '3 months',
-        status: 'available',
-        required_skills: ['Digital Strategy', 'Change Management', 'Project Management'],
-        compensation: 15000,
-        urgency: 'high',
-        team_size: 4,
-        lead_consultant: 'Sarah Johnson',
-        applications_count: 8
-      },
-      {
-        id: '2',
-        title: 'Market Research Analysis',
-        description: 'Conduct comprehensive market research for new product launch in European markets.',
-        client_name: 'Global Ventures Ltd',
-        location: 'London, UK',
-        start_date: '2024-03-01',
-        end_date: '2024-04-30',
-        duration: '2 months',
-        status: 'applied',
-        required_skills: ['Market Research', 'Data Analysis', 'Strategic Planning'],
-        compensation: 12000,
-        urgency: 'medium',
-        team_size: 3,
-        lead_consultant: 'Michael Chen',
-        applications_count: 5
-      },
-      {
-        id: '3',
-        title: 'Financial Restructuring',
-        description: 'Support financial restructuring and optimization for a growing startup.',
-        client_name: 'StartupX',
-        location: 'San Francisco, CA',
-        start_date: '2024-01-20',
-        end_date: '2024-03-20',
-        duration: '2 months',
-        status: 'assigned',
-        required_skills: ['Financial Analysis', 'Business Strategy', 'Risk Management'],
-        compensation: 18000,
-        urgency: 'high',
-        team_size: 2,
-        lead_consultant: 'David Wilson',
-        applications_count: 12,
-        rating: 4.8
+    fetchAssignments();
+    fetchStats();
+  }, []);
+
+  const fetchAssignments = async () => {
+    try {
+      setLoading(true);
+      const [receivedRes, sentRes] = await Promise.all([
+        authFetch('/api/cross-assignments/received'),
+        authFetch('/api/cross-assignments/sent')
+      ]);
+
+      if (receivedRes.ok) {
+        const data = await receivedRes.json();
+        setReceivedAssignments(data.assignments || []);
       }
-    ];
 
-
-
-    setAssignments(mockAssignments);
-    setLoading(false);
-  }, [user]);
-
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'available':
-        return 'text-green-600 bg-green-50 border-green-200';
-      case 'applied':
-        return 'text-blue-600 bg-blue-50 border-blue-200';
-      case 'assigned':
-        return 'text-purple-600 bg-purple-50 border-purple-200';
-      case 'completed':
-        return 'text-gray-600 bg-gray-50 border-gray-200';
-      case 'cancelled':
-        return 'text-red-600 bg-red-50 border-red-200';
-      default:
-        return 'text-gray-600 bg-gray-50 border-gray-200';
+      if (sentRes.ok) {
+        const data = await sentRes.json();
+        setSentAssignments(data.assignments || []);
+      }
+    } catch (error) {
+      console.error('Error fetching assignments:', error);
+    } finally {
+      setLoading(false);
     }
   };
 
-  const getUrgencyColor = (urgency: string) => {
-    switch (urgency) {
-      case 'high':
-        return 'text-red-600 bg-red-50';
-      case 'medium':
-        return 'text-yellow-600 bg-yellow-50';
-      case 'low':
-        return 'text-green-600 bg-green-50';
-      default:
-        return 'text-gray-600 bg-gray-50';
+  const fetchStats = async () => {
+    try {
+      const response = await authFetch('/api/cross-assignments/stats');
+      
+      if (response.ok) {
+        const data = await response.json();
+        setStats(data.stats);
+      }
+    } catch (error) {
+      console.error('Error fetching stats:', error);
     }
   };
 
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD'
-    }).format(amount);
-  };
-
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString();
-  };
-
-  const filteredAssignments = assignments.filter(assignment => {
-    const matchesSearch = assignment.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         assignment.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         assignment.client_name.toLowerCase().includes(searchTerm.toLowerCase());
-    
-    const matchesSkill = !selectedSkill || assignment.required_skills.includes(selectedSkill);
-    const matchesUrgency = !selectedUrgency || assignment.urgency === selectedUrgency;
-    
-    if (selectedTab === 'available') {
-      return assignment.status === 'available' && matchesSearch && matchesSkill && matchesUrgency;
-    } else if (selectedTab === 'my-applications') {
-      return assignment.status === 'applied' && matchesSearch && matchesSkill && matchesUrgency;
-    } else {
-      return assignment.status === 'assigned' && matchesSearch && matchesSkill && matchesUrgency;
+  const handleApprove = async (assignmentId: string) => {
+    if (!confirm('Approve this cross-country service request?')) {
+      return;
     }
-  });
 
-  const allSkills = Array.from(new Set(assignments.flatMap(a => a.required_skills)));
+    try {
+      const response = await authFetch(`/api/cross-assignments/${assignmentId}/approve`, {
+        method: 'PATCH'
+      });
+
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.error || 'Failed to approve assignment');
+      }
+
+      alert('Assignment approved successfully!');
+      await fetchAssignments();
+    } catch (error: any) {
+      console.error('Error approving assignment:', error);
+      alert(error.message || 'Failed to approve assignment');
+    }
+  };
+
+  const handleRejectSubmit = async (assignmentId: string) => {
+    try {
+      const response = await authFetch(`/api/cross-assignments/${assignmentId}/reject`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          rejection_reason: rejectionReason || undefined
+        })
+      });
+
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.error || 'Failed to reject assignment');
+      }
+
+      alert('Assignment rejected.');
+      setRejectingId(null);
+      setRejectionReason('');
+      await fetchAssignments();
+    } catch (error: any) {
+      console.error('Error rejecting assignment:', error);
+      alert(error.message || 'Failed to reject assignment');
+    }
+  };
+
+  const getStatusBadge = (status: string) => {
+    const statusConfig: Record<string, { label: string; color: string; icon: JSX.Element }> = {
+      pending: {
+        label: 'Pending',
+        color: 'bg-yellow-100 text-yellow-800',
+        icon: <Clock className="w-4 h-4" />
+      },
+      approved: {
+        label: 'Approved',
+        color: 'bg-green-100 text-green-800',
+        icon: <CheckCircle className="w-4 h-4" />
+      },
+      rejected: {
+        label: 'Rejected',
+        color: 'bg-red-100 text-red-800',
+        icon: <XCircle className="w-4 h-4" />
+      },
+      cancelled: {
+        label: 'Cancelled',
+        color: 'bg-gray-100 text-gray-800',
+        icon: <AlertCircle className="w-4 h-4" />
+      }
+    };
+
+    const config = statusConfig[status] || statusConfig.pending;
+
+    return (
+      <span className={`inline-flex items-center space-x-1 px-3 py-1 rounded-full text-xs font-medium ${config.color}`}>
+        {config.icon}
+        <span>{config.label}</span>
+      </span>
+    );
+  };
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-      </div>
+      <>
+        <Helmet>
+          <title>Cross-Country Assignments - Consultant Portal</title>
+        </Helmet>
+        
+        <div className="min-h-screen bg-gray-50">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+            <div className="animate-pulse space-y-6">
+              <div className="h-8 bg-gray-200 rounded w-1/3"></div>
+              <div className="space-y-4">
+                {[1, 2, 3].map(i => (
+                  <div key={i} className="h-48 bg-gray-200 rounded-lg"></div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      </>
     );
   }
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex justify-between items-center">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">Cross Assignments</h1>
-          <p className="text-gray-600">Collaborate with other consultants on exciting projects</p>
-        </div>
-        <button className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors flex items-center space-x-2">
-          <Plus className="w-4 h-4" />
-          <span>Create Assignment</span>
-        </button>
-      </div>
-
-      {/* Tabs */}
-      <div className="border-b border-gray-200">
-        <nav className="-mb-px flex space-x-8">
-          <button
-            onClick={() => setSelectedTab('available')}
-            className={`py-2 px-1 border-b-2 font-medium text-sm ${
-              selectedTab === 'available'
-                ? 'border-blue-500 text-blue-600'
-                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-            }`}
-          >
-            Available Assignments
-          </button>
-          <button
-            onClick={() => setSelectedTab('my-applications')}
-            className={`py-2 px-1 border-b-2 font-medium text-sm ${
-              selectedTab === 'my-applications'
-                ? 'border-blue-500 text-blue-600'
-                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-            }`}
-          >
-            My Applications
-          </button>
-          <button
-            onClick={() => setSelectedTab('my-assignments')}
-            className={`py-2 px-1 border-b-2 font-medium text-sm ${
-              selectedTab === 'my-assignments'
-                ? 'border-blue-500 text-blue-600'
-                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-            }`}
-          >
-            My Assignments
-          </button>
-        </nav>
-      </div>
-
-      {/* Filters */}
-      <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-200">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-            <input
-              type="text"
-              placeholder="Search assignments..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10 pr-4 py-2 w-full border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            />
+    <>
+      <Helmet>
+        <title>Cross-Country Assignments - Consultant Portal</title>
+      </Helmet>
+      
+      <div className="min-h-screen bg-gray-50">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
+          {/* Header */}
+          <div>
+            <h1 className="text-3xl font-bold text-gray-900">Cross-Country Assignments</h1>
+            <p className="text-gray-600 mt-1">
+              Collaborate with consultants in other countries and earn referral commissions
+            </p>
           </div>
-          
-          <select
-            value={selectedSkill}
-            onChange={(e) => setSelectedSkill(e.target.value)}
-            className="border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-          >
-            <option value="">All Skills</option>
-            {allSkills.map(skill => (
-              <option key={skill} value={skill}>{skill}</option>
-            ))}
-          </select>
 
-          <select
-            value={selectedUrgency}
-            onChange={(e) => setSelectedUrgency(e.target.value)}
-            className="border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-          >
-            <option value="">All Urgency Levels</option>
-            <option value="high">High</option>
-            <option value="medium">Medium</option>
-            <option value="low">Low</option>
-          </select>
-
-          <button className="bg-gray-100 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-200 transition-colors flex items-center space-x-2">
-            <Filter className="w-4 h-4" />
-            <span>More Filters</span>
-          </button>
-        </div>
-      </div>
-
-      {/* Assignments Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {filteredAssignments.map((assignment) => (
-          <div key={assignment.id} className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-            <div className="flex justify-between items-start mb-4">
-              <div className="flex-1">
-                <h3 className="text-lg font-semibold text-gray-900 mb-2">{assignment.title}</h3>
-                <p className="text-gray-600 text-sm mb-3">{assignment.description}</p>
+          {/* Commission Structure Card */}
+          {stats && (
+            <div className="bg-gradient-to-r from-purple-50 to-blue-50 rounded-lg border border-purple-200 p-6">
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-lg font-semibold text-gray-900">Commission Structure</h2>
+                <DollarSign className="w-6 h-6 text-purple-600" />
               </div>
-              <div className="flex flex-col items-end space-y-2">
-                <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${getStatusColor(assignment.status)}`}>
-                  {assignment.status}
-                </span>
-                <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getUrgencyColor(assignment.urgency)}`}>
-                  {assignment.urgency} priority
-                </span>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="bg-white rounded-lg p-4 shadow-sm">
+                  <div className="text-sm text-gray-600 mb-1">System Fee</div>
+                  <div className="text-2xl font-bold text-gray-900">
+                    {stats.commission_rates.system.toFixed(0)}%
+                  </div>
+                </div>
+                <div className="bg-white rounded-lg p-4 shadow-sm">
+                  <div className="text-sm text-gray-600 mb-1">Assigned Consultant</div>
+                  <div className="text-2xl font-bold text-green-600">
+                    {stats.commission_rates.assigned_consultant.toFixed(0)}%
+                  </div>
+                  <div className="text-xs text-gray-500 mt-1">You earn when providing service</div>
+                </div>
+                <div className="bg-white rounded-lg p-4 shadow-sm">
+                  <div className="text-sm text-gray-600 mb-1">Referring Consultant</div>
+                  <div className="text-2xl font-bold text-blue-600">
+                    {stats.commission_rates.referring_consultant.toFixed(0)}%
+                  </div>
+                  <div className="text-xs text-gray-500 mt-1">You earn when referring clients</div>
+                </div>
               </div>
             </div>
+          )}
 
-            <div className="space-y-3 mb-4">
-              <div className="flex items-center text-sm text-gray-600">
-                <Users className="w-4 h-4 mr-2" />
-                <span>{assignment.client_name}</span>
-              </div>
-              
-              <div className="flex items-center text-sm text-gray-600">
-                <MapPin className="w-4 h-4 mr-2" />
-                <span>{assignment.location}</span>
-              </div>
-              
-              <div className="flex items-center text-sm text-gray-600">
-                <Calendar className="w-4 h-4 mr-2" />
-                <span>{formatDate(assignment.start_date)} - {formatDate(assignment.end_date)}</span>
-              </div>
-              
-              <div className="flex items-center text-sm text-gray-600">
-                <Clock className="w-4 h-4 mr-2" />
-                <span>{assignment.duration} • {assignment.team_size} team members</span>
-              </div>
+          {/* Tabs */}
+          <div className="border-b border-gray-200">
+            <nav className="-mb-px flex space-x-8">
+              <button
+                onClick={() => setActiveTab('received')}
+                className={`py-4 px-1 border-b-2 font-medium text-sm transition-colors ${
+                  activeTab === 'received'
+                    ? 'border-purple-500 text-purple-600'
+                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                }`}
+              >
+                <div className="flex items-center space-x-2">
+                  <Inbox className="w-4 h-4" />
+                  <span>Received Requests</span>
+                  {receivedAssignments.filter(a => a.status === 'pending').length > 0 && (
+                    <span className="bg-purple-100 text-purple-800 px-2 py-0.5 rounded-full text-xs font-medium">
+                      {receivedAssignments.filter(a => a.status === 'pending').length}
+                    </span>
+                  )}
+                </div>
+              </button>
+              <button
+                onClick={() => setActiveTab('sent')}
+                className={`py-4 px-1 border-b-2 font-medium text-sm transition-colors ${
+                  activeTab === 'sent'
+                    ? 'border-purple-500 text-purple-600'
+                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                }`}
+              >
+                <div className="flex items-center space-x-2">
+                  <Send className="w-4 h-4" />
+                  <span>Sent Requests</span>
+                </div>
+              </button>
+            </nav>
+          </div>
 
-              {assignment.rating && (
-                <div className="flex items-center text-sm text-gray-600">
-                  <Star className="w-4 h-4 mr-2 text-yellow-500" />
-                  <span>{assignment.rating}/5.0 rating</span>
+          {/* Received Assignments */}
+          {activeTab === 'received' && (
+            <div className="space-y-6">
+              {receivedAssignments.length > 0 ? (
+                receivedAssignments.map((assignment) => (
+                  <div key={assignment.id} className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                    <div className="flex items-start justify-between mb-4">
+                      <div className="flex-1">
+                        <div className="flex items-center space-x-3 mb-2">
+                          <h3 className="text-xl font-semibold text-gray-900">
+                            {assignment.service_description}
+                          </h3>
+                          {getStatusBadge(assignment.status)}
+                        </div>
+                      </div>
+                      {assignment.estimated_price && (
+                        <div className="text-right ml-4">
+                          <p className="text-sm text-gray-600">Estimated</p>
+                          <p className="text-2xl font-bold text-gray-900">
+                            ${assignment.estimated_price.toLocaleString()}
+                          </p>
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                      <div className="space-y-2">
+                        <div className="flex items-center text-sm text-gray-600">
+                          <User className="w-4 h-4 mr-2" />
+                          <span>
+                            <strong>Client:</strong> {assignment.client_name}
+                            {assignment.client_company && ` (${assignment.client_company})`}
+                          </span>
+                        </div>
+                        <div className="flex items-center text-sm text-gray-600">
+                          <Globe className="w-4 h-4 mr-2" />
+                          <span>
+                            <strong>Referring Consultant:</strong> {assignment.referring_consultant_name} ({assignment.referring_country_code})
+                          </span>
+                        </div>
+                      </div>
+                      <div className="space-y-2">
+                        <div className="flex items-center text-sm text-gray-600">
+                          <Calendar className="w-4 h-4 mr-2" />
+                          <span>
+                            <strong>Requested:</strong> {new Date(assignment.created_at).toLocaleString()}
+                          </span>
+                        </div>
+                        {assignment.approved_at && (
+                          <div className="flex items-center text-sm text-green-600">
+                            <CheckCircle className="w-4 h-4 mr-2" />
+                            <span>
+                              <strong>Approved:</strong> {new Date(assignment.approved_at).toLocaleString()}
+                            </span>
+                          </div>
+                        )}
+                        {assignment.rejected_at && (
+                          <div className="flex items-center text-sm text-red-600">
+                            <XCircle className="w-4 h-4 mr-2" />
+                            <span>
+                              <strong>Rejected:</strong> {new Date(assignment.rejected_at).toLocaleString()}
+                            </span>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+
+                    {assignment.rejection_reason && (
+                      <div className="mb-4 bg-red-50 border border-red-200 rounded-lg p-3">
+                        <p className="text-sm text-red-900">
+                          <strong>Rejection Reason:</strong> {assignment.rejection_reason}
+                        </p>
+                      </div>
+                    )}
+
+                    {assignment.status === 'pending' && (
+                      <div className="border-t border-gray-200 pt-4">
+                        {rejectingId === assignment.id ? (
+                          <div className="space-y-3">
+                            <textarea
+                              value={rejectionReason}
+                              onChange={(e) => setRejectionReason(e.target.value)}
+                              placeholder="Optionally provide a reason for rejection..."
+                              rows={3}
+                              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent resize-none"
+                            />
+                            <div className="flex space-x-3">
+                              <button
+                                onClick={() => {
+                                  setRejectingId(null);
+                                  setRejectionReason('');
+                                }}
+                                className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
+                              >
+                                Cancel
+                              </button>
+                              <button
+                                onClick={() => handleRejectSubmit(assignment.id)}
+                                className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+                              >
+                                Confirm Rejection
+                              </button>
+                            </div>
+                          </div>
+                        ) : (
+                          <div className="flex space-x-3">
+                            <button
+                              onClick={() => setRejectingId(assignment.id)}
+                              className="inline-flex items-center px-4 py-2 border border-red-300 text-red-700 rounded-lg hover:bg-red-50 transition-colors"
+                            >
+                              <XCircle className="w-4 h-4 mr-2" />
+                              Reject
+                            </button>
+                            <button
+                              onClick={() => handleApprove(assignment.id)}
+                              className="inline-flex items-center px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+                            >
+                              <CheckCircle className="w-4 h-4 mr-2" />
+                              Approve Request
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                    )}
+
+                    {assignment.status === 'approved' && (
+                      <div className="border-t border-gray-200 pt-4">
+                        <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+                          <p className="text-sm text-green-900">
+                            <strong>✓ Approved:</strong> You can now work with this client. 
+                            <strong>Commission Structure:</strong> You earn <strong>65%</strong> of service fees, 
+                            the referring consultant earns <strong>5%</strong>, and <strong>30%</strong> goes to the system.
+                          </p>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                ))
+              ) : (
+                <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-12 text-center">
+                  <Inbox className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+                  <h3 className="text-xl font-semibold text-gray-900 mb-2">
+                    No Received Requests
+                  </h3>
+                  <p className="text-gray-600">
+                    You haven't received any cross-country service requests yet
+                  </p>
                 </div>
               )}
             </div>
+          )}
 
-            <div className="mb-4">
-              <p className="text-sm font-medium text-gray-700 mb-2">Required Skills:</p>
-              <div className="flex flex-wrap gap-2">
-                {assignment.required_skills.map((skill, index) => (
-                  <span key={index} className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                    {skill}
-                  </span>
-                ))}
-              </div>
+          {/* Sent Assignments */}
+          {activeTab === 'sent' && (
+            <div className="space-y-6">
+              {sentAssignments.length > 0 ? (
+                sentAssignments.map((assignment) => (
+                  <div key={assignment.id} className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                    <div className="flex items-start justify-between mb-4">
+                      <div className="flex-1">
+                        <div className="flex items-center space-x-3 mb-2">
+                          <h3 className="text-xl font-semibold text-gray-900">
+                            {assignment.service_description}
+                          </h3>
+                          {getStatusBadge(assignment.status)}
+                        </div>
+                      </div>
+                      {assignment.estimated_price && (
+                        <div className="text-right ml-4">
+                          <p className="text-sm text-gray-600">Estimated</p>
+                          <p className="text-2xl font-bold text-gray-900">
+                            ${assignment.estimated_price.toLocaleString()}
+                          </p>
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                      <div className="space-y-2">
+                        <div className="flex items-center text-sm text-gray-600">
+                          <User className="w-4 h-4 mr-2" />
+                          <span>
+                            <strong>Client:</strong> {assignment.client_name}
+                            {assignment.client_company && ` (${assignment.client_company})`}
+                          </span>
+                        </div>
+                        <div className="flex items-center text-sm text-gray-600">
+                          <MapPin className="w-4 h-4 mr-2" />
+                          <span>
+                            <strong>Target Country:</strong> {assignment.target_country_code}
+                          </span>
+                        </div>
+                        <div className="flex items-center text-sm text-gray-600">
+                          <Globe className="w-4 h-4 mr-2" />
+                          <span>
+                            <strong>Target Consultant:</strong> {assignment.target_consultant_name}
+                          </span>
+                        </div>
+                      </div>
+                      <div className="space-y-2">
+                        <div className="flex items-center text-sm text-gray-600">
+                          <Calendar className="w-4 h-4 mr-2" />
+                          <span>
+                            <strong>Sent:</strong> {new Date(assignment.created_at).toLocaleString()}
+                          </span>
+                        </div>
+                        {assignment.status === 'approved' && (
+                          <div className="flex items-center text-sm text-gray-600">
+                            <DollarSign className="w-4 h-4 mr-2 text-green-600" />
+                            <span className="text-green-600">
+                              <strong>Your Referral Commission:</strong> 5%
+                            </span>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+
+                    {assignment.rejection_reason && (
+                      <div className="bg-red-50 border border-red-200 rounded-lg p-3 mb-4">
+                        <p className="text-sm text-red-900">
+                          <strong>Rejection Reason:</strong> {assignment.rejection_reason}
+                        </p>
+                      </div>
+                    )}
+
+                    {assignment.status === 'approved' && (
+                      <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+                        <p className="text-sm text-green-900">
+                          <strong>✓ Approved:</strong> The consultant has accepted this request. 
+                          <strong>Commission Structure:</strong> You earn <strong>5%</strong> referral fee, 
+                          the assigned consultant earns <strong>65%</strong>, and <strong>30%</strong> goes to the system.
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                ))
+              ) : (
+                <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-12 text-center">
+                  <Send className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+                  <h3 className="text-xl font-semibold text-gray-900 mb-2">
+                    No Sent Requests
+                  </h3>
+                  <p className="text-gray-600">
+                    You haven't sent any cross-country service requests yet
+                  </p>
+                </div>
+              )}
             </div>
-
-            <div className="flex justify-between items-center pt-4 border-t border-gray-200">
-              <div>
-                <p className="text-lg font-semibold text-gray-900">{formatCurrency(assignment.compensation)}</p>
-                <p className="text-sm text-gray-600">{assignment.applications_count} applications</p>
-              </div>
-              
-              <div className="flex space-x-2">
-                <button className="bg-gray-100 text-gray-700 px-3 py-2 rounded-lg hover:bg-gray-200 transition-colors flex items-center space-x-1">
-                  <Eye className="w-4 h-4" />
-                  <span>View</span>
-                </button>
-                
-                {assignment.status === 'available' && (
-                  <button className="bg-blue-600 text-white px-3 py-2 rounded-lg hover:bg-blue-700 transition-colors">
-                    Apply
-                  </button>
-                )}
-                
-                {assignment.status === 'applied' && (
-                  <button className="bg-green-600 text-white px-3 py-2 rounded-lg hover:bg-green-700 transition-colors flex items-center space-x-1">
-                    <MessageSquare className="w-4 h-4" />
-                    <span>Message</span>
-                  </button>
-                )}
-                
-                {assignment.status === 'assigned' && (
-                  <button className="bg-purple-600 text-white px-3 py-2 rounded-lg hover:bg-purple-700 transition-colors">
-                    Continue
-                  </button>
-                )}
-              </div>
-            </div>
-          </div>
-        ))}
-      </div>
-
-      {filteredAssignments.length === 0 && (
-        <div className="text-center py-12">
-          <Users className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-          <h3 className="text-lg font-medium text-gray-900 mb-2">No assignments found</h3>
-          <p className="text-gray-600">Try adjusting your filters or check back later for new opportunities.</p>
+          )}
         </div>
-      )}
-    </div>
+      </div>
+    </>
   );
 };
 

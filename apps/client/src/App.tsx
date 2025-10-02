@@ -4,7 +4,6 @@ import LoginPage from './pages/auth/LoginPage';
 import ClientDashboard from './pages/client/ClientDashboard';
 import ClientProjects from './pages/client/ClientProjects';
 import ClientProjectDetails from './pages/client/ClientProjectDetails';
-import ClientTasks from './pages/client/ClientTasks';
 import ClientServices from './pages/client/ClientServices';
 import ClientMessages from './pages/client/ClientMessages';
 import ClientCalendar from './pages/client/ClientCalendar';
@@ -15,6 +14,7 @@ import ClientMailbox from './pages/client/ClientMailbox';
 import ClientProgressTracking from './pages/client/ClientProgressTracking';
 import ClientSupport from './pages/client/ClientSupport';
 import ClientSettings from './pages/client/ClientSettings';
+import ClientBookMeeting from './pages/client/ClientBookMeeting';
 import ClientLayout from './components/layouts/ClientLayout';
 
 function App() {
@@ -66,7 +66,6 @@ const ProtectedClientRoutes = () => {
         <Route path="/" element={<ClientDashboard />} />
         <Route path="/projects" element={<ClientProjects />} />
         <Route path="/projects/:projectId" element={<ClientProjectDetails />} />
-        <Route path="/tasks" element={<ClientTasks />} />
         <Route path="/services" element={<ClientServices />} />
         <Route path="/messages" element={<ClientMessages />} />
         <Route path="/calendar" element={<ClientCalendar />} />
@@ -75,6 +74,7 @@ const ProtectedClientRoutes = () => {
         <Route path="/files" element={<ClientFileManager />} />
         <Route path="/mailbox" element={<ClientMailbox />} />
         <Route path="/progress" element={<ClientProgressTracking />} />
+        <Route path="/book-meeting" element={<ClientBookMeeting />} />
         <Route path="/support" element={<ClientSupport />} />
         <Route path="/settings" element={<ClientSettings />} />
         <Route path="*" element={<Navigate to="/" replace />} />

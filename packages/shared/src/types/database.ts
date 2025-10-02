@@ -19,6 +19,21 @@ export interface UserProfile {
   updated_at: string;
 }
 
+export interface Notification {
+  id: string;
+  user_id: string;
+  type: 'meeting_reminder' | 'message' | 'task_update' | 'payment' | 'system';
+  title: string;
+  message: string;
+  is_read: boolean;
+  related_meeting_id?: string;
+  related_project_id?: string;
+  related_order_id?: string;
+  action_url?: string;
+  created_at: string;
+  read_at?: string;
+}
+
 export interface Country {
   id: string;
   name: string;
@@ -71,6 +86,74 @@ export interface Project {
   currency?: string;
   start_date?: string;
   end_date?: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface AvailabilitySlot {
+  id: number;
+  consultant_id: string;
+  day_of_week: number; // 0=Monday, 6=Sunday
+  start_time: string; // HH:MM format
+  end_time: string;
+  status?: string;
+  notes?: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface BlockedTime {
+  id: string;
+  consultant_id: string;
+  title: string;
+  start_time: string;
+  end_time: string;
+  reason?: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface MeetingPricing {
+  id: string;
+  consultant_id: string;
+  duration_minutes: number;
+  price: number;
+  currency: string;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface ConsultantSettings {
+  id: string;
+  consultant_id: string;
+  video_platform?: string; // 'google_meet' | 'zoom' | 'teams'
+  video_meeting_url?: string;
+  meeting_topics?: string[]; // ["hukuk", "danışmanlık", "şirket kurulumu"]
+  hourly_rate?: number;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface Meeting {
+  id: string;
+  title: string;
+  description?: string;
+  client_id: string;
+  consultant_id: string;
+  start_time: string;
+  end_time: string;
+  meeting_type?: string; // 'video' | 'phone' | 'in-person'
+  meeting_topic?: string;
+  duration_minutes?: number;
+  price_paid?: number;
+  currency?: string;
+  payment_status?: string; // 'pending' | 'paid' | 'refunded'
+  stripe_session_id?: string;
+  status?: string; // 'scheduled' | 'completed' | 'cancelled'
+  meeting_url?: string;
+  location?: string;
+  notes?: string;
   created_at: string;
   updated_at: string;
 }

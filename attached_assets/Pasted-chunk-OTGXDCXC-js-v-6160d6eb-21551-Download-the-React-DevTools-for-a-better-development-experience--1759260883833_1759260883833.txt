@@ -1,0 +1,55 @@
+chunk-OTGXDCXC.js?v=6160d6eb:21551 Download the React DevTools for a better development experience: https://reactjs.org/link/react-devtools
+supabase.ts:8 Supabase URL from env: https://qdwykqrepolavgvfxquw.supabase.co
+supabase.ts:9 Supabase Anon Key from env: *****
+AuthContext.tsx:94 Auth state change: SIGNED_IN client@consulting19.com
+AuthContext.tsx:155 Fetching profile for user: 44175993-eda1-42e7-ab18-bba2f16d721b
+AuthContext.tsx:37 Initial session: client@consulting19.com
+AuthContext.tsx:37 Initial session: client@consulting19.com
+AuthContext.tsx:94 Auth state change: INITIAL_SESSION client@consulting19.com
+AuthContext.tsx:155 Fetching profile for user: 44175993-eda1-42e7-ab18-bba2f16d721b
+qdwykqrepolavgvfxquw.supabase.co/rest/v1/user_profiles?select=*&id=eq.44175993-eda1-42e7-ab18-bba2f16d721b:1  Failed to load resource: the server responded with a status of 406 ()
+AuthContext.tsx:172 Using session data for profile, DB error: Object
+qdwykqrepolavgvfxquw.supabase.co/rest/v1/user_profiles?select=id&id=eq.44175993-eda1-42e7-ab18-bba2f16d721b:1  Failed to load resource: the server responded with a status of 406 ()
+sessionReset.ts:104 ⚠️ Session user ID has no corresponding profile
+checkSessionMismatch @ sessionReset.ts:104
+AuthContext.tsx:43 🔄 Session mismatch detected, resetting...
+sessionReset.ts:9 🧹 Forcing session reset...
+qdwykqrepolavgvfxquw.supabase.co/rest/v1/user_profiles?select=*&id=eq.44175993-eda1-42e7-ab18-bba2f16d721b:1  Failed to load resource: the server responded with a status of 406 ()
+AuthContext.tsx:172 Using session data for profile, DB error: Object
+qdwykqrepolavgvfxquw.supabase.co/rest/v1/clients?select=id%2Cassigned_consultant_id&profile_id=eq.7705f317-931e-4987-8ca8-d8bb50b8f056:1  Failed to load resource: the server responded with a status of 406 ()
+ClientDashboard.tsx:101 Client data not found
+fetchDashboardData @ ClientDashboard.tsx:101
+qdwykqrepolavgvfxquw.supabase.co/rest/v1/user_profiles?select=id&id=eq.44175993-eda1-42e7-ab18-bba2f16d721b:1  Failed to load resource: the server responded with a status of 406 ()
+sessionReset.ts:104 ⚠️ Session user ID has no corresponding profile
+checkSessionMismatch @ sessionReset.ts:104
+AuthContext.tsx:43 🔄 Session mismatch detected, resetting...
+sessionReset.ts:9 🧹 Forcing session reset...
+AuthContext.tsx:94 Auth state change: SIGNED_OUT undefined
+AuthContext.tsx:94 Auth state change: SIGNED_OUT undefined
+sessionReset.ts:37 ✅ Cleared 0 cached session keys
+sessionReset.ts:67 ✅ Session reset completed
+sessionReset.ts:37 ✅ Cleared 0 cached session keys
+sessionReset.ts:67 ✅ Session reset completed
+qdwykqrepolavgvfxquw.supabase.co/rest/v1/clients?select=id%2Cassigned_consultant_id&profile_id=eq.7705f317-931e-4987-8ca8-d8bb50b8f056:1  Failed to load resource: the server responded with a status of 406 ()
+ClientDashboard.tsx:101 Client data not found
+fetchDashboardData @ ClientDashboard.tsx:101
+qdwykqrepolavgvfxquw.supabase.co/rest/v1/clients?select=id%2Cassigned_consultant_id&profile_id=eq.7705f317-931e-4987-8ca8-d8bb50b8f056:1  Failed to load resource: the server responded with a status of 406 ()
+ClientDashboard.tsx:101 Client data not found
+fetchDashboardData @ ClientDashboard.tsx:101
+AuthContext.tsx:94 Auth state change: SIGNED_IN client@consulting19.com
+AuthContext.tsx:155 Fetching profile for user: 44175993-eda1-42e7-ab18-bba2f16d721b
+qdwykqrepolavgvfxquw.supabase.co/rest/v1/user_profiles?select=*&id=eq.44175993-eda1-42e7-ab18-bba2f16d721b:1  Failed to load resource: the server responded with a status of 406 ()
+AuthContext.tsx:172 Using session data for profile, DB error: Object
+qdwykqrepolavgvfxquw.supabase.co/rest/v1/clients?select=id%2Cassigned_consultant_id&profile_id=eq.7705f317-931e-4987-8ca8-d8bb50b8f056:1  Failed to load resource: the server responded with a status of 406 ()
+ClientDashboard.tsx:101 Client data not found
+fetchDashboardData @ ClientDashboard.tsx:101
+qdwykqrepolavgvfxquw.supabase.co/rest/v1/clients?select=id%2Cassigned_consultant_id&profile_id=eq.7705f317-931e-4987-8ca8-d8bb50b8f056:1  Failed to load resource: the server responded with a status of 406 ()
+ClientDashboard.tsx:101 Client data not found
+fetchDashboardData @ ClientDashboard.tsx:101
+AuthContext.tsx:94 Auth state change: SIGNED_IN client@consulting19.com
+AuthContext.tsx:155 Fetching profile for user: 44175993-eda1-42e7-ab18-bba2f16d721b
+qdwykqrepolavgvfxquw.supabase.co/rest/v1/user_profiles?select=*&id=eq.44175993-eda1-42e7-ab18-bba2f16d721b:1  Failed to load resource: the server responded with a status of 406 ()
+AuthContext.tsx:172 Using session data for profile, DB error: Object
+qdwykqrepolavgvfxquw.supabase.co/rest/v1/clients?select=id%2Cassigned_consultant_id&profile_id=eq.7705f317-931e-4987-8ca8-d8bb50b8f056:1  Failed to load resource: the server responded with a status of 406 ()
+ClientDashboard.tsx:101 Client data not found
+fetchDashboardData @ ClientDashboard.tsx:101
